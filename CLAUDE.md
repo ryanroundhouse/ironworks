@@ -6,8 +6,8 @@ missions with salvage, three rival mech companies that compete with you, hire yo
 beside you, and five story threads: connected chapters that come up on the board one at a time,
 are briefed in a briefing room and are flown on a theatre 2.4 times the usual size. Everybody who
 speaks does so aloud, in a made-up language.
-`index.html` is the whole deliverable. It loads three.js from a CDN, so view it through a local
-web server with an internet connection.
+`index.html` is the whole deliverable. It loads three.js (and one add-on, `RoomEnvironment`) from
+a CDN, so view it through a local web server with an internet connection.
 
 ## Scratch space: use `.scratch/`
 
@@ -23,16 +23,11 @@ web server with an internet connection.
 While `.scratch/` exists, `index.html` is generated rather than hand-edited:
 
 - `.scratch/base.html` is a snapshot of the page from before the current round of work.
-- `.scratch/v8/build.py` applies asserted string patches to the base and inserts the part files
-  beside it: `a1_wake.js` (the notice shown while the browser holds the sound back),
-  `v2_cast.js` (voices for the story cast), `f2_scale.js` (the field in two sizes),
-  `m2_brief.js` (the briefing room march), `m3_cut.js` (the comm camera), `s1_story.js` (thread
-  state, the story card and detail on the board, the books, the save), `s2_brief.js` (the
-  briefing room), `s3_kit.js` (the story cast `STC` and the set pieces chapters are built from),
-  `t1_mar.js`, `t2_car.js`, `t3_dead.js`, `t4_derby.js`, `t5_maw.js` (one thread each), plus
-  `ui.css` and `ui.html`.
-  - `python3 .scratch/v8/build.py` writes `index.html` (release).
-  - `python3 .scratch/v8/build.py --debug` writes `.scratch/debug.html` with the test hooks from
+- `.scratch/v9/build.py` applies asserted string patches to the base and inserts the part file
+  beside it: `p1_post.js` (the post chain `POST`: the scene target, the bloom, the pass that
+  writes the canvas, and the hold that leaves a paused sortie's picture standing).
+  - `python3 .scratch/v9/build.py` writes `index.html` (release).
+  - `python3 .scratch/v9/build.py --debug` writes `.scratch/debug.html` with the test hooks from
     `harness.js` (`__ev`, `__errs`, `__ff`, `__cam`, `__see`, `__strip`, `__poses`, `__mus`,
     `__render`, `__wav`, `__mk`, `__sim`, `__vox`, `__story`, `__smk`, `__sites`, `__fcam`,
     `__fsee`).
@@ -40,8 +35,14 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   - The build refuses a part file whose top-level name is already taken in the base.
   - Do not put a `//` comment in the middle of a long one-line statement in a part file: it
     swallows the rest of the line without a syntax error. Use `/* */`, or a line of its own.
-- Earlier rounds (`.scratch/v7/` and before) are history; their output is already in the base.
-  Each folder keeps the base it patched (`v7/base_v7.html`) next to its part files.
+- Earlier rounds (`.scratch/v8/` and before) are history; their output is already in the base.
+  Each folder keeps the base it patched (`v8/base_v8.html`) next to its part files. The part
+  files named further down are in `.scratch/v8/`: `a1_wake.js` (the sound notice), `v2_cast.js`
+  (voices for the story cast), `f2_scale.js` (the field in two sizes), `m2_brief.js` (the
+  briefing march), `m3_cut.js` (the comm camera), `s1_story.js` (thread state, the board, the
+  books, the save), `s2_brief.js` (the briefing room), `s3_kit.js` (the story cast and set
+  pieces), `t1_mar.js` to `t5_maw.js` (one thread each). The test drivers there (`cdp.mjs`,
+  `ff.mjs`, `run.sh` and the rest) are still the ones to use.
 - Every patch asserts its anchor text, so a build fails loudly instead of drifting. Keep that.
 - Starting a new round of work: move `.scratch/base.html` into the round it belonged to, copy the
   current `index.html` to `.scratch/base.html`, make a new `.scratch/vN/` folder with its own
@@ -153,6 +154,24 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   WAV (`cdp.mjs wav` saves it). `python3 .scratch/v5/an.py file.wav` prints band levels over time
   and, with `--png`, draws a spectrogram, which is how balance and timing were checked.
   `python3 .scratch/v6/env.py file.wav` lists dips in level, for finding dropouts.
+- The picture and what it costs, in `.scratch/v9/`:
+  - `post.sh [ff] 'window.__tp = { scale: .7 }'` runs `t_post.js` on the room showing: it sets
+    up three's own EffectComposer chain from the CDN, as the page used to have it, and compares
+    it with `POST` at the same instant, every pixel. With bloom off the two must be identical;
+    with it on, no channel may differ by more than one step. Run it in both browsers after any
+    change to `p1_post.js`.
+  - `t_hold.js` (from a clean page, either browser) counts pictures drawn against frames passed
+    with the sortie ready, playing, paused and under the map, and after each thing that must
+    wake a held picture. `r_hold.js` is the same walk for `ffreal.mjs`, with real clicks and
+    keys. Headless Firefox refuses pointer lock too, so that run goes through the free-mouse
+    fallback.
+  - `t_time.js` times one picture of the room showing, forced to finish with a one-pixel
+    readback. It also runs in a build from before this round (`.scratch/perf/debug_v8.html`).
+    Time one browser at a time with the other parked on `about:blank`: two tabs rendering share
+    the GPU, and that once doubled Firefox's figures.
+  - `.scratch/perf/` holds the probes from the survey that began this round: `drv.mjs` (`load`,
+    `cpu`, `prof`, `audio` over CDP), `stat.js` (draw calls, triangles, what a scene holds),
+    `who.js` (which drawables ever move), `gpu.js` (what each graphics setting costs).
 - Release builds must contain no `window.__` hooks.
 
 ## Conventions
@@ -182,6 +201,19 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   `updateBar`) is built like the deck. The conversation box `#dlg` and `dlg()` serve both rooms;
   `focusOn` hands over to `barFocusOn` in the bar. People there are `Human`s in `BAR.crowd`; the
   regulars are in `BARC`, and seated ones keep their seat through `barStay`.
+- The picture reaches the canvas through `POST` (`p1_post.js`) and nothing else. The main loop
+  sets `POST.scene`, `POST.camera` and `POST.strength` (the bloom) for the room and calls
+  `POST.frame(dt, still)`; `POST.draw(scene, camera)` draws any scene through the whole chain,
+  which is what the contact sheets use. The canvas has no depth buffer and no antialiasing of
+  its own (the scene target has both), so `renderer.render()` straight to the canvas comes out
+  wrong. `gfxApply()` and the resize handler keep `POST.bloom` and `POST.size()` in step.
+- A sortie on hold keeps the picture it has. `still` is true in the field while the pointer is
+  free (SORTIE READY, the pause sheet, the map), nobody is dead, the contract is not over, the
+  comm camera is not live and no tween is running: `updateField` does not run then, so nothing
+  moves. The picture is drawn again when the camera has moved, for three frames after a key, a
+  click, a control, a resize or `POST.kick()`, and twice a second regardless. Anything new that
+  changes the field's look while it is on hold, without one of those, should call `POST.kick()`.
+  The other rooms always draw.
 - What the bar remembers lives in `BARSV` and is saved under `bar` (`barSave()`, `barApply()`).
   A freelance pilot is rebuilt from a seed by `barPilot(seed)`, so the save holds only seeds;
   `CO.wing` may carry `cfg`, `skill`, `hpK` and `paid` for one of them, while deck pilots still
