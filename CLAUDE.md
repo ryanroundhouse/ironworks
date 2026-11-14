@@ -2,8 +2,10 @@
 
 A single-file three.js game: mech hangar with three build bays and a parts inventory, command deck
 with contracts and a rotating market, a bar (rumours, pilots for hire, two contests), field
-missions with salvage, and three rival mech companies that compete with you, hire you and fly
-beside you. Everybody who speaks does so aloud, in a made-up language.
+missions with salvage, three rival mech companies that compete with you, hire you and fly
+beside you, and five story threads: connected chapters that come up on the board one at a time,
+are briefed in a briefing room and are flown on a theatre 2.4 times the usual size. Everybody who
+speaks does so aloud, in a made-up language.
 `index.html` is the whole deliverable. It loads three.js from a CDN, so view it through a local
 web server with an internet connection.
 
@@ -21,20 +23,24 @@ web server with an internet connection.
 While `.scratch/` exists, `index.html` is generated rather than hand-edited:
 
 - `.scratch/base.html` is a snapshot of the page from before the current round of work.
-- `.scratch/v7/build.py` applies asserted string patches to the base and inserts the part files
-  beside it: `v1_vox.js` (the voices: phonemes, each speaker's voice, the synth and its playback
-  bus), `m1_comm.js` (in-cockpit comms, and holding the sortie while one is on screen),
-  `c1_rivals.js` (the three companies: who they are, standing with them, what is saved),
-  `c2_rivops.js` (company offers on the board, their lances, every encounter in the field, the
-  books afterwards), `h1_stand.js` (the STANDING tab of the board and hailing a company),
-  `b3_gossip.js` (bar rumours, now including talk about the companies), plus `ui.css`.
-  - `python3 .scratch/v7/build.py` writes `index.html` (release).
-  - `python3 .scratch/v7/build.py --debug` writes `.scratch/debug.html` with the test hooks from
+- `.scratch/v8/build.py` applies asserted string patches to the base and inserts the part files
+  beside it: `v2_cast.js` (voices for the story cast), `f2_scale.js` (the field in two sizes),
+  `m2_brief.js` (the briefing room march), `m3_cut.js` (the comm camera), `s1_story.js` (thread
+  state, the story card and detail on the board, the books, the save), `s2_brief.js` (the
+  briefing room), `s3_kit.js` (the story cast `STC` and the set pieces chapters are built from),
+  `t1_mar.js`, `t2_car.js`, `t3_dead.js`, `t4_derby.js`, `t5_maw.js` (one thread each), plus
+  `ui.css` and `ui.html`.
+  - `python3 .scratch/v8/build.py` writes `index.html` (release).
+  - `python3 .scratch/v8/build.py --debug` writes `.scratch/debug.html` with the test hooks from
     `harness.js` (`__ev`, `__errs`, `__ff`, `__cam`, `__see`, `__strip`, `__poses`, `__mus`,
-    `__render`, `__wav`, `__mk`, `__sim`, `__vox`).
+    `__render`, `__wav`, `__mk`, `__sim`, `__vox`, `__story`, `__smk`, `__sites`, `__fcam`,
+    `__fsee`).
   - Follow every build with `node --check .scratch/check.mjs`.
-- Earlier rounds (`.scratch/v6/` and before) are history; their output is already in the base.
-  Each folder keeps the base it patched (`v6/base_v6.html`) next to its part files.
+  - The build refuses a part file whose top-level name is already taken in the base.
+  - Do not put a `//` comment in the middle of a long one-line statement in a part file: it
+    swallows the rest of the line without a syntax error. Use `/* */`, or a line of its own.
+- Earlier rounds (`.scratch/v7/` and before) are history; their output is already in the base.
+  Each folder keeps the base it patched (`v7/base_v7.html`) next to its part files.
 - Every patch asserts its anchor text, so a build fails loudly instead of drifting. Keep that.
 - Starting a new round of work: move `.scratch/base.html` into the round it belonged to, copy the
   current `index.html` to `.scratch/base.html`, make a new `.scratch/vN/` folder with its own
@@ -46,16 +52,17 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   `http://127.0.0.1:8765/index.html`. Serve `.scratch/` on another port for `debug.html`.
 - Headless checks: start Chrome with `--headless=new --remote-debugging-port=9222
   --autoplay-policy=no-user-gesture-required --user-data-dir=.scratch/chrome-profile` and drive it
-  with the chrome-devtools tools, or with `node .scratch/v7/cdp.mjs` (`nav`, `eval`, `wav`,
+  with the chrome-devtools tools, or with `node .scratch/v8/cdp.mjs` (`nav`, `eval`, `wav`,
   `shot file [scale]`). It brings the tab to the front on every call: a hidden headless tab gets
-  no animation frames, so tweens and fades never finish. Module-level names are not on `window`,
-  so reach them through `__ev('...')`. Clear that profile's localStorage after test runs; the game
+  no animation frames, so tweens and fades never finish. `nav` also turns the HTTP cache off;
+  Chrome otherwise serves a stale `debug.html` after a rebuild. Module-level names are not on
+  `window`, so reach them through `__ev('...')`. Clear that profile's localStorage after test runs; the game
   saves the company under `ironworks.co` and settings under `ironworks.cfg`.
 - Check in Firefox as well as Chrome: it is the browser the game is actually played in, and its
   Web Audio differs. Start a second, muted instance with
   `/Applications/Firefox.app/Contents/MacOS/firefox --headless --no-remote --profile
   .scratch/ff-profile --remote-debugging-port 9223` and drive it with
-  `node .scratch/v7/ff.mjs run <url|-> script.js ['prelude']` (the file is an async function body;
+  `node .scratch/v8/ff.mjs run <url|-> script.js ['prelude']` (the file is an async function body;
   `shot file` takes a screenshot). The profile's `user.js` needs `media.autoplay.default` 0,
   `media.autoplay.blocking_policy` 0, `media.volume_scale` "0.0" (silent speakers, the audio graph
   still runs) and `remote.active-protocols` 1. Empty the profile except `user.js` after test runs.
@@ -66,6 +73,10 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
     engine, with meters on the voice bus and the music; `t_release.js` walks the release page
     through its real buttons (bay, deck, STANDING, a hail, the XO, bar) with the same meters.
     Both run in either browser.
+  - In `.scratch/v8/`: `rel.sh [ff]` clears the save and walks the release page through the
+    story path with real buttons (deck, the story card, ACCEPT, every step of the briefing, the
+    bay, LAUNCH, the field) with meters on every bus; `t_fflive.js` does the same in the debug
+    build for any chapter (`window.__fl = { k, ch }`).
 - With no save, the page opens on the "found your company" screen. Close it with `#setClose`
   before driving anything else.
 - Headless Chrome refuses pointer lock. To run the field, call `startField()` through `__ev`, then
@@ -82,6 +93,25 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   `node .scratch/v7/cdp.mjs eval "(async () => { $(cat .scratch/v7/t_opp.js) })()"`.
   An open `.ovl` overlay (the salvage picker, say) makes `uiModal()` true and swallows the keys,
   so start field tests from a clean page.
+- Story chapters: `__story(k, ch)` puts a chapter on the board, `__smk(k, ch, flags)` drops
+  straight into it (flags as `{ 'mar.ram': 1 }`), `__sites()` lists where its sites landed. In
+  `.scratch/v8/`:
+  - `run.sh '{ k, ch, f, done, follow: "nav", secs, picks, settle: true }'` flies a chapter with
+    the autopilot in `t_story.js` and prints objectives, what was said (lines that moved the
+    camera are tagged `{cam who|evt: LABEL}`) and the books. `follow: 'nav'` appears beside the
+    newest marker; `drive: .8` runs there at that share of top speed instead (use it for the
+    races); `dps`, `mortal`, `each`, `until` and `hunt: false` are there too. `done` lists
+    threads to count as finished. `ffrun.sh` is the same in Firefox.
+  - `look.sh '<the same, with until>' '__fsee(thing, dist, angle, height)' out.png` flies to a
+    moment, puts a free camera on something (`__fcam()` hands the view back) and takes a
+    picture. `brf.sh '{ k, ch, f, n }' out.png` walks n steps of a briefing and does the same.
+  - `cam.sh '{ hold, wing, cases }'` flies a spread of ordinary contracts and lists which lines
+    moved the camera; `camrt.sh '{ hold, type, plot, o, secs }'` runs one in real time with
+    nobody at the controls and logs line, hold and camera state.
+  - `t_ssave.js` takes story state through the save: round trip, hostile files, a failed
+    chapter and a lapsed offer coming round again, the three-card limit.
+  The autopilot kills fast and (without `drive`) teleports, so it proves a chapter can be
+  finished and says nothing about how hard it is.
 - `__ff(seconds)` fast-forwards bay tweens, so crane and lift sequences (`fitPart`, `switchBay`)
   can be awaited in a loop instead of in real time. It steps whichever room is showing, the bar
   included, and `__cam` places the camera there too.
@@ -95,9 +125,11 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
 - Audio cannot be heard headlessly. `__mus(which, seconds, seed, track, heat)` renders a score
   offline and reports peak, RMS, band energy and beat alignment. `which` is `'night'` (the deck
   theme), `'amb'`, `'deck'` (the theme running on into the ambience), `'win'` (the jingle),
-  `'radio'`, `'juke'` (the radio's band through the bar's jukebox) or `'field'`. For the field, `track` is 0-6 and `heat` is 0 for the patrol
+  `'brief'` (the briefing room march), `'radio'`, `'juke'` (the radio's band through the bar's
+  jukebox) or `'field'`. For the field, `track` is 0-6 and `heat` is 0 for the patrol
   arrangement, 1 for combat, or `[[seconds, heat], ...]` to render the hand-over between them.
   Keep the tracks near 0.07-0.12 RMS with peaks under 1, and combat about 3 dB above patrol.
+  The briefing march is the exception: about 0.045, because somebody talks over all of it.
 - Voices: `node .scratch/v7/t_vox.mjs` renders eight lines from every named voice, a dozen
   strangers and some hostile input offline, counts non-finite samples and writes WAVs to
   `.scratch/v7/wav/` for listening or `an.py`. In the page, `__vox(ch, text, fx)` reports length,
@@ -114,7 +146,11 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
 - Everything lives in one `<script type="module">`. Top-level names are shared across the whole
   file, so new helpers need distinctive names; `node --check` catches collisions.
 - People are built by `Human` from a seeded `lookOf(seed)`. Crew portraits (`drawFace`) use the
-  same seeded draws, so keep the two in step when changing either.
+  same seeded draws, so keep the two in step when changing either. A seed's draws are blind to
+  who the person is (one gave an eleven-year-old a grey beard), so a named character's looks
+  are said outright in their `CAST` entry with `stLook(hair, style, extra, skin)`; both read
+  it. `{ bot: true }` there gives a machine's portrait instead. After adding anybody, look at
+  them: `.scratch/v8/t_faces.js` draws a contact sheet of the story cast.
 - Units are metres. Mechs are 12-16 m tall, people about 1.7 m, so bay furniture meant for people
   needs to be built at human scale.
 - CSS class names are global too, and short ones are taken (`.sn` is the slot name, `.pn` a
@@ -127,7 +163,8 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   validates on the way in because imported files are untrusted.
 - Overlays that take over input carry the `ovl` class; `uiModal()` is how key handlers know to
   stand down.
-- Rooms are `mode` values: `hangar`, `hq`, `bar`, `field`. The bar (`BAR`, camera rig `barCam`,
+- Rooms are `mode` values: `hangar`, `hq`, `bar`, `brief`, `field`. The bar (`BAR`, camera rig
+  `barCam`,
   `updateBar`) is built like the deck. The conversation box `#dlg` and `dlg()` serve both rooms;
   `focusOn` hands over to `barFocusOn` in the bar. People there are `Human`s in `BAR.crowd`; the
   regulars are in `BARC`, and seated ones keep their seat through `barStay`.
@@ -168,6 +205,56 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   `rc` / `rh` (radar and map colours). Flying on your side they are team 0 but their shots are
   owned by 4: they hit what yours hit, the kills are theirs (`MS.v.rvk`), not yours.
   `rivFight()` runs a fight to the point where they yield.
+- Story threads live in `STORY` (no prototype, like `RIV`): `{ name, sub, col, emp, foe, who,
+  open(), wait, flags, fin, ch: [...] }`. A chapter is `{ title, kind, biome, mood, seed, diff,
+  pay, salv, site, op, tease, wire, sites: { lz, key: [x, z, r, label] }, roads, face, guests,
+  brf: [...], async run(ms), epi(ok, f, D), prize(D, add, f) }`. `kind` is one of the ordinary
+  mission types and only dresses the card; `run` replaces that type's script altogether.
+- Where a thread stands is `stState(k)` in `STV.th`: `ch` the next chapter, `st` 0 not begun, 1
+  between chapters, 2 on the board, 3 finished, `at` when it may next be offered, `exp` when
+  the offer closes, `n` failed attempts. `storySync()` is the only thing that puts story cards
+  on the board (never more than three), `storyLapse()` takes an unanswered one away for a
+  while, `storySettle()` moves the thread on or, after a failure, queues the same chapter
+  again. Story cards are never saved with the board; `storySave()` / `storyApply()` keep the
+  thread state and rebuild them.
+- What a thread remembers of the player's choices is a small integer under `'thread.flag'`.
+  In a chapter use `stSet(flag, v)` and `stGet(flag)`: they are staged in `MS.sf` and kept only
+  if the chapter is won. Anywhere else read `stFlag('mar.ram')` or `stDone('mar')`. A flag
+  must be listed in its thread's `flags` or the save drops it.
+- A story theatre is `STK` (2.4) times the ordinary field. `fieldScale(k)` rebuilds the ground
+  and sets `FD.k` and `FD.size`; anything that assumes a kilometre must read those. Chapter
+  sites are given in metres from the centre; `storyLay()` flattens a pad at each and along
+  every `roads` entry (a list of site keys) and keeps props off them. Keep sites within about
+  800 m: the rim hills start at 864.
+- Chapters are written with the helpers in `s3_kit.js` on top of the mission ones (`until`,
+  `after`, `say`, `ask`, `tell` (awaitable `say`), `setObj`, `nav`, `foes`, `spawn`,
+  `dropship`): `stFrom` (alerted hostiles from a bearing), `stHold` and `stBar` (meters),
+  `stPay`, `stGift`, `stMend`, `stRoad`, `stBeacon`, `stGate`, `stFire`, `stShow`, `stTick`,
+  `stRace` (gates, laps, a paced grid), and the big machines `stCrawler`, `stWalker`,
+  `stLantern`, `stDread`. An ally who must not die is wrapped in `stKeep` (`t5_maw.js`): at a
+  quarter armour they are out of the fight and nobody shoots at them. A new named character
+  goes in `STC`, `CAST` (the body and the looks) and `VOX_WHO` / `VOX_CAST` (the voice).
+- The briefing room is `BRF` with camera rig `brfCam`, built like the bar; `toBrief(c)` enters
+  it from the deck, `brfStep(i)` plays one step, `brfLeave('bay' | 'hq')` leaves. A chapter's
+  `brf` is a list of steps `{ t, by, show, shot }`: `by` speaks (the XO if absent; the crew
+  and any `guests` are in the room, anybody else is a voice over the map), `show` puts marks
+  on the wall map (`['site', key, label, colour]`, `['foe' | 'ally' | 'unk', key, label]`,
+  `['route', [keys], colour]`, `['ring', key, metres, label]`, `['card', title, [lines]]`,
+  `['face', character, [lines]]`, `['clear']`). The map is the theatre's real ground, sampled
+  from its seed. A step may be a getter when it depends on a flag, and a briefing should
+  leave things out: what the script springs later is the point.
+- The comm camera (`m3_cut.js`): while a held line is up, the view goes to the speaker if they
+  are on the field, or to the event the line is about. `cutWho` finds a speaker by
+  `fieldWho(ch, ent)`, as the wingman, as a company commander, or by a machine carrying their
+  surname; give anybody else who is physically out there a `fieldWho`. An event is
+  `look(thing, label)` called in the same instant as the `say` about it (either order);
+  dropships, `hot1` and garrison waves report themselves with `look(.., .., true)`, which
+  never displaces a script's own. Announce a thing as it appears rather than seconds before,
+  or there is nothing to show. A speaker cut needs the line to hold (`CFG.hold`); an event is
+  always shown, and at the lower settings holds only as long as the line would have stayed.
+  Chatter never moves the camera.
+- An alerted drone chases at any range (it used to give up beyond 420 m, which stranded
+  waves on the bigger maps).
 - Comms: `say` and `ask` queue lines that hold the sortie while they are on screen, according to
   `CFG.hold` (2 every message, 1 questions only, 0 never: a question then times out to its
   default as it used to). `chatter()` is talk that must never stop the fight. While `commHold`
