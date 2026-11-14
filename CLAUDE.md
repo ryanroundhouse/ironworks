@@ -24,7 +24,8 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
 
 - `.scratch/base.html` is a snapshot of the page from before the current round of work.
 - `.scratch/v8/build.py` applies asserted string patches to the base and inserts the part files
-  beside it: `v2_cast.js` (voices for the story cast), `f2_scale.js` (the field in two sizes),
+  beside it: `a1_wake.js` (the notice shown while the browser holds the sound back),
+  `v2_cast.js` (voices for the story cast), `f2_scale.js` (the field in two sizes),
   `m2_brief.js` (the briefing room march), `m3_cut.js` (the comm camera), `s1_story.js` (thread
   state, the story card and detail on the board, the books, the save), `s2_brief.js` (the
   briefing room), `s3_kit.js` (the story cast `STC` and the set pieces chapters are built from),
@@ -77,6 +78,17 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
     story path with real buttons (deck, the story card, ACCEPT, every step of the briefing, the
     bay, LAUNCH, the field) with meters on every bus; `t_fflive.js` does the same in the debug
     build for any chapter (`window.__fl = { k, ch }`).
+  - The audio graph is built while the page loads, so a meter has to be in place before the
+    page's own script runs. `PRELOAD=.scratch/v8/taps.js` makes `ff.mjs` and `cdp.mjs nav`
+    install one (`window.__taps`); `rel.sh` sets it, and `t_release.js` and `t_fflive.js` say
+    so if it is missing.
+  - Both test profiles allow autoplay, which hides what a player's browser does. For that,
+    `ffreal.mjs <url> steps.js` drives a Firefox with the normal policy (port 9224, profile
+    `.scratch/ff-real`, the same `user.js` without the two autoplay lines) through real clicks
+    and keys (`click`, `key`, `levels(secs)`, `state()`, `nav()`; the `r_*.js` files are
+    scenarios), and `crreal.mjs <url> [key]` does the same in Chrome (port 9225, profile
+    `.scratch/chrome-real`, no `--autoplay-policy` flag). If `ffreal.mjs` reports "Maximum
+    number of active sessions", restart that Firefox.
 - With no save, the page opens on the "found your company" screen. Close it with `#setClose`
   before driving anything else.
 - Headless Chrome refuses pointer lock. To run the field, call `startField()` through `__ev`, then
@@ -133,8 +145,10 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
 - Voices: `node .scratch/v7/t_vox.mjs` renders eight lines from every named voice, a dozen
   strangers and some hostile input offline, counts non-finite samples and writes WAVs to
   `.scratch/v7/wav/` for listening or `an.py`. In the page, `__vox(ch, text, fx)` reports length,
-  peak, RMS and bad samples for one line. Nothing is spoken until the AudioContext exists, so
-  dispatch a `pointerdown` (or call `sfx.init()`) before testing playback or lip movement.
+  peak, RMS and bad samples for one line. `node .scratch/v8/t_static2.mjs [wavdir]` reads the
+  voice code out of `debug.html` and reports, voice by voice, how loud the breath and the
+  consonant hiss are against the voice itself and what share of a line is noise. Keep the hiss
+  20 dB or more under the voice and the share under 1%: louder than that it is heard as static.
 - `__wav(...)` takes the same arguments, plus a list of mix buses to solo, and returns a base64
   WAV (`cdp.mjs wav` saves it). `python3 .scratch/v5/an.py file.wav` prints band levels over time
   and, with `--png`, draws a spectrogram, which is how balance and timing were checked.
@@ -267,6 +281,15 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   `VOX_KIND` archetypes, with the tongue of their faction (`VOX_LANG`, chosen from `ch.role`).
   A new named character wants an entry in both tables. `voxRender` is pure JS and fills its own
   array, `vox.level()` drives the speaker's mouth, and `CFG.voice` is the VOICES slider.
+  The `'radio'` treatment is a small speaker and nothing else: a band-pass, a make-up gain
+  (the filter throws most of a low voice away) and a soft clip. It adds no hiss, no key click
+  and no static tail, and the consonants carry only a trace of noise. That is deliberate.
+- Sound starts with the page: `sfx.init()` runs once at the end of the module, which builds
+  the `AudioContext`, the music and the voices. A browser that blocks autoplay leaves the
+  context suspended until the first click or key; every input event calls `sfx.init()` again,
+  which resumes it, and `#sndHint` (`sndWait`) says so on screen until the context is running.
+  Nothing may assume the context does not exist yet, and nothing should wait for a gesture
+  before building audio.
 - Never keep a `getChannelData()` view of a buffer that gets played. Firefox detaches the view
   once the buffer is playing, reads from it then give `undefined`, and a sample built from that is
   all NaN. One NaN note silences every score until reload (the music shares one compressor).
