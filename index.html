@@ -277,6 +277,34 @@ input[type=range]::-moz-range-thumb{width:12px;height:18px;background:var(--am);
 #bgCv{display:block;width:100%;height:auto;cursor:pointer}
 #bgMsg{min-height:18px;text-align:center;letter-spacing:.1em;color:#e6dfcf;margin:4px 0 2px}#bgMsg b{font-weight:400}
 #barGame .row button{padding:9px}#barGame #bgQuit{flex:0 0 190px}
+/* ---- v7: comms that hold the sortie ---- */
+#commDim{position:fixed;inset:0;background:radial-gradient(ellipse at center,rgba(4,5,6,.3),rgba(4,5,6,.74));z-index:30}
+#comm.hold{left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(640px,calc(100vw - 40px));grid-template-columns:120px 1fr;gap:14px;z-index:31;background:rgba(7,9,11,.95);pointer-events:auto;font-size:12px;border-color:var(--am)}
+#comm.hold canvas{width:120px;height:120px}
+#comm.hold #commWho{font-size:11px;letter-spacing:.14em}
+#comm.hold #commTxt{min-height:56px;line-height:1.55;font-size:13px;margin:6px 0 10px}
+#comm.hold #commOpts div{border:1px solid var(--ln);background:rgba(255,178,26,.07);padding:6px 9px;margin:4px 0;cursor:pointer}
+#comm.hold #commOpts div.on{background:var(--am);color:#111;border-color:var(--am)}
+#comm.hold #commOpts div.on b{color:#111;border-color:#111}
+#comm.hold #commOpts div.go{color:#b9b2a2}#comm.hold #commOpts div.go:hover{color:#fff;border-color:var(--am)}
+#commHint{display:block;font-style:normal;color:#8b8474;font-size:9px;letter-spacing:.16em;margin-top:9px}
+#comm:not(.hold) #commHint{display:none}
+.sg .seg{display:flex;gap:4px;flex-wrap:wrap}.sg .seg button{letter-spacing:.14em}
+/* ---- v7: the STANDING tab of the board, and its detail panel ---- */
+#hqTabs{display:flex;gap:5px;margin:0 0 8px;padding-bottom:7px;border-bottom:1px solid var(--ln)}
+#hqTabs button{flex:1;letter-spacing:.2em;font-size:10px;padding:6px 4px}
+.sdh{color:var(--am);letter-spacing:.2em;font-size:10px;margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--ln);display:flex;justify-content:space-between}.sdh:first-child{margin-top:0}.sdh small{color:#7d776a;letter-spacing:.1em}
+.sdr{border:1px solid rgba(255,255,255,.09);background:rgba(0,0,0,.35);padding:5px 9px;margin-bottom:4px;cursor:pointer;display:grid;grid-template-columns:30px 1fr auto;gap:2px 8px;align-items:center}
+.sdr:hover{border-color:var(--am)}.sdr.on{border-color:var(--am);background:rgba(255,178,26,.13)}.sdr.off{cursor:default;opacity:.6}.sdr.off:hover{border-color:rgba(255,255,255,.09)}
+.sdr>u,.sdr>canvas{grid-row:1/4;width:30px;height:30px;align-self:center}.sdr>u{grid-row:1/3;width:8px;height:22px;justify-self:center;text-decoration:none}.sdr.off>u{grid-row:1;height:12px}
+.sdr b{font-weight:400;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sdr em{font-style:normal;color:#fff;font-size:10px;letter-spacing:.08em;text-align:right;white-space:nowrap}
+.sdr small{grid-column:2/4;color:#8b8474;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sdr .sdm{grid-column:2/4}
+.sdm{display:block;position:relative;height:6px;background:rgba(255,255,255,.08);margin:3px 0}.sdm::after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:#fff}.sdm b{position:absolute;top:0;bottom:0}
+#detail>.sdm{height:9px;margin:6px 0 9px}
+.sdt{display:grid;grid-template-columns:66px 72px 1fr;gap:10px;align-items:center;margin-bottom:8px}.sdt canvas{width:66px;height:66px}.sdt #sdFace{width:72px;height:72px}
+.sdc{display:flex;gap:3px;margin-top:6px}.sdc u{width:26px;height:9px;border:1px solid rgba(255,255,255,.25)}
+.sdl{display:grid;grid-template-columns:34px 1fr;gap:8px;font-size:10px;color:#c9c2b2;padding:3px 0;border-bottom:1px dotted rgba(255,255,255,.08);line-height:1.35}.sdl b{font-weight:400;text-align:right}.sdl b.p{color:var(--ok)}.sdl b.n{color:var(--hot)}
+#detail .kv b{text-align:right}
 </style>
 </head>
 <body>
@@ -312,7 +340,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:18px;background:var(--am);
  <div id="ret"><i></i><i></i><i></i><i></i><b></b></div>
  <div id="twist"><b id="hdg">000</b><i id="twI"></i></div>
  <div id="obj" class="pn"><div id="objW">HOSTILES <b id="hCnt">0</b>KILLS <b id="kCnt">0</b>WAVE <b id="wCnt">1</b></div><div id="objM" class="hid"><h2><span id="msTitle">CONTRACT</span><small id="msClock"></small></h2><div id="objList"></div></div></div>
- <div id="help" class="pn"><b>W/S</b> throttle · <b>A/D</b> turn legs<br><b>MOUSE</b> torso twist / aim<br><b>LMB</b> left arm · <b>RMB</b> right arm<br><b>F</b> back unit · <b>SPACE</b> jump jets<br><b>SHIFT</b> sprint · <b>C</b> camera · <b>X</b> center legs<br><b>R</b> repair kit · <b>V</b> coolant flush<br><b>M</b> tactical map · <b>1-3</b> answer comms<br><b>H</b> withdraw to base · <b>ESC</b> pause</div>
+ <div id="help" class="pn"><b>W/S</b> throttle · <b>A/D</b> turn legs<br><b>MOUSE</b> torso twist / aim<br><b>LMB</b> left arm · <b>RMB</b> right arm<br><b>F</b> back unit · <b>SPACE</b> jump jets<br><b>SHIFT</b> sprint · <b>C</b> camera · <b>X</b> center legs<br><b>R</b> repair kit · <b>V</b> coolant flush<br><b>M</b> tactical map · <b>1-3</b> answer comms<br><b>SPACE</b> carry on after a message<br><b>H</b> withdraw to base · <b>ESC</b> pause</div>
  <canvas id="radar" width="190" height="190"></canvas>
  <div id="gauges" class="pn">
   <div class="st" id="gArm"><span>ARMOR</span><i><b></b></i><em></em></div>
@@ -324,14 +352,15 @@ input[type=range]::-moz-range-thumb{width:12px;height:18px;background:var(--am);
  <div id="msg"></div>
  <div id="navs"></div>
  <div id="tgt" class="hid"><span id="tgtN"></span><i><b id="tgtB"></b></i></div>
- <div id="comm" class="pn hid"><canvas id="commFace" width="144" height="144"></canvas><div><b id="commWho"></b><p id="commTxt"></p><div id="commOpts"></div><i id="commBar"></i></div></div>
+ <div id="commDim" class="hid"></div>
+ <div id="comm" class="pn hid"><canvas id="commFace" width="144" height="144"></canvas><div><b id="commWho"></b><p id="commTxt"></p><div id="commOpts"></div><i id="commBar"></i><em id="commHint"></em></div></div>
 </div>
 
 <div id="hqUI" class="hid">
  <div class="ttl"><canvas width="100" height="100"></canvas><b>IRONWORKS</b><span>COMMAND DECK // CONTRACT OPERATIONS</span><i></i></div>
  <div id="tags"></div>
  <div id="hqStat" class="pn"></div>
- <div id="board" class="pn"><h2>CONTRACT BOARD <small>LIVE OFFERS</small></h2><div id="cards"></div></div>
+ <div id="board" class="pn"><div id="hqTabs"><button data-t="board" class="on">CONTRACT BOARD</button><button data-t="stand">STANDING</button></div><div id="cards"></div><div id="stand" class="hid"></div></div>
  <div id="detail" class="pn"></div>
  <div id="hqBar"><button id="btnToBay">◀ MECH BAY</button><button id="btnToBar">▼ THE BAR</button><button id="bXO">XO VARGA</button><button id="bIntel">INTEL · SATO</button><button id="bChief">CHIEF · DUTCH</button><button id="bP0">PILOT · ROOK</button><button id="bP1">PILOT · ANVIL</button><button id="bMkt">MARKET</button><button id="bSet">⚙ SETTINGS</button></div>
 </div>
@@ -492,7 +521,7 @@ const PAINTS = [
   { n: 'NIGHT OPS', pri: 0x2d3540, sec: 0x15181c, acc: 0x35d0c0, glow: 0x45ffe0 },
 ];
 function makeMats(pi) {
-  const p = PAINTS[pi];
+  const p = pi && typeof pi === 'object' ? pi : PAINTS[pi] || PAINTS[0];
   return {
     pri: std({ color: p.pri, map: TX.panel, metalness: .5, roughness: .6 }),
     sec: std({ color: p.sec, map: TX.panel, metalness: .6, roughness: .55 }),
@@ -503,7 +532,7 @@ function makeMats(pi) {
     glow: glowMat(p.glow, 2.4),
   };
 }
-function applyPaint(m, pi) { const p = PAINTS[pi]; m.pri.color.set(p.pri); m.sec.color.set(p.sec); m.acc.color.set(p.acc); m.glass.emissive.set(p.glow); m.glow.emissive.set(p.glow); }
+function applyPaint(m, pi) { const p = pi && typeof pi === 'object' ? pi : PAINTS[pi] || PAINTS[0]; m.pri.color.set(p.pri); m.sec.color.set(p.sec); m.acc.color.set(p.acc); m.glass.emissive.set(p.glow); m.glow.emissive.set(p.glow); }
 
 /* ============ GEOMETRY HELPERS (parent first, cached geometry) ============ */
 const geoC = {}, UB = new THREE.BoxGeometry(1, 1, 1);
@@ -563,11 +592,11 @@ function explode(fx, p, s = 1) {
 }
 
 /* ============ SETTINGS: kept apart from the save file, so importing a company never changes your volume or controls ============ */
-const CFG_DEF = { vol: .8, sfx: .8, mus: .7, amb: true, radio: true, score: true, jingle: true, track: 0, sens: 1, invY: false, scale: 1, bloom: true, shadow: true };
+const CFG_DEF = { vol: .8, sfx: .8, mus: .7, amb: true, radio: true, score: true, jingle: true, track: 0, voice: .8, hold: 2, sens: 1, invY: false, scale: 1, bloom: true, shadow: true };
 const CFG = { ...CFG_DEF };
 {
   try { const s = JSON.parse(localStorage.getItem('ironworks.cfg') || 'null'); if (s && typeof s === 'object') { for (const k in CFG_DEF) if (typeof s[k] === typeof CFG_DEF[k]) CFG[k] = s[k]; } else if (localStorage.getItem('ironworks.music') === '0') CFG.mus = 0; } catch (e) { }
-  for (const k of ['vol', 'sfx', 'mus']) CFG[k] = clamp(+CFG[k] || 0, 0, 1); CFG.sens = clamp(+CFG.sens || 1, .3, 2.5); CFG.scale = clamp(+CFG.scale || 1, .5, 1.5); CFG.track = clamp(CFG.track | 0, 0, 7);
+  for (const k of ['vol', 'sfx', 'mus', 'voice']) CFG[k] = clamp(+CFG[k] || 0, 0, 1); CFG.hold = clamp(CFG.hold | 0, 0, 2); CFG.sens = clamp(+CFG.sens || 1, .3, 2.5); CFG.scale = clamp(+CFG.scale || 1, .5, 1.5); CFG.track = clamp(CFG.track | 0, 0, 7);
 }
 const cfgSave = () => { try { localStorage.setItem('ironworks.cfg', JSON.stringify(CFG)); } catch (e) { } };
 /* the seven mission scores, in theatre order: [biome, title, liner note] */
@@ -578,7 +607,7 @@ const scoreFor = biome => CFG.track ? CFG.track - 1 : Math.max(0, SCORES.findInd
 /* ============ AUDIO (tiny procedural synth) ============ */
 const sfx = (() => {
   let ac, master, on = true, nb;
-  function init() { if (ac) return; try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; } master = ac.createGain(); master.gain.value = .45 * CFG.vol * CFG.sfx; master.connect(ac.destination); nb = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; music.boot(ac); }
+  function init() { if (ac) return; try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; } master = ac.createGain(); master.gain.value = .45 * CFG.vol * CFG.sfx; master.connect(ac.destination); nb = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; music.boot(ac); vox.boot(ac); }
   function tone(type, f0, f1, dur, vol, delay = 0) { const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t + dur); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur); o.connect(g).connect(master); o.start(t); o.stop(t + dur + .03); }
   function noise(dur, vol, f0, f1, q = 1, delay = 0) { const t = ac.currentTime + delay, s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = nb; s.loop = true; f.type = 'bandpass'; f.Q.value = q; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur); s.connect(f).connect(g).connect(master); s.start(t, rand(.5)); s.stop(t + dur + .03); }
   const lib = {
@@ -606,6 +635,203 @@ const sfx = (() => {
 })();
 addEventListener('pointerdown', () => sfx.init());
 addEventListener('keydown', () => sfx.init());
+
+/* ============ VOICES: EVERY LINE OF DIALOGUE IS SPOKEN ALOUD IN A MADE-UP LANGUAGE — NONSENSE WORDS WITH REAL INTONATION, THROUGH A THROAT THAT IS HALF PERSON, HALF MUTED TROMBONE ============ */
+/* nothing is sampled. A small formant synthesiser renders each line as it is spoken: a buzzing source at the speaker's pitch, shaped by three moving resonances (the mouth), with hiss and breath for the consonants.
+   A voice is a throat (pitch, size, buzz, breath, gravel), a way of talking (pace, melody, how crisply the mouth moves) and a private vocabulary built from its own handful of sounds — so a character always sounds like themselves,
+   and people of one faction share a tongue. The words mean nothing; the punctuation of the real line decides how they are said: questions rise, orders fall, shouting is shouted, and a line cut off with a dash stops dead. */
+const VOX_SR = 22050, VOX_HOP = 55;   /* control frames of 2.5 ms */
+/* vowels: the first three resonances of an average adult mouth */
+const VOX_V = { a: [730, 1090, 2440], A: [660, 1720, 2410], e: [530, 1840, 2480], E: [500, 1500, 2500], i: [270, 2290, 3010], I: [390, 1990, 2550], o: [500, 870, 2400], O: [570, 840, 2410], u: [300, 870, 2240], U: [440, 1020, 2240], y: [280, 1750, 2150], q: [400, 1450, 2300] };
+/* consonants: each a short run of [ms, voicing, breath, hiss, hiss centre Hz, hiss width Hz, mouth shape (null = already forming the vowel that follows), nasal].
+   j is the y of "yes", S sh, Z zh, c ch, J the j of "judge", R a rolled r, x the ch of "loch", ! a click, ' a catch in the throat */
+const VOX_C = {
+  w: [[60, .7, 0, 0, 0, 0, [300, 620, 2300]]], j: [[55, .7, 0, 0, 0, 0, [270, 2250, 3000]]], l: [[55, .6, 0, 0, 0, 0, [360, 1150, 2750]]], r: [[55, .65, 0, 0, 0, 0, [420, 1250, 1650]]],
+  R: [[20, .12, 0, 0, 0, 0, [450, 1350, 2300]], [22, .8, 0, 0, 0, 0, [450, 1350, 2300]], [20, .12, 0, 0, 0, 0, [450, 1350, 2300]], [22, .8, 0, 0, 0, 0, [450, 1350, 2300]]],
+  m: [[65, .5, 0, 0, 0, 0, [250, 1050, 2300], 1]], n: [[60, .5, 0, 0, 0, 0, [250, 1600, 2600], 1]],
+  b: [[50, .12, 0, 0, 0, 0, [200, 800, 2200]], [8, .3, 0, .5, 900, 1200, null]], d: [[45, .12, 0, 0, 0, 0, [200, 1750, 2600]], [8, .3, 0, .6, 3800, 1800, null]], g: [[50, .12, 0, 0, 0, 0, [200, 2100, 2400]], [10, .3, 0, .6, 2200, 1200, null]],
+  p: [[55, 0, 0, 0, 0, 0, [200, 800, 2200]], [8, 0, 0, .6, 900, 1200, null], [28, 0, .5, 0, 0, 0, null]], t: [[50, 0, 0, 0, 0, 0, [200, 1750, 2600]], [10, 0, 0, .8, 4200, 2000, null], [28, 0, .5, 0, 0, 0, null]],
+  k: [[55, 0, 0, 0, 0, 0, [200, 2100, 2400]], [12, 0, 0, .8, 2300, 1200, null], [32, 0, .5, 0, 0, 0, null]],
+  s: [[90, 0, 0, .5, 6200, 2600, null]], S: [[90, 0, 0, .55, 3000, 1400, null]], f: [[75, 0, 0, .22, 4500, 5000, null]], h: [[65, 0, .65, 0, 0, 0, null]], x: [[80, 0, .2, .45, 1700, 900, null]],
+  z: [[70, .5, 0, .28, 6000, 2600, [260, 1700, 2600]]], Z: [[70, .5, 0, .32, 3000, 1400, [260, 1900, 2500]]], v: [[60, .55, 0, .1, 4500, 5000, [280, 1100, 2300]]],
+  c: [[45, 0, 0, 0, 0, 0, [200, 1800, 2600]], [60, 0, 0, .5, 3200, 1500, null]], J: [[40, .12, 0, 0, 0, 0, [200, 1800, 2600]], [50, .4, 0, .35, 3000, 1400, null]],
+  '!': [[25, 0, 0, 0, 0, 0, null], [6, 0, 0, 1, 3500, 3000, null], [20, 0, 0, 0, 0, 0, null]], "'": [[45, 0, 0, 0, 0, 0, null]],
+};
+/* six tongues: [onsets, vowels, codas] — a sound listed twice turns up twice as often, a dot is "none". Everyone who speaks for a faction draws their words from its tongue */
+const VOX_LANG = [
+  ['wwmmbnndl.j', 'aaoouE', '.....nm'],     /* 0 round and brassy */
+  ['ttkkssSpr.', 'iieeaI', '....nsk'],      /* 1 clipped and bright */
+  ['ggddbbrrx.', 'aaoOuU', '....rkx'],      /* 2 from the back of the throat */
+  ['llmmnnvzj.', 'eeaaioq', '.....lns'],    /* 3 liquid */
+  ['SSccttjh.s', 'iIeEay', '....Sn'],       /* 4 quick and hissing */
+  ['RRddllmb.f', 'aaeiou', '.....nr'],      /* 5 rolled */
+];
+const VOX_FAC = { hel: 3, kar: 2, tyr: 0, ord: 5, vom: 1, maw: 4 };
+const VOX_DEF = { f0: 140, tr: 1, rate: 5, range: 5, brass: .3, breath: .1, rough: .1, tilt: 2600, vib: 0, nas: 0, crisp: 1, stac: .2, lilt: 1, dip: .15, emoP: .14, emo: ['hm', 'ah', 'uh'] };
+/* the named cast. f0 pitch · tr size of the throat (below 1 is a bigger body) · rate syllables a second · range how far the melody travels, in semitones · brass 0 a person … 1 a trombone with a plunger ·
+   breath, rough (gravel) · tilt how bright the buzz is · vib vibrato · nas through the nose · crisp how fast the mouth moves · stac 0 legato … 1 clipped · lilt how much the tune wanders · dip how often a vowel slides into another · ph their own sounds */
+const VOX_CAST = {
+  xo: { f0: 186, tr: 1.07, rate: 5, range: 4.5, brass: .22, crisp: 1.25, stac: .5, tilt: 3200, lilt: .6, ph: ['ttkkddrvsn.', 'aaeeio', '.....nrs'], emo: ['hm', 'ah'], emoP: .08 },                        /* Cmdr. Ilsa Varga: clipped, even, used to being obeyed */
+  intel: { f0: 236, tr: 1.16, rate: 6.4, range: 6, brass: .1, breath: .32, crisp: 1.35, stac: .15, tilt: 3000, ph: ['ssSSmmnktj.', 'iieeauy', '.....nS'], emo: ['hm', 'mhm', 'eh'], emoP: .2 },             /* Mira Sato: quick, quiet, half to herself */
+  chief: { f0: 92, tr: .86, rate: 4, range: 5.5, brass: .72, rough: .32, crisp: .7, tilt: 2300, dip: .3, ph: ['bbddmmwwgl.', 'ooaauO', '.....mn'], emo: ['ha', 'grunt', 'oh'], emoP: .22 },                   /* "Dutch" Okonkwo: a low warm rumble, never in a hurry */
+  rook: { f0: 212, tr: 1.12, rate: 6.1, range: 8.5, brass: .14, crisp: 1.3, tilt: 3600, lilt: 1.4, dip: .35, ph: ['rrkklljpc.', 'iiaaeE', '.....kn'], emo: ['ha', 'eh', 'ah'], emoP: .25 },                    /* Rook: young, bright, sure of herself */
+  anvil: { f0: 76, tr: .82, rate: 3.5, range: 2.4, brass: .5, rough: .62, crisp: .75, stac: .55, tilt: 1900, lilt: .4, ph: ['ggddbbmnr.', 'oouuaU', '....mnk'], emo: ['grunt', 'hm'], emoP: .2 },              /* Anvil: very low, very slow, gravel */
+  keep: { f0: 164, tr: 1, rate: 4.4, range: 6, brass: .42, breath: .24, rough: .26, crisp: .85, tilt: 2500, dip: .3, ph: ['mmnnllwwhd.', 'aaooeE', '.....nl'], emo: ['hm', 'mhm', 'ha', 'sigh'], emoP: .22 },  /* "Mother" Brandt: husky and unhurried */
+  load: { f0: 118, tr: .92, rate: 4.8, range: 3.6, brass: .35, nas: .65, crisp: .95, stac: .35, tilt: 2700, lilt: .7, ph: ['bbggddnhr.', 'AAaaOE', '....nkr'], emo: ['grunt', 'uh', 'ha'], emoP: .18 },         /* Strand: blunt, through the nose */
+  sig: { f0: 224, tr: 1.15, rate: 6.8, range: 5, brass: .08, crisp: 1.45, stac: .4, tilt: 3500, ph: ['ttddppkknl.s', 'iieeaI', '....ntk'], emo: ['eh', 'hm', 'ah'], emoP: .16 },                              /* Banerjee: light, exact, rapid */
+  broker: { f0: 140, tr: .98, rate: 4.3, range: 5, brass: .3, crisp: .8, stac: 0, vib: .012, tilt: 2600, dip: .4, ph: ['llssmmvvzw.', 'oouueeaq', '.....ls'], emo: ['hm', 'ah'], emoP: .1 },                    /* Calloway: smooth as an invoice */
+  drink: { f0: 150, tr: .95, rate: 4.7, range: 8.5, brass: .5, rough: .3, crisp: .9, tilt: 3000, lilt: 1.3, dip: .3, ph: ['bbgghhjjrw.', 'aaooqyu', '.....rn'], emo: ['ha', 'ah', 'oh'], emoP: .3 },           /* "Ballast": big, loud, enjoying herself */
+  arm: { f0: 84, tr: .84, rate: 4.2, range: 3, brass: .4, rough: .7, crisp: .9, stac: .6, tilt: 2200, lilt: .5, ph: ['kkggbbttdm.', 'aaUUoe', '....kmn'], emo: ['grunt', 'ha'], emoP: .18 },                    /* "Vise": a bass with not much to say */
+  cob: { f0: 170, tr: 1.03, rate: 4.2, range: 3.6, brass: .3, crisp: .9, stac: .12, vib: .008, tilt: 2700, lilt: .5, dip: .2, ph: ['vvllddnnrsm.', 'aaeeoi', '.....nrl'], emo: ['hm'], emoP: .06 },             /* Col. Ferreira, Cobalt Lance: grave, formal, every word placed */
+  car: { f0: 150, tr: .97, rate: 5.3, range: 10.5, brass: .36, crisp: 1.1, vib: .03, tilt: 3300, lilt: 1.6, dip: .45, ph: ['RRllbbddttmfc.', 'aaiiooeu', '.....nrl'], emo: ['ha', 'ah', 'oh', 'ha'], emoP: .38 },   /* the Maestro, the Carnival: a tenor playing to the back row */
+  ver: { f0: 156, tr: 1.02, rate: 5.9, range: 4.6, brass: .18, breath: .3, rough: .66, crisp: 1.2, stac: .25, tilt: 2900, lilt: .9, ph: ['ssSSkkttcczh.', 'IIeeaaE', '....Skn'], emo: ['tsk', 'ha', 'hm', 'eh'], emoP: .3 },   /* "Jackdaw" Halloran, Verdigris: a quick sly rasp, all sibilants */
+  zz: { f0: 110, tr: .93, rate: 3.2, range: 2, brass: .6, breath: .4, rough: .4, crisp: .5, tilt: 1800, lilt: .3, ph: ['mmnnwwbl.', 'ooEEuU', '.....mn'], emo: ['sigh', 'hm', 'uh'], emoP: .5 },             /* somebody's rigger, asleep in the booth */
+};
+/* which seed is which of them (a character is its seed everywhere else in the game too) */
+const VOX_WHO = { 11: 'xo', 23: 'intel', 37: 'chief', 51: 'rook', 67: 'anvil', 311: 'keep', 331: 'load', 347: 'sig', 359: 'broker', 373: 'drink', 389: 'arm', 409: 'zz', 7401: 'cob', 8587: 'car', 7866: 'ver' };
+/* everyone else is cut from one of eight cloths (four low, four high), then nudged so that no two are quite alike */
+const VOX_KIND = [
+  { f0: 104, tr: .9, rate: 4.6, range: 4, brass: .5, rough: .3, tilt: 2400 }, { f0: 122, tr: .95, rate: 5.2, range: 5, brass: .3, tilt: 2800 }, { f0: 142, tr: .99, rate: 5.6, range: 6.5, brass: .2, nas: .35, tilt: 3200 }, { f0: 96, tr: .87, rate: 4.1, range: 3, brass: .6, rough: .5, tilt: 2100 },
+  { f0: 196, tr: 1.08, rate: 5.2, range: 5.5, brass: .3, breath: .2, tilt: 3000 }, { f0: 226, tr: 1.14, rate: 6.1, range: 7, brass: .15, tilt: 3600 }, { f0: 178, tr: 1.04, rate: 4.7, range: 4, brass: .4, rough: .3, breath: .25, tilt: 2600 }, { f0: 208, tr: 1.11, rate: 5.6, range: 5, brass: .2, nas: .4, tilt: 3400 },
+];
+const VOX_LOW = /^(Tobias|Bastien|Kofi|Soren|Dmitri|Hugo|Omar|Jonas|Ezra|Viktor|Idris|Teodor)$/, VOX_HIGH = /^(Ilsa|Mira|Juno|Anya|Yara|Lena|Nadia|Vera|Priya|Malia|Sabine|Greta|Amara)$/;
+/* a vocabulary: twenty-two words of one to three syllables from the speaker's sounds. The first three are the ones they lean on */
+function voxLex(ph, seed, dip) {
+  const R = mulberry(seed * 7919 + 13), pk = s => s[(R() * s.length) | 0], dot = c => c === '.' ? '' : c, W = [];
+  const syl = () => { const v = pk(ph[1]), s = { on: dot(pk(ph[0])), v, co: dot(pk(ph[2])) }; if (R() < dip) { const w = pk(ph[1]); if (w !== v) s.v2 = w; } return s; };
+  for (let i = 0; i < 22; i++) { const r = R(), n = r < .42 ? 1 : r < .87 ? 2 : 3, w = []; for (let j = 0; j < n; j++) w.push(syl()); if (n === 1 && !w[0].on && !w[0].co) w[0].on = dot(pk(ph[0].replace(/\./g, '') || 'm')); W.push(w); }
+  return W;
+}
+const VOX_Z = new Map();
+function voxOf(ch) {
+  const seed = (ch && ch.seed) | 0, fk = ch && ch.role && typeof FAC !== 'undefined' ? Object.keys(VOX_FAC).find(f => FAC[f] && ch.role.startsWith(FAC[f].short)) : null, key = seed + '|' + (fk || '');
+  let z = VOX_Z.get(key); if (z) return z;
+  const who = VOX_CAST[VOX_WHO[seed]], R = mulberry(seed * 71 + 29);
+  if (who) z = { ...VOX_DEF, ...who, lex: voxLex(who.ph, seed * 31 + 7, who.dip ?? VOX_DEF.dip) };
+  else {
+    const f = ch && ch.first, low = f && VOX_LOW.test(f) ? true : f && VOX_HIGH.test(f) ? false : R() < .5, K = VOX_KIND[(low ? 0 : 4) + ((R() * 4) | 0)], j = (v, k) => v * (1 + (R() - .5) * k), li = fk ? VOX_FAC[fk] : (R() * VOX_LANG.length) | 0;
+    z = { ...VOX_DEF, ...K, f0: j(K.f0, .2), tr: j(K.tr, .07), rate: j(K.rate, .2), range: j(K.range, .4), brass: clamp(j(K.brass, .5), 0, .8), tilt: j(K.tilt, .25), crisp: j(1, .4), stac: R() * .5, lilt: .6 + R() * .8, dip: .1 + R() * .25,
+      emo: [['hm', 'ah', 'uh'], ['grunt', 'hm', 'ha'], ['eh', 'ah', 'mhm'], ['oh', 'tsk', 'hm']][(R() * 4) | 0], lex: voxLex(VOX_LANG[li], fk ? 900 + li : 950 + ((R() * 3) | 0) * 7 + li, .1 + R() * .25) };   /* one faction, one vocabulary; strangers share a few between them */
+  }
+  if (VOX_Z.size > 240) VOX_Z.clear(); VOX_Z.set(key, z); return z;
+}
+/* render one line. Returns the samples, a loudness envelope per control frame (it moves the speaker's mouth) and the length in seconds. o.fx: 'radio' — a cockpit set, 'holo' — a projection on the deck. o.seed fixes the take */
+function voxRender(z, text, o = {}) {
+  const R = mulberry((o.seed ?? Math.random() * 1e9) | 0), rr = (a, b) => a + R() * (b - a), HS = VOX_HOP / VOX_SR, K = HS * 1000, MAXF = Math.ceil(5.4 / HS), sr = VOX_SR;
+  const T = {}; for (const k of ['f1', 'f2', 'f3', 'av', 'ah', 'af', 'ff', 'fb', 'ns', 'p']) T[k] = new Float32Array(MAXF);
+  const sc = F => [F[0] * z.tr, F[1] * z.tr, F[2] * z.tr], cz = clamp(5 / z.rate, .72, 1.3); let n = 0, Fl = sc(VOX_V.E), pl = 0;
+  /* hold a target for some milliseconds; the pitch travels from p0 to p1 (semitones about the speaker's own note) */
+  const put = (ms, av, ah, af, ff, fb, F, ns, p0, p1) => { const m = Math.max(1, Math.round(ms / K)); for (let i = 0; i < m && n < MAXF; i++, n++) { T.f1[n] = F[0]; T.f2[n] = F[1]; T.f3[n] = F[2]; T.av[n] = av; T.ah[n] = ah; T.af[n] = af; T.ff[n] = ff || 3000; T.fb[n] = fb || 1500; T.ns[n] = ns || 0; T.p[n] = p0 + (p1 - p0) * (m > 1 ? i / (m - 1) : 0); } Fl = F; pl = p1; };
+  const rest = ms => put(ms, 0, 0, 0, 0, 0, Fl, 0, pl, pl);
+  const cons = (c, Fv, amp, p) => { for (const g of VOX_C[c] || []) put(g[0] * cz, g[1] * amp, g[2] * amp, g[3] * amp, g[4], g[5], g[6] ? sc(g[6]) : Fv, g[7], p, p); };
+  const consMs = c => (VOX_C[c] || []).reduce((s, g) => s + g[0] * cz, 0);
+  /* one syllable: onset, vowel (the tune moves through it; a brassy throat closes over the end like a plunger over a bell), coda */
+  const syl = (s, ms, amp, p0, p1, gap) => {
+    const Fv = sc(VOX_V[s.v]), F2 = s.v2 ? sc(VOX_V[s.v2]) : null, scoop = z.brass * 1.6, close = z.brass > .25 ? 28 + 50 * z.brass : 0, vd = Math.max(45, ms - consMs(s.on) - consMs(s.co) - close - gap);
+    if (s.on) cons(s.on, Fv, amp, p0 - scoop);
+    if (F2) { const pm = lerp(p0, p1, .45); put(vd * .45, amp, 0, 0, 0, 0, Fv, z.nas * .5, p0 - scoop, pm); put(vd * .55, amp, 0, 0, 0, 0, F2, z.nas * .5, pm, p1); } else put(vd, amp, 0, 0, 0, 0, Fv, z.nas * .5, p0 - scoop, p1);
+    if (close) put(close, amp * .5, 0, 0, 0, 0, sc([330, 720, 2300]), z.nas * .5, p1, p1 - .6);
+    if (s.co) cons(s.co, F2 || Fv, amp * .8, p1); if (gap) rest(gap);
+  };
+  /* the sounds people make that are not words */
+  const Fm = sc([250, 1050, 2300]), Fa = sc(VOX_V.a), EMO = {
+    hm: () => { put(170, .5, 0, 0, 0, 0, Fm, 1, 0, -2.5); put(190, .5, 0, 0, 0, 0, Fm, 1, -2.5, 1.5); },
+    mhm: () => { put(120, .5, 0, 0, 0, 0, Fm, 1, -2, -2); put(45, 0, .25, 0, 0, 0, Fm, 0, -2, 3); put(190, .55, 0, 0, 0, 0, Fm, 1, 3, 2); },
+    uh: () => put(230, .7, 0, 0, 0, 0, sc(VOX_V.E), 0, -1.5, -2.5),
+    ah: () => { put(40, 0, .5, 0, 0, 0, Fa, 0, 4, 4); put(210, 1, 0, 0, 0, 0, Fa, 0, 4.5, -1.5); },
+    oh: () => put(270, .9, 0, 0, 0, 0, sc(VOX_V.o), 0, 2.5, -3.5),
+    eh: () => put(200, .85, 0, 0, 0, 0, sc(VOX_V.e), 0, -1, 5.5),
+    ha: () => { const k = 3 + ((R() * 2) | 0); for (let i = 0; i < k; i++) { put(48, 0, .7, 0, 0, 0, Fa, 0, 5 - i * 1.6, 5 - i * 1.6); put(82, 1 - i * .15, 0, 0, 0, 0, Fa, 0, 5 - i * 1.6, 3.6 - i * 1.6); } },
+    sigh: () => { put(260, 0, .8, 0, 0, 0, sc(VOX_V.E), 0, 1, -2); put(240, .35, .4, 0, 0, 0, sc(VOX_V.E), 0, 0, -5); },
+    tsk: () => { for (let i = 0; i < 2; i++) { put(8, 0, 0, 1, 3600, 3000, Fl, 0, 0, 0); rest(110); } },
+    grunt: () => put(140, 1, .2, 0, 0, 0, sc(VOX_V.U), 0, -3, -5),
+    snore: () => { for (let k = 0; k < 2; k++) { for (let i = 0; i < 22; i++) put(38, .12, i % 2 ? .8 : .3, 0, 0, 0, sc([380, 950, 2200]), 1, -7, -7); rest(260); put(520, 0, .3, .12, 2600, 1800, sc(VOX_V.u), 0, -7, -7); rest(380); } },
+  };
+  const emote = k => { (EMO[k] || EMO.hm)(); rest(rr(90, 150)); };
+  /* ---- read the real line for its shape: how many phrases, how long each is, and how each one ends ---- */
+  const txt = String(text == null ? '' : text).trim(), C = [];
+  txt.replace(/[^.!?,;:\n—…]+[.!?,;:\n—…]*/g, m => { const w = m.match(/[A-Za-z0-9¢']+/g) || []; if (w.length) C.push({ w: w.length, m: m.trim(), end: /\?\s*$/.test(m) ? 'Q' : /!\s*$/.test(m) ? 'X' : /(\.\.\.|…)\s*$/.test(m) ? 'T' : /—\s*$/.test(m) ? 'D' : /[,;:]\s*$/.test(m) ? 'C' : 'S', loud: w.filter(x => x.length > 2 && /[A-Z]/.test(x) && x === x.toUpperCase()).length * 2 >= w.length }); return m; });
+  if (C.length && C[C.length - 1].end === 'D') C[C.length - 1].end = 'K';   /* a dash in the middle is a breath; a dash at the very end is somebody being cut off */
+  const L = C.length > 3 ? [C[0], C[1], C[C.length - 1]] : C, lex = z.lex, word = first => (first && R() < .45) || R() < .14 ? lex[(R() * 3) | 0] : lex[3 + ((R() * (lex.length - 3)) | 0)];
+  let budget = Math.max(2, Math.round(z.rate * 2.3));
+  const phrase = (c, nw, first) => {
+    const S = []; let prev = null; for (let i = 0; i < nw && (S.length < budget || !i); i++) { let w = word(first && !i); if (w === prev) w = word(false); prev = w; const st = w.length > 2 && R() < .3 ? 1 : 0; w.forEach((s, j) => S.push({ s, st: j === st, w0: j === 0 })); }
+    budget -= S.length; const N = S.length, rg = z.range * (c.loud ? 1.25 : 1), up = (c.end === 'X' ? rg * .3 : 0) + (c.loud ? 2.5 : 0), slow = (c.end === 'T' ? 1.25 : 1) * (c.loud ? 1.12 : 1); let nuc = N - 1; while (nuc > 0 && !S[nuc].st) nuc--;
+    S.forEach((y, i) => {
+      const x = N > 1 ? i / (N - 1) : 1, fin = i === N - 1, amp = (y.st ? 1 : .74) * (c.loud ? 1.2 : 1) * (c.end === 'T' ? lerp(1, .6, x) : 1);
+      let p = up + lerp(.3, -.3, x) * rg + (y.st ? rg * rr(.12, .3) : -rg * .06) + (i === nuc ? rg * .2 : 0) + (R() - .5) * rg * .4 * z.lilt, q = p + (R() - .5) * rg * .3 * z.lilt, ms = 1000 / z.rate * (y.st ? 1.14 : .86) * rr(.88, 1.12) * slow;
+      if (fin) { ms *= c.end === 'K' ? .7 : 1.42; if (c.end === 'Q') { p = up + rg * .05; q = p + rg * .85; } else if (c.end === 'C' || c.end === 'D') q = p + rg * .28; else if (c.end === 'X') { p = up + rg * .45; q = up - rg * .55; } else if (c.end === 'T') p = q = up - rg * .35; else if (c.end === 'S') { p = Math.min(p, up - rg * .1); q = p - rg * .5; } }
+      syl(y.s, ms, amp, p, q, fin ? 0 : z.stac * (S[i + 1].w0 ? 55 : 28));
+    });
+  };
+  rest(20);
+  if (/^\(/.test(txt)) emote(/snor/i.test(txt) ? 'snore' : 'hm');   /* a stage direction, not speech */
+  else {
+    if (/^(\.\.\.|…)/.test(txt)) emote(R() < .5 ? 'uh' : 'hm'); else if (/^(Ha|Heh)\b/.test(txt)) emote('ha'); else if (/^(Hm+|Huh|Well)\b/.test(txt)) emote('hm'); else if (/^(Oh|Ah)\b/.test(txt)) emote(/^Oh/.test(txt) ? 'oh' : 'ah'); else if (L.length && R() < z.emoP) emote(z.emo[(R() * z.emo.length) | 0]);
+    const tw = L.reduce((s, c) => s + c.w, 0) || 1;
+    L.forEach((c, i) => { if (budget <= 0 && i) return; phrase(c, clamp(Math.round(c.w * (tw > 14 ? .34 : .55) + rr(0, .8)), 1, 5), !i); if (i < L.length - 1) rest(c.end === 'C' || c.end === 'D' ? rr(80, 130) : c.end === 'T' ? rr(260, 340) : rr(170, 250)); });
+    if (L.length && L[L.length - 1].end === 'Q' && tw < 4 && R() < .4) { rest(90); emote('eh'); }
+    if (!L.length) emote(z.emo[0]);
+  }
+  if (!(L.length && L[L.length - 1].end === 'K')) rest(70); else rest(12);
+  /* ---- the mouth cannot jump: every target is approached, quickly by a crisp speaker, lazily by a brassy one ---- */
+  const sm = (a, tau) => { const k = 1 - Math.exp(-HS / tau); let y = a[0]; for (let i = 0; i < n; i++) { y += (a[i] - y) * k; a[i] = y; } };
+  const tf = .02 / z.crisp + .016 * z.brass; sm(T.f1, tf); sm(T.f2, tf); sm(T.f3, tf * 1.1); sm(T.av, .007); sm(T.ah, .005); sm(T.af, .004); sm(T.ns, .01); sm(T.p, .022 + .03 * z.brass);
+  /* ---- the throat: a band-limited buzz (with breath and gravel) through four resonators in a row; hiss takes its own road ---- */
+  const N = n * VOX_HOP, pcm = new Float32Array(N), env = new Float32Array(n), TP = TAU / sr, kT = 1 - Math.exp(-TP * z.tilt), bwK = lerp(1.2, .72, z.brass), F4 = Math.min(4600, 3500 * z.tr);
+  let sd = ((R() * 0x7fffffff) | 0) || 1; const rnd = () => { sd ^= sd << 13; sd ^= sd >>> 17; sd ^= sd << 5; return (sd >>> 0) / 4294967296; };
+  let ph = R(), cyc = 0, jit = 1, shim = 1, lpS = 0, a1 = 0, a2 = 0, b1 = 0, b2 = 0, c1 = 0, c2 = 0, d1 = 0, d2 = 0, g1 = 0, g2 = 0, k = 0, hx = 0, hy = 0;
+  const r4 = Math.exp(-PI * 300 / sr), D4c = -r4 * r4, D4b = 2 * r4 * Math.cos(TP * F4), D4a = 1 - D4b - D4c;
+  for (let f = 0; f < n; f++) {
+    const ns = T.ns[f], av = T.av[f], ah = T.ah[f], af = T.af[f], F1 = clamp(T.f1[f], 160, 1300), F2 = clamp(T.f2[f], 480, 3500), F3 = clamp(T.f3[f], 1300, 4400), th = TP * clamp(T.ff[f], 500, 9000);
+    const dp = clamp(z.f0 * Math.pow(2, T.p[f] / 12) * (1 + z.vib * Math.sin(TAU * 5.6 * f * HS)), 45, 520) / sr;
+    const r1 = Math.exp(-PI * bwK * (70 + 110 * ns) / sr), A1c = -r1 * r1, A1b = 2 * r1 * Math.cos(TP * F1), A1a = 1 - A1b - A1c, r2 = Math.exp(-PI * bwK * (100 + 260 * ns) / sr), B2c = -r2 * r2, B2b = 2 * r2 * Math.cos(TP * F2), B2a = 1 - B2b - B2c;
+    const r3 = Math.exp(-PI * bwK * (160 + 300 * ns) / sr), C3c = -r3 * r3, C3b = 2 * r3 * Math.cos(TP * F3), C3a = 1 - C3b - C3c, rf = Math.exp(-PI * T.fb[f] / sr), Gc = -rf * rf, Gb = 2 * rf * Math.cos(th), Ga = (1 - rf) * Math.sqrt(1 - 2 * rf * Math.cos(2 * th) + rf * rf);
+    let e = 0;
+    for (let i = 0; i < VOX_HOP; i++) {
+      const dd = dp * jit; ph += dd; if (ph >= 1) { ph -= 1; cyc++; jit = 1 + (rnd() - .5) * z.rough * .09; shim = 1 - z.rough * (.3 * (cyc & 1) + .2 * rnd()); }
+      let s = 2 * ph - 1; if (ph < dd) { const q = ph / dd; s -= q + q - q * q - 1; } else if (ph > 1 - dd) { const q = (ph - 1) / dd; s -= q * q + q + q + 1; }
+      lpS += (s - lpS) * kT; const x = lpS * av * shim + (rnd() * 2 - 1) * (ah * .4 + av * z.breath * (ph < .55 ? .22 : .06));
+      const y1 = A1a * x + A1b * a1 + A1c * a2; a2 = a1; a1 = y1; const y2 = B2a * y1 + B2b * b1 + B2c * b2; b2 = b1; b1 = y2; const y3 = C3a * y2 + C3b * c1 + C3c * c2; c2 = c1; c1 = y3; const y4 = D4a * y3 + D4b * d1 + D4c * d2; d2 = d1; d1 = y4;
+      const fr = Ga * (rnd() * 2 - 1) * af + Gb * g1 + Gc * g2; g2 = g1; g1 = fr;
+      const v = y4 + fr * 5; hy = v - hx + .985 * hy; hx = v; pcm[k++] = hy; e += hy * hy;
+    }
+    env[f] = Math.sqrt(e / VOX_HOP);
+  }
+  /* ---- level it: every line leaves at the same loudness whoever speaks it, then whatever it is heard through ---- */
+  let sq = 0, m = 0, pk = 0; for (let f = 0; f < n; f++) { if (env[f] > pk) pk = env[f]; } for (let f = 0; f < n; f++) if (env[f] > pk * .12) { sq += env[f] * env[f]; m++; }
+  const g = m && sq > 0 ? .17 / Math.sqrt(sq / m) : 0;
+  if (o.fx) {
+    /* a small speaker: no bottom, no top, a hot stage that clips; the set keys up with a click and lets go with a spit of static */
+    const radio = o.fx === 'radio', bq = (type, fc, q) => { const w = TP * fc, cs = Math.cos(w), al = Math.sin(w) / (2 * q), a0 = 1 + al, hpf = type === 'hp'; return [(hpf ? (1 + cs) / 2 : (1 - cs) / 2) / a0, (hpf ? -(1 + cs) : 1 - cs) / a0, (hpf ? (1 + cs) / 2 : (1 - cs) / 2) / a0, -2 * cs / a0, (1 - al) / a0]; };
+    const run = c => { let x1 = 0, x2 = 0, y1 = 0, y2 = 0; for (let i = 0; i < N; i++) { const x = pcm[i], y = c[0] * x + c[1] * x1 + c[2] * x2 - c[3] * y1 - c[4] * y2; x2 = x1; x1 = x; y2 = y1; y1 = y; pcm[i] = y; } };
+    run(bq('hp', radio ? 420 : 230, .8)); run(bq('lp', radio ? 2800 : 4300, .9)); if (radio) run(bq('hp', 420, .7));
+    const drive = radio ? 2.6 : 1.2, tail = radio ? Math.min(N, (.085 * sr) | 0) : 0, key = radio ? Math.min(N, (.022 * sr) | 0) : 0;
+    for (let i = 0; i < N; i++) { let v = Math.tanh(pcm[i] * g * drive) / Math.tanh(drive * .5) * .5; if (radio) { v += (rnd() - .5) * .012; if (i < key) v += (rnd() - .5) * .5 * (1 - i / key); if (i >= N - tail) { const q = (i - (N - tail)) / tail; v = v * (1 - q) + (rnd() - .5) * .3 * (1 - q) * (q < .15 ? q / .15 : 1); } } else v *= 1 + .05 * Math.sin(TAU * 31 * i / sr); pcm[i] = v; }
+  } else for (let i = 0; i < N; i++) pcm[i] = Math.tanh(pcm[i] * g * 1.6) / 1.6;
+  const fade = Math.min(N, 80); for (let i = 0; i < fade; i++) { pcm[i] *= i / fade; if (!o.fx || o.fx !== 'radio') pcm[N - 1 - i] *= i / fade; }
+  if (pk > 0) for (let f = 0; f < n; f++) env[f] = Math.min(1, env[f] / pk * 1.15);
+  return { pcm, env, dur: N / sr };
+}
+/* the engine: one voice at a time. say() renders the line and plays it; whoever speaks next cuts the last speaker off */
+const vox = (() => {
+  let ac = null, out = null, cur = null; const lvl = () => .9 * CFG.vol * CFG.voice;
+  return {
+    boot(ctx) { if (out) return; ac = ctx; out = ac.createGain(); out.gain.value = lvl(); out.connect(ac.destination); },
+    vol() { if (out) out.gain.setTargetAtTime(lvl(), ac.currentTime, .05); },
+    say(ch, text, fx) {
+      this.stop(); if (!out || !ch || lvl() <= 0) return 0; if (ac.state === 'suspended') ac.resume();
+      let r; try { r = voxRender(voxOf(ch), text, { fx }); } catch (e) { console.error('voice', e); return 0; }
+      for (let i = 0; i < r.pcm.length; i++) if (!isFinite(r.pcm[i])) return 0;   /* never hand the mixer a bad sample */
+      const b = ac.createBuffer(1, r.pcm.length, VOX_SR), s = ac.createBufferSource(), g = ac.createGain(), t0 = ac.currentTime + .13; b.copyToChannel(r.pcm, 0); s.buffer = b; s.connect(g).connect(out); s.start(t0);
+      const me = cur = { s, g, t0, env: r.env, dur: r.dur }; s.onended = () => { if (cur === me) cur = null; }; return r.dur;
+    },
+    stop() { const c = cur; if (!c) return; cur = null; try { c.g.gain.setTargetAtTime(0, ac.currentTime, .012); c.s.stop(ac.currentTime + .07); } catch (e) { } },
+    busy() { return !!cur && ac.currentTime < cur.t0 + cur.dur; },
+    /* how wide the speaker's mouth is right now, 0..1 */
+    level() { if (!cur) return 0; const i = Math.floor((ac.currentTime - cur.t0) * VOX_SR / VOX_HOP); return i >= 0 && i < cur.env.length ? cur.env[i] : 0; },
+  };
+})();
 
 /* ============ MUSIC: GENERATIVE SCORE — A THEME AND AMBIENCE ON THE COMMAND DECK, A SMALL RADIO IN THE BAY AND A JUKEBOX IN THE BAR, SEVEN SCORES FOR THE FIELD (PATROL AND COMBAT), A JINGLE FOR A CONTRACT WON ============ */
 /* everything is synthesised and composed at run time from a seed; nothing is sampled or quoted */
@@ -1670,7 +1896,7 @@ function barSave() { const pst = {}, n = CO.day * 24 + CO.hour; for (const k in 
 function saveBlob() {
   return {
     game: 'IRONWORKS', v: 2, saved: new Date().toISOString(), company: { name: YARD.name, logo: { ...YARD.logo }, founded: YARD.founded },
-    ledger: { cb: Math.round(CO.cb), day: CO.day, hour: +CO.hour.toFixed(2), rep: { ...CO.rep }, done: CO.done, fails: CO.fails, seed: CO.seed },
+    ledger: { cb: Math.round(CO.cb), day: CO.day, hour: +CO.hour.toFixed(2), rep: { ...CO.rep }, done: CO.done, fails: CO.fails, seed: CO.seed, ...rivSave() },
     inventory: { ...YARD.inv }, bays: YARD.bays.map(b => ({ ...b })), activeBay: YARD.act, market: { rot: YARD.shop.rot, stock: YARD.shop.stock.map(e => ({ ...e })) },
     board: CO.board.map(c => ({ ...c })), active: CO.active ? CO.active.id : null, news: CO.news.slice(0, 9),
     pilots: PILOTS.map(p => ({ fee: p.fee, until: p.until, hag: !!p.hag })), wing: CO.wing ? { i: PILOTS.indexOf(CO.wing.p), share: CO.wing.share, s: CO.wing.p.seed || 0, paid: CO.wing.paid || 0 } : null, bar: barSave(),
@@ -1684,12 +1910,12 @@ function saveCheck(s) {
 function ledgerApply(s) {
   const L = (s && s.ledger) || (s && s.rep ? s : null) || {}, num = (v, d) => typeof v === 'number' && isFinite(v) ? v : d;
   Object.assign(CO, { cb: num(L.cb, 120000), day: Math.max(1, num(L.day, 1) | 0), hour: clamp(num(L.hour, 6), 0, 23.99), done: Math.max(0, num(L.done, 0) | 0), fails: Math.max(0, num(L.fails, 0) | 0), seed: num(L.seed, (Math.random() * 1e6) | 0) | 0, active: null, sel: null, wing: null, wingDown: false, board: [], news: [], dirty: true });
-  for (const f of EMPS) CO.rep[f] = clamp(num(L.rep && L.rep[f], 0), -100, 100);
+  for (const f of EMPS) CO.rep[f] = clamp(num(L.rep && L.rep[f], 0), -100, 100); rivApply(L);
 }
 function boardApply(s) {
   CO.board = []; CO.news = []; CO.active = CO.sel = null;
   const ok = c => c && TYPES[c.type] && TYPES[c.type].plots.includes(c.plot) && FAC[c.emp] && FAC[c.foe] && BIOMES[c.biome] && PERSONA[c.persona] && c.contact && c.contact.name && Array.isArray(c.pos) && typeof c.pay === 'number' && typeof c.seed === 'number';
-  if (s && Array.isArray(s.board)) for (const c of s.board) if (ok(c)) { c.twists = (c.twists || []).filter(t => TWISTS[t]); c.intel = Array.isArray(c.intel) ? c.intel : []; c.diff = clamp(c.diff | 0, 1, 5); CO.board.push(c); cid = Math.max(cid, c.id | 0); }
+  if (s && Array.isArray(s.board)) for (const c of s.board) if (ok(c)) { c.twists = (c.twists || []).filter(t => TWISTS[t]); rivClean(c); c.intel = Array.isArray(c.intel) ? c.intel : []; c.diff = clamp(c.diff | 0, 1, 5); CO.board.push(c); cid = Math.max(cid, c.id | 0); }
   if (s && Array.isArray(s.news)) CO.news = s.news.filter(n => typeof n === 'string').slice(0, 9);
   if (s && s.active != null) CO.active = CO.board.find(c => c.id === s.active) || null;
   if (!CO.board.length) { fillBoard(); news(`${YARD.name} mercenary company is open for contracts.`); } else fillBoard();
@@ -2498,7 +2724,7 @@ function collide(p, r) {
   }
   const d = Math.hypot(p.x, p.z); if (d > 430) { p.x *= 430 / d; p.z *= 430 / d; }
 }
-const targetsOf = o => o === 0 ? FD.t0 : FD.t1;   // who a shot from team o can hit (lists rebuilt each frame by retarget)
+const targetsOf = o => o === 1 ? FD.t1 : FD.t0;   // who a shot can hit, by owner: 1 hostile · 0 yours · 4 another company on your side (lists rebuilt each frame by retarget)
 const _o = V3(), _d = V3(), _p = V3(), _c = V3();
 function rayHit(o, d, maxD, owner) {
   let best = maxD, ent = null;
@@ -2541,7 +2767,7 @@ function updateShots(dt) {
       s.arm -= dt; const tg = s.lock && !s.lock.dead ? s.lock : null, sp = Math.min(s.max * 1.5, s.vel.length() + 60 * dt);
       if (tg && s.arm < 0) { _c.copy(tg.pos); _c.y += tg.cy; _d.copy(_c).sub(p).normalize(); s.vel.normalize().lerp(_d, Math.min(1, 3.2 * dt)).normalize(); } else s.vel.normalize();
       s.vel.multiplyScalar(sp); s.m.lookAt(_p.copy(p).add(s.vel)); FD.fx.smoke.emit(p.x, p.y, p.z, rand(-.5, .5), rand(-.2, .8), rand(-.5, .5), rand(.6, 1.3), 1.1, .8, .8, .8, .35, -.2, .5, 2); FD.fx.spark.emit(p.x, p.y, p.z, 0, 0, 0, .12, 1.3, 5, 2.6, .7);
-    } else if (s.t === 'plasma') { const c = s.owner === 0 ? [1.4, 4, 6] : [6, 1.6, 1]; FD.fx.spark.emit(p.x + rand(-.3, .3), p.y + rand(-.3, .3), p.z + rand(-.3, .3), 0, 0, 0, .35, 1.6, ...c, .8, 0, 0, -.6); }
+    } else if (s.t === 'plasma') { const c = s.owner !== 1 ? [1.4, 4, 6] : [6, 1.6, 1]; FD.fx.spark.emit(p.x + rand(-.3, .3), p.y + rand(-.3, .3), p.z + rand(-.3, .3), 0, 0, 0, .35, 1.6, ...c, .8, 0, 0, -.6); }
     const steps = Math.ceil(s.vel.length() * dt / 2.5), sd = dt / steps;
     for (let k = 0; k < steps && !hit && !boom; k++) {
       p.addScaledVector(s.vel, sd);
@@ -2582,7 +2808,7 @@ function drive(e, want, spd, dt, rad, turnRate) {
   return turn;
 }
 function killEnt(e, owner) {
-  if (e.dead) return; e.dead = true; if (e.team === 1 && owner === 0) { P.kills++; YARD.loot.push({ kind: e.kind, sk: e.sk, cfg: e.mech && e.mech.cfg }); } const at = e.pos.clone(), big = e.kind === 'mech' || e.kind === 'struct'; at.y += e.cy;
+  if (e.dead) return; e.dead = true; e.by = owner; if (e.team === 1 && owner === 0) { P.kills++; YARD.loot.push({ kind: e.kind, sk: e.sk, cfg: e.mech && e.mech.cfg }); } else if (e.team === 1 && owner === 4 && MS.on) MS.v.rvk = (MS.v.rvk || 0) + 1; const at = e.pos.clone(), big = e.kind === 'mech' || e.kind === 'struct'; at.y += e.cy;
   explode(FD.fx, at, big ? 2.4 : 1.2); sfx.play('boom', big ? 1.2 : .7); FD.ents.splice(FD.ents.indexOf(e), 1);
   if (e.blast) { explode(FD.fx, at, 3.4); splash(at, e.blast, 70, 0); splash(at, e.blast, 70, 1); }
   if (e.onKill) e.onKill(e, owner);
@@ -2657,7 +2883,7 @@ function mkMech(x, z, cfg, team = 1, o = {}) {
       const tw = st.twist > 3 ? angDiff(e.yaw, to) : clamp(angDiff(e.yaw, to), -st.twist, st.twist); m.twist += angDiff(m.twist, tw) * Math.min(1, 3 * dt); m.pitch = clamp(Math.atan2(tg.pos.y + tg.cy - e.pos.y - e.cy, d), -.4, .4);
       if (!e.pacify && d < 210 && Math.abs(angDiff(e.yaw + m.twist, to)) < .14) for (const k of ['armL', 'armR', 'back']) {
         e.cd[k] -= dt; const w = k === 'back' ? PARTS.back[cfg.back].weapon : PARTS.arm[cfg[k]].weapon; if (!w || e.cd[k] > 0) continue;
-        const er = d / e.skill; fire(m, k, w, aimAt(tg, er * .045, er * .025), e.team, tg); e.cd[k] = w.cd < .2 ? (Math.random() < .16 ? rand(2, 3.5) : .17) : w.cd * rand(2.1, 3.2);
+        const er = d / e.skill; fire(m, k, w, aimAt(tg, er * .045, er * .025), e.rv && e.team === 0 ? 4 : e.team, tg); e.cd[k] = w.cd < .2 ? (Math.random() < .16 ? rand(2, 3.5) : .17) : w.cd * rand(2.1, 3.2);
       }
     } else m.twist = damp(m.twist, 0, 2, dt);
     m.update(dt);
@@ -2690,9 +2916,9 @@ function mkStruct(sk, x, z, team = 1, o = {}) {
   e.max = e.hp; FD.ents.push(e); return e;
 }
 /* a dropship flies in, hovers while cb() unloads, then leaves — resolves once it has gone */
-function dropship(x, z, cb, a = rand(TAU), team = 1) {
+function dropship(x, z, cb, a = rand(TAU), team = 1, cab) {
   const g = grp(FD.scene), gy = heightAt(x, z) + 30, sx = Math.sin(a), cz = Math.cos(a), pods = []; let on = true;
-  tbox(g, M.dark, 9, 5, 22, .75, .8, 0, 0, 0); tbox(g, team === 1 ? M.red : M.blue, 7, 2.4, 9, .7, .6, 0, 3.6, 4); noShadow(box(g, M.cyan, 4.4, 1, .2, 0, 3.2, 8.6, -.5)); box(g, M.girder, 24, .8, 6, 0, 1.6, -3);
+  tbox(g, M.dark, 9, 5, 22, .75, .8, 0, 0, 0); tbox(g, cab || (team === 1 ? M.red : M.blue), 7, 2.4, 9, .7, .6, 0, 3.6, 4); noShadow(box(g, M.cyan, 4.4, 1, .2, 0, 3.2, 8.6, -.5)); box(g, M.girder, 24, .8, 6, 0, 1.6, -3);
   for (const [px, pz] of [[-11, 0], [11, 0], [-11, -6], [11, -6]]) { cyl(g, M.steel, 2.2, 2.6, 4, px, .6, pz, 0, 0, 0, 12); pods.push(noShadow(cyl(g, M.amber, 1.9, 1.9, .3, px, -1.5, pz, 0, 0, 0, 12))); }
   g.rotation.y = a + PI; FD.misc.push(g);
   FD.tick.push(() => { if (!on) return false; for (const p of pods) { p.getWorldPosition(_v); FD.fx.spark.emit(_v.x + rand(-.6, .6), _v.y, _v.z + rand(-.6, .6), rand(-2, 2), rand(-30, -18), rand(-2, 2), rand(.2, .45), rand(1.6, 2.6), 4, 2.4, .8, .8, 0, .5); } return true; });
@@ -2757,7 +2983,7 @@ function drawRadar() {
   if (MS.on) for (const n of MS.navs) { if (n.pos.dead) continue; const p = n.pos.isVector3 ? n.pos : n.pos.pos; let [px, py, ok] = plot(p.x, p.z); if (!ok) [px, py] = edge(px, py); g.strokeStyle = n.col; g.lineWidth = 1.5; g.beginPath(); g.moveTo(px, py - 5); g.lineTo(px + 5, py); g.lineTo(px, py + 5); g.lineTo(px - 5, py); g.closePath(); g.stroke(); }
   for (const e of FD.ents) {
     let [px, py, ok] = plot(e.pos.x, e.pos.z); if (!ok) { if (e.team !== 1) continue; [px, py] = edge(px, py); }
-    g.fillStyle = `rgba(${e.team === 1 ? '255,74,42' : e.team === 0 ? '90,200,255' : '210,210,210'},${ok ? 1 : .4})`; g.beginPath();
+    g.fillStyle = `rgba(${e.team === 1 ? '255,74,42' : e.rc || (e.team === 0 ? '90,200,255' : '210,210,210')},${ok ? 1 : .4})`; g.beginPath();
     if (e.kind === 'mech') { g.moveTo(px, py - 5); g.lineTo(px + 4, py + 4); g.lineTo(px - 4, py + 4); } else if (e.kind === 'struct') g.rect(px - 3, py - 3, 6, 6); else g.arc(px, py, e.kind === 'drone' ? 2 : 3, 0, TAU); g.fill();
   }
   g.strokeStyle = '#ffb21a'; g.lineWidth = 2; g.beginPath(); g.moveTo(R, R); g.lineTo(R + Math.sin(P.twist) * 16, R - Math.cos(P.twist) * 16); g.stroke(); g.fillStyle = '#8dff6a'; g.beginPath(); g.moveTo(R, R - 6); g.lineTo(R + 4, R + 4); g.lineTo(R - 4, R + 4); g.fill();
@@ -2870,23 +3096,45 @@ function drawFace(cv, ch) {
   g.fillStyle = 'rgba(0,0,0,.22)'; for (let y = 0; y < 72; y += 3) g.fillRect(0, y, 72, 1); g.strokeStyle = col; g.lineWidth = 2; g.strokeRect(1, 1, 70, 70); g.restore();
 }
 
-/* in-cockpit comms: queued lines; a line with options waits for keys 1-3 (or times out to a default) */
-const commQ = []; let commCur = null;
-function comm(who, text, opts, tmo = 18, def = 0) { const k = MS.k; return new Promise(res => commQ.push({ who, text, opts, tmo, def, res, k })); }
-function commDone(i) { const c = commCur; if (!c) return; commCur = null; $('comm').classList.add('hid'); if (c.opts) MS.log.push(`${c.who.last || c.who.name}: "${c.opts[i]}"`); if (c.k === MS.k && !MS.over) c.res(i); }
+/* in-cockpit comms: queued lines, each spoken aloud. Unless it is switched off (SETTINGS · CONTROLS), the sortie HOLDS while a line is on screen — nothing moves, nothing fires and no clock runs until it has been
+   read and answered. A line with options takes keys 1-3, or the mouse / arrow keys to pick one and a click / ENTER to confirm it; a plain line waits for SPACE. With holding off, a question times out to its default
+   as it always did. chatter() is talk that never stops the fight (a wingman forming up) */
+const commQ = []; let commCur = null, commHold = false, commSel = -1, commMv = 0;
+function comm(who, text, opts, tmo = 18, def = 0, chat = false) { const k = MS.k; return new Promise(res => commQ.push({ who, text, opts, tmo, def, res, k, chat })); }
+function commFree() { commHold = false; $('commDim').classList.add('hid'); $('comm').classList.remove('hold'); }
+function commReset() { commQ.length = 0; commCur = null; commFree(); $('comm').classList.add('hid'); vox.stop(); }
+function commDone(i) { const c = commCur; if (!c) return; commCur = null; vox.stop(); $('comm').classList.add('hid'); if (c.opts) MS.log.push(`${c.who.last || c.who.name}: "${c.opts[i]}"`); if (c.k === MS.k && !MS.over) c.res(i); }
 function commKey(n) { const c = commCur; if (c && c.opts && n >= 0 && n < c.opts.length && c.t > .5) { sfx.play('ui'); commDone(n); } }
+function commMark(i) { if (i === commSel) return; commSel = i; [...$('commOpts').children].forEach((d, j) => d.classList.toggle('on', j === i)); }
+function commMove(d) { const c = commCur; if (!c || !c.opts || c.t < .45) return; commMark(commSel < 0 ? (d > 0 ? 0 : c.opts.length - 1) : clamp(commSel + d, 0, c.opts.length - 1)); sfx.play('ui'); }
+/* while the sortie is held. Keys: 1-3 answer, the arrows move the highlight, ENTER / SPACE confirm it — or carry on past a plain line. A held key from the fight does nothing: it has to be pressed again */
+function commHoldKey(e) {
+  const c = commCur; if (!c || e.repeat || c.t < .45) return; const go = e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Space';
+  if (!c.opts) { if (go) { sfx.play('ui'); commDone(0); } return; }
+  if (go) { if (commSel >= 0) commKey(commSel); } else if (e.code === 'ArrowDown' || e.code === 'ArrowUp') commMove(e.code === 'ArrowDown' ? 1 : -1); else if (/^(Digit|Numpad)\d$/.test(e.code)) commKey(+e.code.slice(-1) - 1);
+}
+/* the mouse, with the pointer still captured: moving it up and down walks the highlight, a click takes the highlighted reply. A click never dismisses a plain line — that would be the trigger finger doing the reading */
+function commMouse(e) { if (soft) return; commMv += e.movementY || 0; if (Math.abs(commMv) > 38) { commMove(Math.sign(commMv)); commMv = 0; } }
+function commClick(e) { const c = commCur; if (!c || e.button !== 0 || (e.target && e.target.closest && e.target.closest('#comm'))) return; if (c.opts && commSel >= 0) commKey(commSel); }
+$('commOpts').addEventListener('click', e => { const d = e.target.closest('[data-i]'), c = commCur; if (!d || !c || !commHold || c.t < .45) return; if (c.opts) commKey(+d.dataset.i); else { sfx.play('ui'); commDone(0); } });
+$('commOpts').addEventListener('mousemove', e => { const d = e.target.closest('[data-i]'); if (d && commHold && commCur && commCur.opts) commMark(+d.dataset.i); });
 function updateComm(dt) {
   if (!commCur) {
-    const c = commQ.shift(); if (!c) return; commCur = c; c.t = 0; c.dur = c.opts ? c.tmo : clamp(2.4 + c.text.length * .045, 3.2, 8.5);
+    const c = commQ.shift(); if (!c) { if (commHold) commFree(); return; }
+    commCur = c; c.t = 0; commSel = -1; commMv = 0; c.hold = !c.chat && CFG.hold > (c.opts ? 0 : 1) && MS.on && !MS.over && !P.dead;
+    const vd = vox.say(c.who, c.text, 'radio'); c.dur = c.opts ? c.tmo : Math.max(clamp(2.4 + c.text.length * .045, 3.2, 8.5), vd + .7);
     drawFace($('commFace'), c.who); $('commWho').textContent = `${c.who.name} · ${c.who.role}`; $('commWho').style.color = c.who.col;
-    $('commOpts').innerHTML = c.opts ? c.opts.map((o, i) => `<div><b>${i + 1}</b>${o}</div>`).join('') : ''; $('comm').classList.remove('hid'); sfx.play('comm');
+    $('commOpts').innerHTML = c.opts ? c.opts.map((o, i) => `<div data-i="${i}"><b>${i + 1}</b>${o}</div>`).join('') : c.hold ? '<div class="go" data-i="0"><b>SPACE</b>CONTINUE</div>' : '';
+    $('commHint').textContent = !c.hold ? '' : c.opts ? 'SORTIE HELD — PRESS 1-' + c.opts.length + ' · OR MOUSE / ARROWS, THEN CLICK / ENTER' : 'SORTIE HELD — SPACE TO CARRY ON';
+    $('comm').classList.toggle('hold', c.hold); $('commDim').classList.toggle('hid', !c.hold); $('comm').classList.remove('hid'); sfx.play('comm');
+    commHold = c.hold; if (c.hold) P.md = [false, false, false];
   }
-  const c = commCur; c.t += dt; $('commTxt').textContent = c.text.slice(0, Math.floor(c.t * 70)); $('commBar').style.width = c.opts ? (1 - c.t / c.dur) * 100 + '%' : '0%';
-  if (c.t >= c.dur) commDone(c.def);
+  const c = commCur; c.t += dt; $('commTxt').textContent = c.text.slice(0, Math.floor(c.t * (c.hold ? 110 : 70))); $('commBar').style.width = c.opts && !c.hold ? (1 - c.t / c.dur) * 100 + '%' : '0%';
+  if (!c.hold && c.t >= c.dur) commDone(c.def);
 }
 const say = (who, text) => { comm(who, text); };
 const ask = (who, text, opts, tmo, def) => comm(who, text, opts, tmo, def);
-
+const chatter = (who, text) => { comm(who, text, null, 18, 0, true); };
 /* objectives: st 0 active · 1 done · 2 failed · 3 dropped; fn() supplies live text */
 function setObj(id, text, st = 0, opt) {
   let o = MS.obj.find(o => o.id === id); if (!o) { MS.obj.push(o = { id, opt: false }); sfx.play('ui'); }
@@ -2947,14 +3195,15 @@ function shipProp(p, yaw) {
 function beginMission(c) {
   const R = mulberry(c.seed), a = R() * TAU, pt = (ang, r) => [Math.sin(ang) * r, Math.cos(ang) * r], lz = pt(a, 300), A = pt(a + PI + (R() - .5), 110 + R() * 110), B = pt(a + PI / 2 + (R() - .5) * .6, 200 + R() * 70), C = pt(a - PI / 2 + (R() - .5) * .6, 200 + R() * 70);
   buildEnv(c.biome, c.seed, { pads: [[...lz, 36], [...A, 54], [...B, 40], [...C, 40]], mood: c.mood });
-  Object.assign(MS, { on: true, k: MS.k + 1, c, t: 0, over: false, ok: false, partial: 0, obj: [], navs: [], wait: [], log: [], bonus: [], repD: {}, payK: 1, payer: c.emp, v: {}, dirty: true, jam: false, abort: false, endText: '',
+  Object.assign(MS, { on: true, k: MS.k + 1, c, t: 0, over: false, ok: false, partial: 0, obj: [], navs: [], wait: [], log: [], bonus: [], repD: {}, relD: {}, payK: 1, payer: c.emp, v: {}, dirty: true, jam: false, abort: false, endText: '',
     LZ: gpos(...lz), A: gpos(...A), B: gpos(...B), C: gpos(...C), foePaint: FAC[c.foe].paint, allyPaint: FAC[c.emp].paint, ops: CREW.xo, hnd: c.contact, foe: mkChar(c.seed + 5, FAC[c.foe].short + ' COMMANDER', FAC[c.foe].col, 'Maj.') });
-  commQ.length = 0; commCur = null; $('comm').classList.add('hid');
+  commReset();
   P.pos.copy(MS.LZ).add(_v.set(-Math.sin(a) * 50, 0, -Math.cos(a) * 50)); P.pos.y = heightAt(P.pos.x, P.pos.z); P.yaw = Math.atan2(A[0] - P.pos.x, A[1] - P.pos.z); shipProp(MS.LZ, a);
   $('msTitle').textContent = `${TYPES[c.type].name} — ${c.site}`.toUpperCase();
   const go = f => Promise.resolve().then(() => f(MS)).catch(e => console.error('mission script', e));
-  if (CO.wing) { const w = CO.wing, e = mkMech(P.pos.x + 14, P.pos.z + 6, w.cfg ? { ...w.cfg } : { ...PRESETS[w.mech], paint: player.cfg.paint }, 0, { ai: 'follow', name: w.ch.name, skill: w.skill || 1.25, hpK: w.hpK || 1.5, yaw: P.yaw }); MS.wing = e; e.onKill = () => { say(MS.ops, `${w.ch.first}'s mech is down. Pilot ejected — we'll recover them.`); note(`${w.ch.name} was shot down.`); CO.wingDown = true; }; go(async () => { await after(4); say(w.ch, pick(['On your wing. Try not to get us both killed.', 'Formed up. Point me at something.', 'Green across the board. After you, boss.'])); }); } else MS.wing = null;
+  if (CO.wing) { const w = CO.wing, e = mkMech(P.pos.x + 14, P.pos.z + 6, w.cfg ? { ...w.cfg } : { ...PRESETS[w.mech], paint: player.cfg.paint }, 0, { ai: 'follow', name: w.ch.name, skill: w.skill || 1.25, hpK: w.hpK || 1.5, yaw: P.yaw }); MS.wing = e; e.onKill = () => { say(MS.ops, `${w.ch.first}'s mech is down. Pilot ejected — we'll recover them.`); note(`${w.ch.name} was shot down.`); CO.wingDown = true; }; go(async () => { await after(4); chatter(w.ch, pick(['On your wing. Try not to get us both killed.', 'Formed up. Point me at something.', 'Green across the board. After you, boss.'])); }); } else MS.wing = null;
   go(MISSIONS[c.type]); for (const t of c.twists) if (TWISTS[t]) go(TWISTS[t]);
+  if (c.cok === 'joint' && RIV[c.co]) go(rivJoint); if (c.cok === 'sub' && RIV[c.co]) go(async () => { await after(7); say(RIV[c.co].ch, RIVL[c.co].subHi); });
 }
 
 /* ============ MISSIONS: SIX CONTRACT TYPES, EACH WITH FOUR HIDDEN PLOTS ============ */
@@ -3209,14 +3458,7 @@ const MISSIONS = {
     setObj('m', () => `Secure the ${item} at the crash site${pk > 0 && pk < 1 ? ' — ' + (pk * 100).toFixed(0) + '%' : ''}`); nav('p', pod.position, 'PACKAGE', '#7fe7ff');
     say(ms.hnd, `A dropship went down at ${c.site} carrying a ${item}. Scavengers are already picking at it. Bring it back intact.`);
     const grab = () => new Promise(res => FD.tick.push(dt => { if (ms.over) return false; pk = near(pod.position, 17) ? pk + dt / 4 : Math.max(0, pk - dt); ms.dirty = true; if (pk < 1) return true; FD.scene.remove(pod); P.carry = true; unnav('p'); setObj('m', null, 1); msg('PACKAGE ABOARD', 3); res(); return false; }));
-    if (c.plot === 'race') {
-      const rv = mkChar(c.seed + 61, 'BLACK TALON CO.', '#ffe36a', 'Capt.'), Rv = spawn({ mech: 2 + (c.diff > 3 ? 1 : 0), tier: Math.min(2, c.diff >> 1) }, A.x, A.z, 30, 60, 2, fopt({ paint: 4, ai: 'guard', name: 'BLACK TALON' })); Rv.forEach(e => e.pacify = true);
-      await until(() => near(A, 200));
-      const r = await ask(rv, 'Well. Another crew on the same wreck. We got here first, friend — but I am reasonable. Fifty-fifty, and nobody\'s machine gets scratched.', ['Fight them for it', 'Split it fifty-fifty', 'Bluff: this claim is registered'], 18, 1);
-      if (r === 1) { ms.payK *= .5; setTeam(Rv, 0, { ai: 'follow', lead: PE, pacify: false }); say(rv, 'Smart. We will walk you out. Half is better than a funeral.'); note('You split the salvage with Black Talon.'); }
-      else if (r === 2 && Math.random() < .4 + CO.done * .04) { say(rv, 'Registered. Of course it is. ...Fine. Talon, we are leaving. I will remember this, friend.'); leave(Rv); note('You bluffed Black Talon off the claim.'); }
-      else { say(rv, r === 2 ? 'Nice try. Talon — take the wreck.' : 'Your funeral. Talon — weapons free.'); setTeam(Rv, 1, { pacify: false, alert: true, ai: 'hunt' }); note('You fought Black Talon for the wreck.'); }
-    }
+    if (c.plot === 'race') await rivSalvage(ms);
     if (c.plot === 'surv') {
       await until(() => near(A, 170)); const sv = mkChar(c.seed + 81, 'CRASH SURVIVOR', '#ffffff');
       say(sv, 'Is — is someone there? Six of us made it out of the hull. Two cannot walk. Please tell me you are the rescue.'); await after(5);
@@ -3286,7 +3528,82 @@ const FAC = {
 };
 const EMPS = ['hel', 'kar', 'tyr', 'ord', 'vom'];
 const fmt = n => (n < 0 ? '−' : '') + '¢' + Math.abs(Math.round(n)).toLocaleString('en-US');
-const CO = { cb: 120000, day: 1, hour: 6, rep: { hel: 0, kar: 0, tyr: 0, ord: 0, vom: 0 }, done: 0, fails: 0, kit: 1, active: null, sel: null, board: [], news: [], wing: null, wingDown: false, seed: (Math.random() * 1e6) | 0, driftT: 4, dirty: true };
+/* ============ RIVAL COMPANIES: THREE OTHER OUTFITS WORK THIS SECTOR. THEY BID ON THE SAME PAPER, SOMETIMES TAKE THE OTHER SIDE OF IT, AND NOW AND THEN HIRE YOU OR FLY BESIDE YOU ============ */
+/* each has a commander with a voice and a temper of their own, a livery nobody else wears, and four machines (light to assault) — in the field they bring whichever is closest to the one you are flying.
+   paint is a scheme object rather than an index into PAINTS: makeMats / applyPaint take either, and the paint shop never sees these.
+   facts: [id, the line the dossier shows once you know it, how somebody in the bar tells it]. Every one of them is true of how that company behaves in the field (TWISTS.rival, rivSalvage, the joint operations) */
+const RIV = {
+  cob: {
+    name: 'Cobalt Lance', short: 'COBALT', col: '#6f9bff', rgb: '111,155,255', mate: 'LANCER', call: '"PALADIN" FERREIRA', tag: 'HONOUR-BOUND EX-REGULARS',
+    paint: { n: 'COBALT', pri: 0x1f4fbf, sec: 0x14234f, acc: 0xdfe6f2, glow: 0x9fd0ff }, logo: { shape: 0, sym: 6, c1: '#16285c', c2: '#e6ecf5', c3: '#6f9bff' },
+    ch: { name: 'Col. Adaeze "Paladin" Ferreira', first: 'Adaeze', last: 'Ferreira', role: 'COBALT LANCE · COMMANDING', seed: 7401, col: '#6f9bff' },
+    blurb: 'A regiment that outlived its government and kept the drill. Ferreira signs few contracts, keeps every one of them to the letter, and expects the same of whoever is standing next to her.',
+    style: 'Gauss rifles and heavy plate. Slow, exact, and deadly at range.',
+    roster: [{ name: 'ESQUIRE', legs: 'rap', torso: 'sti', head: 'vis', armL: 'las', armR: 'las', back: 'rad' }, { name: 'LANCER', legs: 'bip', torso: 'bas', head: 'vis', armL: 'gau', armR: 'las', back: 'snk' },
+      { name: 'CATAPHRACT', legs: 'quad', torso: 'brd', head: 'vis', armL: 'gau', armR: 'gau', back: 'plt' }, { name: 'PALADIN', legs: 'hvy', torso: 'jug', head: 'skl', armL: 'gau', armR: 'pls', back: 'plt' }],
+    facts: [
+      ['bribe', 'Cannot be bought off a contract. Offering only makes her angry.', 'Somebody tried to pay Cobalt to walk off a job last season. Ferreira sent the money back with the man who brought it, and then she won the job.'],
+      ['yield', 'Strikes her colours when a fight is lost, and expects to be let walk. Refuse and the whole Lance remembers it.', 'When Cobalt is beaten, Cobalt says so, and walks. That is the old way. The one crew that kept shooting after the colours came down does not get work in this sector any more.'],
+      ['word', 'Will not fire on a company she has stood beside. If you are on good terms, say so and she will withdraw.', 'Ferreira took a contract against a crew she had flown with, found out on the ground, and handed the fee back rather than fire. If you have stood with Cobalt, remind her.'],
+      ['share', 'Shares work fairly if asked plainly, and holds to the split.', 'Ask Cobalt straight out to share a job and they will, sixty-forty, and you will not have to count it afterwards. Only outfit in here I would say that about.'],
+      ['kit', 'Gauss rifles and plate: they hit hardest from far away. Close the distance.', 'Cobalt machines are all rail and armour. Stand off and trade with them and you lose. Get in close, where those long guns are slow.'],
+      ['pow', 'On a shared contract she lets beaten enemies go, and wants your silence about it.', 'Fly a joint job with Cobalt and you will watch her let enemy pilots walk away from their wrecks. The client never likes it. She will ask you to have seen nothing.'],
+    ],
+  },
+  car: {
+    name: 'The Carnival', short: 'CARNIVAL', col: '#ff6ec7', rgb: '255,110,199', mate: 'PLAYER', call: 'THE MAESTRO', tag: 'GLORY-HOUNDS WITH AN AUDIENCE',
+    paint: { n: 'CARNIVAL', pri: 0xd4267e, sec: 0x34113a, acc: 0xffcf3a, glow: 0xff8ad8 }, logo: { shape: 1, sym: 5, c1: '#3a123f', c2: '#ffcf3a', c3: '#ff6ec7' },
+    ch: { name: 'Dario "Maestro" Quintero', first: 'Dario', last: 'Quintero', role: 'THE CARNIVAL · RINGMASTER', seed: 8587, col: '#ff6ec7' },
+    blurb: 'They film their own contracts and sell the footage. Quintero would rather lose beautifully than win quietly, has never once refused a bet, and treats a threat as a request for an encore.',
+    style: 'Missiles, rockets and jump jets. Loud, fast, and thin in the armour.',
+    roster: [{ name: 'HARLEQUIN', legs: 'rap', torso: 'pod', head: 'dom', armL: 'mis', armR: 'las', back: 'jet' }, { name: 'JUGGLER', legs: 'bip', torso: 'bas', head: 'dom', armL: 'mis', armR: 'pls', back: 'jet' },
+      { name: 'RINGMASTER', legs: 'quad', torso: 'brd', head: 'dom', armL: 'mis', armR: 'pls', back: 'rak' }, { name: 'CALLIOPE', legs: 'hvy', torso: 'jug', head: 'arr', armL: 'mis', armR: 'pls', back: 'rak' }],
+    facts: [
+      ['wager', 'Has never refused a wager. Put money on it and he will fight you alone, or race you, to win it.', 'The Maestro once bet his own dropship on a coin. Offer him a wager — any wager — and he forgets what he was hired for.'],
+      ['threat', 'Telling him to back off is an invitation. He will fight you for the audience alone.', 'Do not tell the Carnival to leave. A crew did that at Vorn, and Quintero made a whole show out of them. They sell the recording.'],
+      ['solo', 'Does not share a stage: he will not split a contract with a competitor.', 'You cannot go halves with the Maestro. He does not share billing. He would sooner lose the fee.'],
+      ['bow', 'When he is beaten he bows out and pays what he owes. Shooting him after the bow costs you every friend he has.', 'When Quintero is beaten he takes a bow — on the open channel, in front of everybody — and pays up. Let him. The room does not forgive the other thing.'],
+      ['kit', 'Missiles and jump jets, little armour. They hate a brawl. Get in close and stay there.', 'Carnival machines are fireworks on legs. All the missiles in the world and plate like a tin roof. Close with them and they come apart.'],
+      ['bet', 'On a shared contract he will bet you on the kill count.', 'Fly with the Carnival and he will want a side bet on who drops more of them. He pays when he loses, too. Mostly he does not lose.'],
+    ],
+  },
+  ver: {
+    name: 'Verdigris Salvage', short: 'VERDIGRIS', col: '#2fd3b0', rgb: '47,211,176', mate: 'PICKER', call: '"JACKDAW" HALLORAN', tag: 'SCAVENGERS WITH A PRICE LIST',
+    paint: { n: 'VERDIGRIS', pri: 0x2aa695, sec: 0x7a4a26, acc: 0xe08a3c, glow: 0x6fffd6 }, logo: { shape: 5, sym: 7, c1: '#173f3a', c2: '#e08a3c', c3: '#2fd3b0' },
+    ch: { name: 'Capt. Mags "Jackdaw" Halloran', first: 'Mags', last: 'Halloran', role: 'VERDIGRIS SALVAGE · OWNER', seed: 7866, col: '#2fd3b0' },
+    blurb: 'A salvage yard that learned to shoot. Halloran has a price for everything, most of all for going home, and has never taken a fight she could be paid to avoid.',
+    style: 'Claws and autocannon. They want to be inside your guard.',
+    roster: [{ name: 'MAGPIE', legs: 'rap', torso: 'pod', head: 'can', armL: 'claw', armR: 'acn', back: 'rad' }, { name: 'RAGPICKER', legs: 'bip', torso: 'bas', head: 'can', armL: 'claw', armR: 'acn', back: 'snk' },
+      { name: 'GLEANER', legs: 'quad', torso: 'brd', head: 'vis', armL: 'claw', armR: 'pls', back: 'plt' }, { name: 'BREAKER', legs: 'trk', torso: 'jug', head: 'vis', armL: 'claw', armR: 'gau', back: 'plt' }],
+    facts: [
+      ['bribe', 'Always takes the money. Pay her and she leaves, whoever hired her.', 'Jackdaw has a price for going home and she will tell you what it is. Pay it. It is cheaper than the fight, and she always stays bought.'],
+      ['fold', 'Only picks on the wounded. Meet her with your armour whole, tell her to leave, and she will.', 'Verdigris are scavengers. They do not fight healthy machines. Turn up without a scratch on you and tell her to clear off — she will.'],
+      ['share', 'Takes a split every time it is offered.', 'Offer Halloran half and she takes it before you have finished the sentence. Half of something for no work is her favourite number.'],
+      ['ransom', 'Beaten, she pays to be let go — and she does pay.', 'Corner Jackdaw and she will try to buy her way out. Take it or do not, but the money is real. She keeps a float for exactly that.'],
+      ['kit', 'Claws and autocannon: they need to be close. Keep them at arm’s length.', 'Verdigris fit claws to everything. They want your machine in pieces small enough to carry. Keep your distance and they are just slow.'],
+      ['graft', 'On a shared contract she finds something off the manifest and offers you half to keep quiet.', 'Fly with Verdigris and something valuable will turn out not to be on the manifest. She will offer you half. The client finds out about one time in three.'],
+    ],
+  },
+};
+Object.setPrototypeOf(RIV, null);   /* a company key read from a save is looked up here: 'constructor' and '__proto__' must find nothing */
+const RIVS = Object.keys(RIV);
+const relWord = r => r > 40 ? 'allied' : r > 15 ? 'friendly' : r > -15 ? 'wary' : r > -40 ? 'bad blood' : 'feud';
+const rivPick = () => RIVS[(Math.random() * RIVS.length) | 0];
+/* every change of standing is written down with its reason; the STANDING view shows the last six for each faction and company */
+function stLog(L, d, why) { if (!Math.round(d)) return; L.unshift([CO.day, Math.round(d), String(why || '').slice(0, 80)]); L.length = Math.min(L.length, 6); }
+function repAdd(f, d, why) { if (CO.rep[f] === undefined || !d) return; CO.rep[f] = clamp(CO.rep[f] + d, -100, 100); stLog(CO.hist[f] || (CO.hist[f] = []), d, why); CO.dirty = true; }
+function rivRel(k, d, why) { const R = CO.riv[k]; if (!R || !d) return; R.rel = clamp(R.rel + d, -100, 100); stLog(R.log, d, why); CO.dirty = true; }
+function rivKnow(k, id) { const R = CO.riv[k]; if (!R || R.know.includes(id)) return false; R.know.push(id); CO.dirty = true; return true; }
+/* the ledger's share of this: where we stand with each company, what we have learned about them, and why each standing last moved. Validated on the way in — imported files are untrusted */
+function rivApply(L) {
+  const num = (v, d, a, z) => typeof v === 'number' && isFinite(v) ? clamp(v, a, z) : d, obj = o => o && typeof o === 'object' ? o : {};
+  const logs = a => Array.isArray(a) ? a.filter(e => Array.isArray(e) && typeof e[0] === 'number' && typeof e[1] === 'number' && isFinite(e[0]) && isFinite(e[1]) && typeof e[2] === 'string').slice(0, 6).map(e => [Math.max(1, e[0] | 0), clamp(Math.round(e[1]), -100, 100), e[2].slice(0, 80)]) : [];
+  CO.riv = {}; CO.hist = {};
+  for (const k of RIVS) { const s = obj(obj(L && L.riv)[k]); CO.riv[k] = { rel: num(s.rel, 0, -100, 100), log: logs(s.log), know: Array.isArray(s.know) ? RIV[k].facts.map(f => f[0]).filter(id => s.know.includes(id)) : [], ask: num(s.ask, -99, -99, 1e7), gift: num(s.gift, -99, -99, 1e7) }; }
+  for (const f of EMPS) CO.hist[f] = logs(obj(L && L.hist)[f]);
+}
+const rivSave = () => ({ riv: Object.fromEntries(RIVS.map(k => { const R = CO.riv[k]; return [k, { rel: Math.round(R.rel), log: R.log.map(e => [...e]), know: [...R.know], ask: +R.ask.toFixed(1), gift: +R.gift.toFixed(1) }]; })), hist: Object.fromEntries(EMPS.map(f => [f, (CO.hist[f] || []).map(e => [...e])])) });
+const CO = { riv: {}, hist: {}, cb: 120000, day: 1, hour: 6, rep: { hel: 0, kar: 0, tyr: 0, ord: 0, vom: 0 }, done: 0, fails: 0, kit: 1, active: null, sel: null, board: [], news: [], wing: null, wingDown: false, seed: (Math.random() * 1e6) | 0, driftT: 4, dirty: true };
 Object.defineProperty(CO, 'kit', { get: () => invN('gear.kit'), set: v => invAdd('gear.kit', (v | 0) - invN('gear.kit')) });   /* repair kits live in the stores now */
 ledgerApply(BOOT);
 const saveCO = () => { try { localStorage.setItem('ironworks.co', JSON.stringify(saveBlob())); } catch (e) { } };
@@ -3309,6 +3626,7 @@ const PERSONA = {
   desperate: { n: 'running out of options', pat: 92, pay: .75, salv: .65, honest: .6, hi: 'Thank you for answering. Nobody else would. What do you need?', no: 'I — I cannot. There is nothing left in the account.', yes: 'Yes. Yes, fine, whatever it takes.', bye: 'Then we are lost. Forget I called.' },
   smuggler: { n: 'slippery', pat: 66, pay: .52, salv: .5, honest: .15, hi: 'My favourite kind of person: armed and for hire. Let us talk numbers.', no: 'Ha. No. Try again with a smaller number.', yes: 'For you? Why not. It is not my money.', bye: 'Shame. I will tell the next crew you said hello.' },
 };
+const PERSONA_STD = Object.keys(PERSONA);   /* the ordinary clients; the three company commanders are added further down and are never drawn at random */
 const HINT = {
   'strike.clean': 'Looks like exactly what it says. Expect a response force once the place is burning.', 'strike.trap': 'Thermal imaging of the target reads cold. Those tanks may be empty — it could be bait.', 'strike.civ': 'There are civilians living inside the perimeter. Nobody put that in the brief.', 'strike.melt': 'That reactor is an old unshielded design. If it goes, clear the whole basin.',
   'garrison.siege': 'Three assault waves are planned, the last by dropship.', 'garrison.bribe': 'The enemy commander has a habit of buying out mercenaries mid-fight.', 'garrison.arty': 'Siege guns are being hauled onto a ridge within range of the HQ.', 'garrison.evac': 'The client has transports fuelled and waiting. They do not expect to hold.',
@@ -3328,7 +3646,7 @@ const BRIEF = {
 };
 let cid = 0;
 function genContract(o = {}) {
-  const type = o.type || pick(Object.keys(TYPES)), emp = o.emp || pick(EMPS), foe = o.foe || pick([...EMPS.filter(f => f !== emp), 'maw']), biome = o.biome || pick(BIOME_KEYS), T = TYPES[type], persona = pick(Object.keys(PERSONA));
+  const type = o.type || pick(Object.keys(TYPES)), emp = o.emp || pick(EMPS), foe = o.foe || pick([...EMPS.filter(f => f !== emp), 'maw']), biome = o.biome || pick(BIOME_KEYS), T = TYPES[type], persona = pick(PERSONA_STD);
   const diff = clamp(Math.round(1 + CO.done * .22 + rand(-1.1, 1.8)), 1, 5), seed = ((CO.seed + ++cid * 7919 + Math.random() * 1e5) | 0) % 1000000, rg = REGION[biome], a = rand(TAU), rr = rand(.05, .2);
   const c = {
     id: cid, type, emp, foe, biome, mood: Math.random() < .4 ? 1 : 0, diff, seed, plot: pick(T.plots), twists: [], persona, pat: PERSONA[persona].pat, pushes: 0, intel: [], support: false,
@@ -3336,11 +3654,13 @@ function genContract(o = {}) {
     pay: Math.round(T.base * (.55 + diff * .32) * rand(.85, 1.2) * (1 + CO.rep[emp] / 250) / 1000) * 1000, salv: pick([10, 15, 20, 25]), exp: now() + rand(10, 46), pos: [rg[0] + Math.sin(a) * rr, rg[1] + Math.cos(a) * rr], upd: o.upd || '',
   };
   for (let i = 0; i < 2; i++) if (Math.random() < .55) { const t = pick(['storm', 'reinf', 'ace', 'pirates', 'supply', 'side', 'renege']); if (!c.twists.includes(t) && !(t === 'pirates' && foe === 'maw') && !(t === 'storm' && !BIOMES[biome].storm)) c.twists.push(t); }
+  /* now and then another company wants the same job — or has been hired to stop it. A salvage race always has one */
+  if (type === 'recovery' && c.plot === 'race') c.rival = rivPick(); else if (Math.random() < .07) { c.rival = rivPick(); c.twists.push('rival'); }
   c.brief = (o.pre || '') + BRIEF[type](FAC[emp], FAC[foe], c); return c;
 }
 function fillBoard() {
   while (CO.board.length < 6) { const have = CO.board.map(c => c.type), miss = Object.keys(TYPES).filter(t => !have.includes(t)), used = CO.board.map(c => c.biome), free = BIOME_KEYS.filter(b => !used.includes(b)); CO.board.push(genContract({ type: miss.length ? pick(miss) : undefined, biome: free.length && Math.random() < .8 ? pick(free) : undefined })); }
-  CO.dirty = true;
+  rivOffers(); CO.dirty = true;
 }
 const dropContract = c => { const i = CO.board.indexOf(c); if (i >= 0) CO.board.splice(i, 1); if (CO.sel === c) CO.sel = null; if (CO.active === c) CO.active = null; CO.dirty = true; };
 /* the board is alive: offers lapse, terms drift, situations escalate */
@@ -3356,31 +3676,260 @@ function drift() {
 }
 function tickClock(dt) {
   CO.hour += dt / 10; if (CO.hour >= 24) { CO.hour -= 24; CO.day++; saveCO(); }
-  for (const c of [...CO.board]) if (c !== CO.active && now() > c.exp) { dropContract(c); news(pick([`Another outfit took the ${FAC[c.emp].short} job at ${c.site}.`, `${FAC[c.emp].short} withdrew its offer for ${c.site}.`, `The ${c.site} contract lapsed unfilled.`])); }
+  for (const c of [...CO.board]) if (c !== CO.active && now() > c.exp) { dropContract(c); news(pick([`${rivOutfit()} took the ${FAC[c.emp].short} job at ${c.site}.`, `${FAC[c.emp].short} withdrew its offer for ${c.site}.`, `The ${c.site} contract lapsed unfilled.`])); }
   if (CO.board.length < 6) fillBoard();
-  if ((CO.driftT -= dt / 10) <= 0) { CO.driftT = rand(3, 6); drift(); }
+  if ((CO.driftT -= dt / 10) <= 0) { CO.driftT = rand(3, 6); drift(); if (Math.random() < .2) news(rivNews()); }
   if (shopRoll()) { news('The quartermaster has posted new stock on the market.'); saveCO(); if (ST.open) storesDraw(); }
 }
 const NEXT = { strike: ['garrison', 'They are coming back for what you burned. '], garrison: ['strike', 'Time to hit back while they regroup. '], escort: ['recovery', 'One of ours never made it home. '], headhunt: ['recon', 'With their ace gone, we want to see what is left. '], recon: ['strike', 'Your scans found something worth destroying. '], recovery: ['escort', 'The package has to move, and it cannot fly. '] };
 /* settle the books after a sortie: returns the debrief the XO reads out */
 function settle() {
   const c = MS.c, ok = MS.ok, L = [], add = (l, v) => { if (Math.round(v)) L.push([l, Math.round(v)]); }, payer = MS.payer, base = ok ? c.pay * MS.payK : c.pay * (MS.partial || 0), D = { c, ok, text: MS.endText, log: [...MS.log], lines: L, renege: false, base };
-  add(ok ? (payer ? `Contract fee — ${FAC[payer].short}` : 'Collection — off the books') : 'Partial payment', base); for (const [l, v] of MS.bonus) add(l, v);
+  add(ok ? (payer ? (c.cok === 'sub' && payer === c.emp ? `Subcontract fee — ${RIV[c.co].short}` : `Contract fee — ${FAC[payer].short}`) : 'Collection — off the books') : 'Partial payment', base); for (const [l, v] of MS.bonus) add(l, v);
   if (ok && P.kills) add(`Battlefield scrap ${c.salv}% · ${P.kills} kills`, P.kills * 1500 * c.salv / 25);
   D.salv = ok ? salvageRoll(c, YARD.loot, MS.bonus.length > 0) : null; YARD.loot = [];
   add('Repairs and rearm', -((1 - clamp(P.armor / P.max, 0, 1)) * 38000 + (P.dead ? 55000 : 0)));
   if (CO.wing && CO.wing.share) add(`${CO.wing.ch.first}'s ${Math.round(CO.wing.share * 100)}% share`, -Math.max(0, base) * CO.wing.share);
   if (MS.v.faked && Math.random() < .45) { add('Clawback — the "dead" pilot was seen alive', -base * .5); rep(c.emp, -14); D.log.push(`${FAC[c.emp].short} found out the kill was faked.`); }
-  if (payer === c.emp) rep(c.emp, ok ? 4 + c.diff : MS.abort ? -8 : -5); if (ok && FAC[c.foe] && c.foe !== 'maw') rep(c.foe, -3);
-  D.rep = Object.entries(MS.repD).filter(([f, v]) => CO.rep[f] !== undefined && v); for (const [f, v] of D.rep) CO.rep[f] = clamp(CO.rep[f] + v, -100, 100);
+  if (payer === c.emp) rep(c.emp, Math.round((ok ? 4 + c.diff : MS.abort ? -8 : -5) * (c.cok === 'sub' ? .5 : 1))); if (ok && FAC[c.foe] && c.foe !== 'maw') rep(c.foe, -3); rivSettle(c, ok, D, add, base);
+  D.rep = Object.entries(MS.repD).filter(([f, v]) => CO.rep[f] !== undefined && Math.round(v)); for (const [f, v] of D.rep) repAdd(f, v, f === c.emp ? `${ok ? 'completed' : MS.abort ? 'abandoned' : 'failed'} their ${TYPES[c.type].name.toLowerCase()} contract at ${c.site}` : f === c.foe ? `flew against them at ${c.site}` : `the ${TYPES[c.type].name.toLowerCase()} contract at ${c.site}`);
+  D.rel = []; for (const [k, L] of Object.entries(MS.relD || {})) if (RIV[k]) for (const [d, why] of L) if (Math.round(d)) { D.rel.push([k, Math.round(d), why]); rivRel(k, Math.round(d), why || `the ${c.site} contract`); }
   D.renege = ok && payer === c.emp && c.twists.includes('renege') && base > 0; D.total = L.reduce((s, l) => s + l[1], 0); CO.cb += D.total; ok ? CO.done++ : CO.fails++;
   /* the world moves on */
   CO.hour += rand(8, 20); while (CO.hour >= 24) { CO.hour -= 24; CO.day++; } dropContract(c);
   news(ok ? `${YARD.name} completed a ${TYPES[c.type].name.toLowerCase()} contract at ${c.site}${payer && payer !== c.emp ? ' — though not for the original client' : ''}.` : `${YARD.name} failed a ${FAC[c.emp].short} contract at ${c.site}.`);
-  for (const o of CO.board.filter(() => Math.random() < .4)) { dropContract(o); news(`Another outfit took the ${FAC[o.emp].short} job at ${o.site}.`); }
+  for (const o of CO.board.filter(() => Math.random() < .4)) { dropContract(o); news(`${rivOutfit()} took the ${FAC[o.emp].short} job at ${o.site}.`); }
   if (ok && payer === c.emp && Math.random() < .7) { const [t, pre] = NEXT[c.type]; CO.board.push(genContract({ type: t, emp: c.emp, foe: c.foe, biome: Math.random() < .6 ? c.biome : undefined, pre: `FOLLOW-UP to ${c.site}. ${pre}`, upd: 'FOLLOW-UP' })); }
   else if (!ok && Math.random() < .6) CO.board.push(genContract({ type: pick(['strike', 'recovery']), emp: c.foe === 'maw' ? pick(EMPS) : c.foe, foe: c.emp, pre: `${FAC[c.emp].short} is reeling after ${c.site}. Their rivals smell blood. `, upd: 'OPPORTUNITY' }));
   fillBoard(); drift(); drift(); if (CO.wing) { if (CO.wingDown) { CO.wing.p.until = now() + 48; if (CO.wing.p.bar) BARSV.pst[CO.wing.p.seed] = { until: CO.wing.p.until }; } CO.wing = null; CO.wingDown = false; } saveCO(); return D;
+}
+/* ============ RIVAL COMPANIES ON THE BOARD AND IN THE FIELD ============ */
+/* a company that subcontracts to you is the one you bargain with, so each commander is also a negotiating persona (never drawn at random: PERSONA_STD is the ordinary five) */
+Object.assign(PERSONA, {
+  cob: { n: 'exact to the letter', pat: 70, pay: .2, salv: .5, honest: 1, hi: 'I hold this paper and cannot staff it. The terms are fair and I have not padded them. Ask what you need to ask.', no: 'No. The figure was fair when I named it.', yes: 'That is reasonable. Amended.', bye: 'Then I will find another company. Cobalt out.' },
+  car: { n: 'all showmanship', pat: 60, pay: .5, salv: .35, honest: .55, hi: 'Ironworks! I am double-booked, and you are my understudy. Do not tell me the fee is small. Tell me you will be magnificent.', no: 'Tsk. Understudies do not renegotiate.', yes: 'Oh, why not. It is only money.', bye: 'I shall find someone with more flair. Ta!' },
+  ver: { n: 'counting every crate', pat: 66, pay: .3, salv: .2, honest: .35, hi: 'Jackdaw. I have a job I cannot be bothered with, and you have a mech. Let us not waste each other’s evening.', no: 'Ha. No. I did not get this yard by giving money away.', yes: 'Fine, fine. You are bleeding me, love.', bye: 'Too rich for me. Somebody cheaper will turn up.' },
+});
+HINT.rival = 'Another mech company has been asking about this one.';
+const dealer = c => c.cok === 'sub' && RIV[c.co] ? RIV[c.co].ch : c.contact;
+const rivOutfit = () => Math.random() < .55 ? RIV[rivPick()].name : 'Another outfit';
+function rivNews() {
+  const k = rivPick(), f = FAC[pick(EMPS)].short, s = `${pick(SITE.a)} ${pick(SITE[pick(BIOME_KEYS)])}`;
+  return pick({
+    cob: [`Cobalt Lance turned down a ${f} contract at ${s} on a point of honour.`, `Cobalt Lance held ${s} for ${f} to the hour agreed, then left.`, `Ferreira has posted bond for a captured ${f} crew. Nobody asked her to.`],
+    car: [`The Carnival put on a show at ${s}: three ${f} machines down, footage on sale by morning.`, `Quintero lost a wager at ${s} and paid it in public.`, `${f} has asked the Carnival to stop filming its installations.`],
+    ver: [`Verdigris Salvage is selling parts that look a lot like the ones ${f} lost at ${s}.`, `Verdigris were seen leaving ${s} an hour before the ${f} garrison arrived.`, 'Halloran has bought another lifter. Business is good.'],
+  }[k]);
+}
+/* turn an offer on the board into one that involves a company: 'sub' — they hold the paper and pass it down to you; 'joint' — their lance deploys beside yours (share: the cut they take when it was your idea) */
+function rivCo(c, k, kind, share = 0) {
+  const V = RIV[k], E = FAC[c.emp].short; c.co = k; c.cok = kind; c.twists = c.twists.filter(t => t !== 'rival' && (kind !== 'sub' || t !== 'renege')); delete c.rival; c.intel = c.intel.filter(i => i.k !== 'rival' && i.k !== 'r.rival');
+  if (c.type === 'recovery' && c.plot === 'race') { c.plot = pick(TYPES.recovery.plots.filter(p => p !== 'race')); c.intel = c.intel.filter(i => i.k !== 'plot' && i.k !== 'r.plot'); }
+  if (kind === 'sub') { c.persona = k; c.pat = PERSONA[k].pat; c.pushes = 0; c.talked = false; c.pay = Math.round(c.pay * .85 / 1000) * 1000; c.upd = 'SUBCONTRACT'; c.brief = `SUBCONTRACT. ${V.name} holds this paper with ${E} and cannot staff it. You would fly it in their name, for their client. ` + c.brief; }
+  else {
+    if (share) c.share = share; else { c.diff = Math.min(5, c.diff + 1); c.pay = Math.round(c.pay * 1.3 / 1000) * 1000; } c.upd = 'JOINT OP';
+    c.brief = (share ? `JOINT OPERATION at your invitation: ${V.name} flies this one beside you for ${Math.round(share * 100)}% of the fee. ` : `JOINT OPERATION. ${E} is paying two companies to be certain: ${V.name} deploys beside you. `) + c.brief;
+  }
+  CO.dirty = true; return c;
+}
+/* now and then work comes your way through another company. Never from one you are feuding with, and never more than one offer of each kind on the board */
+function rivOffers() {
+  for (const kind of ['sub', 'joint']) {
+    if (CO.board.some(c => c.cok === kind) || Math.random() > (kind === 'sub' ? .1 : .08)) continue; const ks = RIVS.filter(k => CO.riv[k].rel > -40); if (!ks.length) continue;
+    const c = pick(CO.board.filter(c => c !== CO.active && c !== CO.sel && !c.co && !c.talked && !c.intel.length && (kind === 'sub' || ['strike', 'garrison', 'escort', 'headhunt'].includes(c.type)))); if (c) rivCo(c, pick(ks), kind);
+  }
+}
+/* an offer loaded from a save: anything about a company that does not add up is dropped rather than trusted */
+function rivClean(c) {
+  if (!RIV[c.rival]) delete c.rival; if (!RIV[c.co] || (c.cok !== 'sub' && c.cok !== 'joint')) { delete c.co; delete c.cok; delete c.share; }
+  if (c.cok === 'sub') c.persona = c.co; else if (!PERSONA_STD.includes(c.persona)) c.persona = 'clerk';
+  if (c.share !== undefined) c.share = c.cok === 'joint' && typeof c.share === 'number' && isFinite(c.share) ? clamp(c.share, 0, .5) : 0;
+  if (c.co || !c.rival) c.twists = c.twists.filter(t => t !== 'rival'); if (c.co) delete c.rival;
+}
+/* walking away from signed paper costs you with whoever was counting on it */
+function quitCost(c) { const why = `walked away from the ${c.site} job`; if (c.cok === 'sub') return rivRel(c.co, -6, why); repAdd(c.emp, -3, why); if (c.cok === 'joint') rivRel(c.co, -4, why); }
+
+/* ---- what each commander says. E the client, F the opposition, W a sum of money ---- */
+const RIVL = {
+  cob: {
+    seen: 'Dropship on the scope in Cobalt Lance colours. That is Ferreira herself — and she is not on our contract.',
+    race: E => `Ironworks, Cobalt Lance actual. ${E} has issued the same paper twice: I hold a copy, and so do you. I will not pretend otherwise. How do you wish to proceed?`,
+    raceO: () => ['May the better company win', 'Share the work — sixty-forty, on my lead', 'This contract is mine. Withdraw'],
+    raceGo: 'Then we race, and cleanly. Lance: the objective only. Ironworks is not to be touched.', splitOk: 'Accepted, and I will hold to it to the letter. Cobalt forms on your lead.',
+    offOk: '...You have earned that much from us. Cobalt is withdrawing. Do not make a habit of asking.', offNo: 'I have a signed contract and no reason to tear it up. We stay. May the better company win.',
+    won: 'The field is ours today, Ironworks. You flew well. Cobalt out.', lost: 'Cleanly done. The fee is yours — I will say so to anyone who asks. Cobalt out.',
+    opp: (E, F) => `Ironworks, Cobalt Lance actual. ${F} holds my contract, and it says you do not finish yours. I take no pleasure in it. I offer this courtesy once: withdraw.`,
+    oppO: () => ['Then we fight', 'Name your price to walk away', 'We have stood together. Stand down'],
+    fight: 'So be it. Lance — weapons free. Fight them clean.', buyNo: 'You mistake me for somebody else. Lance — weapons free.',
+    pastOk: '...Yes. We have. I will not fire on a company I have bled beside. Cobalt is returning the fee. We are leaving.', pastNo: 'We have not stood together often enough for that. Weapons free.',
+    yield: () => 'Enough. Cobalt strikes its colours — you have the field, Ironworks. I ask the customary terms: we walk.', yieldO: () => ['Granted. Go', 'No quarter'],
+    spared: 'You have my thanks, and my word that it will be remembered.', doomed: 'Then you are no soldier. Lance — to the last!',
+    help: 'Ironworks, Cobalt actual. We are between contracts and inside your grid. If you want a second lance, say so. Ten percent, and you lead.', helpYes: 'Cobalt is yours for the duration.', helpNo: 'Understood. Good hunting.',
+    salv: 'Ironworks, Cobalt Lance actual. We have a salvage claim filed on this wreck, and I see that you have one too. The registry has made fools of us both. I would rather not fight over a clerk’s mistake.',
+    salvO: () => ['Fight them for it', 'Split it fifty-fifty', 'We have stood together. Let me have this one'], salvNo: 'A claim is a claim. But I will share it before I fight you for it: halves, and Cobalt walks you out.',
+    subHi: 'Ironworks, Cobalt actual. My name is on this paper. Fly it as I would: to the letter, and no further.', jHi: 'Cobalt Lance, on station. You have the lead, Ironworks. We will hold your flank.',
+    jDown: 'Ferreira is down — pilot is out and moving for our dropship. Cobalt’s lance is still with you.',
+  },
+  car: {
+    seen: 'Dropship inbound, and it is painted like a fairground. That is the Carnival. Quintero does not turn up where there is no audience.',
+    race: E => `Ironworks! What luck — an audience. ${E} has booked two acts for one stage, and I do not open for anybody. Shall we make it interesting?`,
+    raceO: (E, F, W) => ['A race, then. Best crew wins', `A wager on it — ${fmt(W)} says I finish first`, 'Get off my stage, clown'],
+    raceGo: 'Splendid! Places, everyone. And do try to keep up.', bet: W => `HA! Now it is a show. ${fmt(W)}, witnessed by everybody listening. Carnival — make it beautiful!`,
+    offNo: '"Clown." Oh, I was hoping you would say something like that. Carnival! Change of programme — the first act is Ironworks.',
+    won: 'And THAT is how it is done. Do not sulk, Ironworks. You were a wonderful supporting act.', lost: 'Upstaged! On my own tour! ...Well flown, damn you. The Carnival moves on.',
+    opp: (E, F) => `Ironworks! Tonight the part of the villain is played by me. ${F} is paying, and the script says you lose. But a script is only a suggestion. Entertain me.`,
+    oppO: (E, F, W) => ['Then come and take your bow', `Single combat — you and me, ${fmt(W)} on it`, 'We have shared a stage. Sit this one out'],
+    fight: 'Curtain up!', duel: W => `A DUEL! Oh, you do know me. Carnival, stand down and watch. ${fmt(W)}, and this one is mine.`,
+    pastOk: '...So we have. And it was a good show. Very well: the Carnival is dark tonight. You owe me an encore.', pastNo: 'Darling, I have shared a stage with everyone. Curtain up!',
+    yield: () => 'Enough, enough! House lights! A magnificent performance — yours, I admit it. Let me take my bow and go.', yieldO: () => ['Take your bow. Go', 'No encore. Finish it'],
+    spared: 'Gracious in victory! They will hear about this in every bar on the rock. I will see to it personally.', doomed: 'You would boo the cast? Philistine! Carnival — finale!', paid: W => `And your winnings, as promised: ${fmt(W)}. I always pay.`,
+    help: 'Ironworks! We were passing, and it looked dull down there without us. Ten percent, and top billing stays yours.', helpYes: 'Then let us give them a show!', helpNo: 'Your loss. Literally. Ta!',
+    salv: 'Ironworks! Two companies, one wreck, and nobody watching. What a waste. I do not share a stage, as you may have heard. So: how shall we settle it?',
+    salvO: (E, F, W) => ['Fight them for it', 'Split it fifty-fifty', `Single combat for it — ${fmt(W)} on top`], salvNo: 'Halves? A duet? No, no, no. Carnival — places!',
+    subHi: 'Ironworks! You are wearing my name out there. Do try to be memorable.', jHi: 'The Carnival has arrived! Try to look impressed. After you, Ironworks — it is your name on the poster.',
+    jDown: 'Quintero is down — he is out of the cockpit and, I think, bowing. His lance is still with you.',
+  },
+  ver: {
+    seen: 'New contact — a dropship in Verdigris green, coming in quiet. Halloran only shows up where there is something to carry away.',
+    race: E => `Ironworks. Jackdaw, Verdigris. Seems ${E} sold the same job twice — bad form, that. No sense both of us bleeding for one fee, love. What do you say?`,
+    raceO: () => ['First to finish takes the fee', 'Go halves — sixty-forty, on my lead', 'Clear off. This one is mine'],
+    raceGo: 'Suit yourself. Verdigris — strip it quick.', splitOk: 'There. That was easy. We will be right behind you. Mind the paintwork.',
+    offOk: '...That is a lot of machine, and not a scratch on it. Fine. Verdigris, we are leaving. There will be other wrecks.', offNo: 'Bit dented to be giving orders, love. We will stay and see how you get on.',
+    won: 'That is the fee, and I thank you for softening them up. No hard feelings, pet.', lost: 'Quick, are you not. Fine — yours. I will bill them for my fuel.',
+    opp: (E, F) => `Ironworks. Jackdaw. ${F} is paying me to see you go home empty. Nothing personal. But I am a practical woman, and everything has a price.`,
+    oppO: (E, F, W) => ['Then earn your fee', `Pay her to leave — ${fmt(W)}`, 'We have worked together. Walk away'],
+    fight: 'Pity. Verdigris — take them apart. Carefully. I want the pieces.', buyOk: F => `Pleasure. ${F} will get a very sad report. Verdigris — home.`, buyNo: 'With what, love? Your account is emptier than my conscience. Verdigris — take them apart.',
+    pastOk: '...We have, and you paid on time. Fine. I was never here.', pastNo: 'Not well enough, pet.',
+    yield: W => `All right — ALL RIGHT. You have made your point. Call it off and I will make it worth your while: ${fmt(W)} to let us limp home.`, yieldO: (E, F, W) => ['Go. Keep your money', `Take the ${fmt(W)} and let them go`, 'No deal. Finish it'],
+    spared: '...For nothing? You are a strange one, Ironworks. I will not forget it.', paid: () => 'Wired. Robbery — but fair robbery.', doomed: 'Then I hope you choke on the salvage!',
+    help: 'Ironworks. Jackdaw. We are picking over the next valley and it is thin. Want another lance? Ten percent, and first look at the wrecks.', helpYes: 'Lovely. Try not to burn the good bits.', helpNo: 'Suit yourself.',
+    salv: 'Ironworks. Jackdaw. This wreck has my name on it, and yours too by the look of things. Half of something for no work is my favourite number, love. Halves?',
+    salvO: () => ['Fight them for it', 'Split it fifty-fifty', 'Bluff: this claim is registered. Leave'], salvNo: '',
+    subHi: 'Ironworks. Jackdaw. That is my paper you are flying. Bring it back tidy and we will do this again.', jHi: 'Verdigris, on the ground. Lead on, love — and leave the big pieces in one lump if you can.',
+    jDown: 'Halloran is down — she is out, and already arguing about the salvage. Her lance is still with you.',
+  },
+};
+/* changes of standing with a company during a sortie are settled with the books, like faction standing */
+const rvRel = (k, d, why = '') => { const L = MS.relD[k] || (MS.relD[k] = []), e = L.find(e => e[1] === why); if (e) e[0] += d; else L.push([d, why]); };
+const rivMat = k => RIV[k].mat || (RIV[k].mat = std({ color: RIV[k].paint.pri, metalness: .5, roughness: .6 }));
+/* which of a company's four machines is closest in power to the one you are flying */
+function rivTier(k) { const pw = mechPower(player.cfg), R = RIV[k].roster; let b = 0, bd = 1e9; R.forEach((c, i) => { const d = Math.abs(mechPower(c) - pw); if (d < bd) { bd = d; b = i; } }); return b; }
+/* a lance: the commander ([0]) in that machine, one or two lancemates a class lighter. Flying beside you they are on your team but keep their own tally (shots owned by 4: see targetsOf and killEnt) */
+function rivLance(k, x, z, team, o = {}) {
+  const V = RIV[k], t = rivTier(k), n = o.n ?? (MS.on && MS.c.diff >= 3 ? 2 : 1), L = [];
+  for (let i = 0; i <= n; i++) {
+    const [px, pz] = i ? groundSpot(x, z, 12, 30) : [x, z], e = mkMech(px, pz, { ...V.roster[Math.max(0, t - (i ? 1 : 0))], paint: V.paint }, team, { ai: o.ai || 'hunt', lead: o.lead, yaw: o.yaw, skill: i ? 1.15 : Math.min(1.7, 1.4 + CO.done * .012), hpK: i ? 1.2 : 2, name: i ? `${V.short} ${V.mate} ${i}` : V.call });
+    Object.assign(e, { rv: k, rc: V.rgb, rh: V.col, pacify: !!o.pacify }); L.push(e);
+  }
+  return L;
+}
+const rivDrop = (k, x, z, team, o) => new Promise(res => { dropship(x, z, () => res(rivLance(k, x, z, team, o)), undefined, team, rivMat(k)); });
+const rivWhole = () => P.armor > P.max * .7;
+/* a lance that has turned on you (o.duel: only the commander fights, the rest watch). The commander strikes colours at a third of their armour; what you do next is what every company remembers */
+async function rivFight(ms, k, L, o = {}) {
+  const V = RIV[k], ch = V.ch, T = RIVL[k], boss = L[0], c = ms.c, E = FAC[c.emp].short, F = FAC[c.foe].short, W = Math.round(c.pay * .1 / 1000) * 1000, at = `at ${c.site}`;
+  setTeam(o.duel ? [boss] : L, 1, { pacify: false, alert: true, ai: 'hunt' }); nav('rv', boss, V.short, V.col); note(o.duel ? `You fought ${ch.name} in single combat.` : `You fought ${V.name} ${at}.`);
+  for (const e of L) e.onKill = (x, owner) => { if (owner === 0) rvRel(k, x === boss ? -5 : -2, `shot down their machines ${at}`); };
+  await until(() => boss.dead || boss.hp < boss.max * .36);
+  if (boss.dead) { unnav('rv'); leave(L); say(ms.ops, `${ch.last} has punched out. What is left of ${V.name} is pulling back.`); return note(`${ch.name} was shot down and ejected.`); }
+  for (const e of L) if (!e.dead) Object.assign(e, { team: 2, pacify: true, inv: true, tgt: null, tT: 0, ai: 'hold' });
+  const r = await ask(ch, T.yield(W), T.yieldO(E, F, W), 20, 0), kill = r === T.yieldO(E, F, W).length - 1; for (const e of L) e.inv = false;
+  if (!kill) {
+    unnav('rv'); leave(L); if (r === 1) { bonus(`${ch.last}'s ransom`, W); say(ch, T.paid(W)); rvRel(k, 1, `took a ransom to let them go ${at}`); note(`${V.name} paid ${fmt(W)} to be let go.`); }
+    else { say(ch, T.spared); rvRel(k, k === 'cob' ? 10 : 8, `let them walk when they yielded ${at}`); note(`${V.name} yielded and you let them walk.`); }
+    if (o.duel && o.bet) { bonus(`Wager with ${ch.last}`, o.bet); if (T.paid) say(ch, T.paid(o.bet)); rvRel(k, 4, 'a duel won fairly'); }
+    return;
+  }
+  say(ch, T.doomed); setTeam(L, 1, { pacify: false, alert: true, ai: 'hunt', skill: 1.7 }); nav('rv', boss, V.short, '#ff5a1f'); rvRel(k, k === 'cob' ? -24 : k === 'car' ? -20 : -16, `fired on them after they yielded ${at}`); note(`${V.name} yielded. You gave no quarter.`);
+  for (const q of RIVS) if (q !== k) rvRel(q, -4, `word got round about ${V.name} ${at}`);
+  boss.onKill = () => { unnav('rv'); news(`${YARD.name} shot down ${ch.name} after ${V.name} had struck its colours ${at}.`); };
+}
+
+/* ---- the twist: another company turns up on your contract. Friends offer a hand; otherwise they hold the same paper as you (a race) or the other side's (a fight, unless you can talk your way out of it) ---- */
+TWISTS.rival = async function (ms) {
+  const c = ms.c, k = c.rival; if (!RIV[k] || c.co || (c.type === 'recovery' && c.plot === 'race')) return; const V = RIV[k], ch = V.ch, T = RIVL[k], R = CO.riv[k], E = FAC[c.emp].short, F = FAC[c.foe].short, t0 = rand(40, 75), W = Math.round(c.pay * .14 / 1000) * 1000, at = `at ${c.site}`;
+  await until(() => near(ms.A, 270) || ms.t > t0); await after(rand(3, 9)); if (ms.jam) return;
+  const live = t => !t.dead && t.team === 1, goals = () => (c.type === 'strike' ? ms.navs.filter(n => /^t\d$/.test(n.id)) : c.type === 'headhunt' ? ms.navs.filter(n => n.id === 'a') : []).map(n => n.pos).filter(t => !t.isVector3 && live(t));
+  const mode = R.rel >= 35 && Math.random() < .65 ? 'help' : goals().length ? 'race' : 'opp'; say(ms.ops, mode === 'help' ? `Friendly dropship inbound — ${V.name}. ${ch.last} is asking for you by name.` : T.seen);
+  const [x, z] = mode === 'race' ? groundSpot(ms.A.x, ms.A.z, 80, 120) : groundSpot(P.pos.x, P.pos.z, mode === 'help' ? 60 : 110, mode === 'help' ? 90 : 150), L = await rivDrop(k, x, z, 2, { ai: 'hold', pacify: true }), boss = L[0];
+  nav('rv', boss, V.short, V.col); await after(1.5);
+  if (mode === 'help') {
+    const r = await ask(ch, T.help, ['Form on me — ten percent', 'We have this one'], 18, 1); unnav('rv');
+    if (r === 0) { ms.payK *= .9; setTeam(L, 0, { ai: 'follow', lead: PE, pacify: false }); say(ch, T.helpYes); rvRel(k, 2, `flew beside you ${at}`); note(`${V.name} joined you for a tenth of the fee.`); } else { say(ch, T.helpNo); leave(L); }
+    return;
+  }
+  if (mode === 'race') {
+    let r = await ask(ch, T.race(E), T.raceO(E, F, W), 20, 0), bet = 0; const tg = goals(), n = tg.length || 1;
+    if (r === 1 && k === 'car') { bet = W; say(ch, T.bet(W)); note(`You bet ${ch.last} ${fmt(W)} that you would finish first.`); r = 0; }
+    else if (r === 1) { ms.payK *= .6; setTeam(L, 0, { ai: 'follow', lead: PE, pacify: false }); unnav('rv'); say(ch, T.splitOk); rvRel(k, 3, `shared the work ${at}`); return note(`You split the ${c.site} contract with ${V.name}.`); }
+    else if (r === 2) {
+      if (k === 'car') { say(ch, T.offNo); rvRel(k, -3, `told them to leave ${at}`); return rivFight(ms, k, L); }
+      if (k === 'cob' ? R.rel >= 15 : rivWhole()) { say(ch, T.offOk); unnav('rv'); leave(L); rvRel(k, -2, `made them give up the ${c.site} contract`); return note(`${V.name} withdrew when you told them to.`); }
+      say(ch, T.offNo); rvRel(k, -2, `told them to leave ${at}`);
+    } else say(ch, T.raceGo);
+    /* the race: they go for the same objective, and whatever they take the client does not pay you for */
+    say(ms.hnd, 'Two crews on one fee, mercenary. I pay for what you destroy. Not for what they do.'); setTeam(L, 0, { ai: 'hunt', pacify: false, alert: true }); note(`You raced ${V.name} for the ${c.site} contract.`);
+    let mine = 0, theirs = 0, on = true; const seen = new Set();
+    FD.tick.push(() => {
+      if (ms.over || !on) return false;
+      for (const t of tg) if (!seen.has(t) && !live(t)) { seen.add(t); if (!t.dead) continue; if (t.by === 4) { theirs++; ms.payK *= c.type === 'strike' ? 1 - .6 / n : .5; msg(`${V.short} CLAIMS ${c.type === 'strike' ? 'A TARGET' : 'THE KILL'}`, 3); } else mine++; }
+      for (const e of L) if (!e.dead && (!e.focus || !live(e.focus))) e.focus = tg.filter(live).sort((a, b) => a.pos.distanceTo(e.pos) - b.pos.distanceTo(e.pos))[0] || null;
+      return true;
+    });
+    await until(() => !tg.some(live) || !alive(L)); on = false; unnav('rv'); const any = mine + theirs > 0, won = mine >= theirs;
+    if (!alive(L)) return note(`${V.name} lost their lance to ${F} during the race.`);
+    if (theirs) note(`${V.name} took ${theirs} of ${n} ${c.type === 'strike' ? 'targets' : 'kills'} ahead of you.`);
+    if (bet && any) { bonus(`Wager with ${ch.last}`, won ? bet : -bet); rvRel(k, won ? 4 : 2, 'a wager honoured'); } else if (!bet) rvRel(k, 1, `a clean race ${at}`);
+    if (!boss.dead && any) say(ch, won ? T.lost : T.won); leave(L); return;
+  }
+  /* hired by the other side */
+  const price = Math.round(c.pay * .16 / 1000) * 1000, r = await ask(ch, T.opp(E, F), T.oppO(E, F, k === 'ver' ? price : W), 20, 0), past = R.rel >= { cob: 10, car: 25, ver: 20 }[k];
+  if (r === 2 && past) { say(ch, T.pastOk); unnav('rv'); leave(L); rvRel(k, -2, `stood down for you ${at}`); return note(`${V.name} stood down rather than fight you.`); }
+  if (r === 1 && k === 'ver' && CO.cb >= price) { bonus(`Paid off ${V.name}`, -price); say(ch, T.buyOk(F)); unnav('rv'); leave(L); rvRel(k, 2, `did business ${at}`); return note(`You paid ${V.name} ${fmt(price)} to go home.`); }
+  if (r === 1 && k === 'car') { say(ch, T.duel(W)); return rivFight(ms, k, L, { duel: true, bet: W }); }
+  if (r === 1 && k === 'cob') rvRel(k, -4, `tried to buy them off ${at}`);
+  say(ch, r === 2 ? T.pastNo : r === 1 ? T.buyNo : T.fight); return rivFight(ms, k, L);
+};
+/* recovery, plot 'race': another company has filed for the same wreck and got there first */
+async function rivSalvage(ms) {
+  const c = ms.c, A = ms.A, k = RIV[c.rival] ? c.rival : rivPick(), V = RIV[k], ch = V.ch, T = RIVL[k], R = CO.riv[k], E = FAC[c.emp].short, F = FAC[c.foe].short, W = Math.round(c.pay * .14 / 1000) * 1000, at = `at ${c.site}`;
+  const L = rivLance(k, ...groundSpot(A.x, A.z, 30, 55), 2, { ai: 'guard', pacify: true }); await until(() => near(A, 200)); nav('rv', L[0], V.short, V.col);
+  const r = await ask(ch, T.salv, T.salvO(E, F, W), 18, 1), ally = () => { ms.payK *= .5; unnav('rv'); setTeam(L, 0, { ai: 'follow', lead: PE, pacify: false }); rvRel(k, 3, `shared the salvage ${at}`); note(`You split the salvage with ${V.name}.`); };
+  if (r === 1 && k !== 'car') { say(ch, T.splitOk); return ally(); }
+  if (r === 2 && k === 'cob') { if (R.rel >= 15) { say(ch, T.offOk); unnav('rv'); leave(L); rvRel(k, -2, `gave up their salvage claim ${at}`); return note(`${V.name} gave up the claim for old times’ sake.`); } say(ch, T.salvNo); return ally(); }
+  if (r === 2 && k === 'ver' && rivWhole()) { say(ch, T.offOk); unnav('rv'); leave(L); rvRel(k, -2, `bluffed off their claim ${at}`); return note(`You bluffed ${V.name} off the claim.`); }
+  if (r === 2 && k === 'car') { say(ch, T.duel(W)); rivFight(ms, k, L, { duel: true, bet: W }); return; }
+  say(ch, r === 1 ? T.salvNo : r === 2 ? T.offNo : T.fight); rivFight(ms, k, L);
+}
+/* a joint operation: their lance deploys with you and follows your lead. Somewhere in the middle, each commander is true to type */
+async function rivJoint(ms) {
+  const c = ms.c, k = c.co, V = RIV[k], ch = V.ch, T = RIVL[k], E = FAC[c.emp].short, L = rivLance(k, P.pos.x - 16, P.pos.z + 10, 0, { ai: 'follow', lead: PE, yaw: P.yaw, n: c.diff >= 4 ? 2 : 1 }), boss = L[0], at = `at ${c.site}`; ms.v.joint = L;
+  boss.onKill = () => { say(ms.ops, T.jDown); note(`${ch.name} was shot down flying beside you.`); };
+  await after(5); say(ch, T.jHi); await after(rand(60, 100)); await until(() => !FD.t0.some(e => e.team === 1 && e.kind !== 'struct' && e.pos.distanceTo(P.pos) < 150) || ms.t > 200); if (boss.dead) return;
+  if (k === 'cob') {
+    const r = await ask(ch, `Ironworks. Two of their crews have ejected in front of my guns and are walking out with their hands up. ${E} wants no survivors. I intend to let them go — and I would like your word that we saw nothing.`, ['You have my word', `No. ${E} hears about this`], 20, 0);
+    if (r === 0) { say(ch, 'Thank you. That is the kind of thing I remember.'); rvRel(k, 6, `kept quiet about the prisoners ${at}`); rep(c.foe, 2); note(`${ch.last} let enemy crews go. You said nothing.`); }
+    else { say(ch, 'Then we understand each other. I am sorry for it.'); rvRel(k, -10, `reported her to ${E}`); rep(c.emp, 3); bonus(`${E} informant’s fee`, 8000); note(`You reported ${ch.last} to ${E} for sparing prisoners.`); }
+  } else if (k === 'car') {
+    const amt = 12000, r = await ask(ch, `Ironworks! A little side bet, to keep the band awake. ${fmt(amt)} to whichever of us drops more of them between now and the dropship. Are you in?`, ['You are on', 'I do not gamble on a contract'], 20, 1);
+    if (r === 0) { ms.v.bet = { k, p0: P.kills, r0: ms.v.rvk || 0, amt }; say(ch, 'Marvellous! Counting from... now.'); note(`You took ${ch.last}'s bet on the kill count.`); } else { say(ch, 'How very dull of you.'); rvRel(k, -2, 'turned down a wager'); }
+  } else {
+    const amt = 14000, r = await ask(ch, `Ironworks. Quiet word. One of these wrecks was a paymaster’s carrier. The strongbox is whole, and it is on nobody’s manifest. Halves — and ${E} never hears of it?`, ['Halves. I saw nothing', `It belongs to ${E}. Report it`, 'All of it, or I report you'], 20, 0);
+    if (r === 0) { bonus('Off the manifest', amt); ms.v.graft = amt; say(ch, 'Knew I liked you.'); rvRel(k, 5, `went halves on a strongbox ${at}`); note(`You and ${ch.last} split a strongbox that was on nobody's manifest.`); }
+    else if (r === 1) { bonus(`${E} finder’s fee`, 5000); rep(c.emp, 4); say(ch, 'Honest. How disappointing.'); rvRel(k, -9, `reported her strongbox to ${E}`); note(`You reported the strongbox to ${E}.`); }
+    else if (Math.random() < .5) { bonus('Off the manifest — all of it', amt * 2); ms.v.graft = amt * 2; say(ch, '...You are a worse thief than I am. Take it.'); rvRel(k, -12, `robbed her of a strongbox ${at}`); note(`You took the whole strongbox from ${ch.last}.`); }
+    else { say(ch, 'Report away, love. Who do you think they will believe — the one holding the box, or the one who is not?'); rvRel(k, -6, `tried to rob her ${at}`); }
+  }
+}
+/* the books: wagers, side deals, shares, and what the sortie did to your standing with any company involved */
+function rivSettle(c, ok, D, add, base) {
+  const v = MS.v;
+  if (v.bet) { const b = v.bet, mine = P.kills - b.p0, theirs = (v.rvk || 0) - b.r0; if (mine !== theirs) add(`Wager with ${RIV[b.k].name} — ${mine} kills to ${theirs}`, mine > theirs ? b.amt : -b.amt); else D.log.push(`The wager with ${RIV[b.k].name} came out even at ${mine} apiece. No money moved.`); rvRel(b.k, mine > theirs ? 3 : 2, 'a wager honoured'); }
+  if (v.graft && ok && Math.random() < .33) { add('Clawback — unlisted salvage', -v.graft); rep(c.emp, -6); D.log.push(`${FAC[c.emp].short} found out about the strongbox.`); }
+  if (!c.co || !RIV[c.co]) return; const V = RIV[c.co], at = `at ${c.site}`;
+  if (c.cok === 'joint') { if (ok && c.share) add(`${V.name}'s ${Math.round(c.share * 100)}% share`, -Math.max(0, base) * c.share); rvRel(c.co, ok ? 5 + c.diff : MS.abort ? -8 : -4, ok ? `fought beside them ${at}` : `the joint operation ${at} failed`); }
+  else if (ok && MS.payer !== c.emp) rvRel(c.co, -14, `sold out their client ${at}`);
+  else rvRel(c.co, ok ? 7 + c.diff : MS.abort ? -14 : -10, ok ? `flew their subcontract ${at}` : MS.abort ? `abandoned their subcontract ${at}` : `failed their subcontract ${at}`);
 }
 boardApply(BOOT);
 
@@ -3402,7 +3951,7 @@ function startField() {
 async function toHangar() {
   if (mode !== 'field' || P.leaving) return; P.leaving = true; mapClose(false); if (document.pointerLockElement) document.exitPointerLock(); locked = false; $('pause').classList.add('hid');
   if (MS.on && !MS.over) { MS.abort = true; endMission(false, 'You withdrew from the contract area.'); }
-  await tween(.7, fade); const D = MS.on ? settle() : null; MS.on = false; commQ.length = 0; commCur = null; $('comm').classList.add('hid'); clearField(); mode = 'hangar'; player.run = 1; player.gait.sk = 1; soft = false;
+  await tween(.7, fade); const D = MS.on ? settle() : null; MS.on = false; commReset(); clearField(); mode = 'hangar'; player.run = 1; player.gait.sk = 1; soft = false;
   HG.turn.add(player.root); HG.turn.rotation.y = 0; player.root.position.set(0, MECH_Y, 0); player.root.rotation.set(0, 0, 0); player.twist = player.pitch = 0; player.gait.amt = player.gait.turn = 0; player.setJets(false); player.slot.head.visible = true; player.onStep = null;
   setDoor(0); HG.lift.position.y = .1; orb.cine = false; orb.idle = 0; setGang(1); busy = false;
   $('fieldUI').classList.add('hid'); $('hangarUI').classList.remove('hid'); for (const id of ['panelL', 'panelR', 'hint', 'status']) $(id).classList.remove('hid');
@@ -3817,7 +4366,7 @@ Object.assign(Human.prototype, {
       if ((this.scT -= dt) < 0) { this.scT = rand(.5, 2.4); this.scY = rand(-.14, .14); this.scP = rand(-.07, .07); }
       this.eY = damp(this.eY || 0, lk ? eyY : this.scY, 22, dt); this.eP = damp(this.eP || 0, lk ? eyP : this.scP, 22, dt);
       for (const E of this.eye) { E.pv.rotation.set(this.eP, this.eY, 0); E.lp.rotation.x = lerp(-.34 + this.eP * .7, 1.02, lid); }
-      const m = this.speak ? Math.max(0, Math.sin(t * 13.1) * .6 + Math.sin(t * 7.3 + 1) * .5) : 0; this.mo = damp(this.mo || 0, Math.max(m, this.yawn * 1.6), 26, dt);
+      const m = !this.speak ? 0 : vox.busy() ? Math.min(1.1, vox.level() * 1.7) : Math.max(0, Math.sin(t * 13.1) * .6 + Math.sin(t * 7.3 + 1) * .5); this.mo = damp(this.mo || 0, Math.max(m, this.yawn * 1.6), 26, dt);
       this.mouth.scale.set(1 - this.mo * .12, 1 + this.mo * 2.2, 1); this.mouth.position.y = this.mouthP.y - this.mo * .002 * this.he;
       this.brow.position.y = this.browY + (this.speak ? .0028 * Math.max(0, Math.sin(t * 1.9 + this.L.seed)) : 0) * this.he + this.yawn * .002 + (lid > .5 ? -.0008 : 0);
     }
@@ -4018,8 +4567,9 @@ pilotsApply(BOOT);
   const wc = document.createElement('canvas'); wc.width = 1024; wc.height = 360; const wg = wc.getContext('2d'), wt = new THREE.CanvasTexture(wc); wt.colorSpace = THREE.SRGBColorSpace;
   const wm = new THREE.Mesh(new THREE.PlaneGeometry(10.2, 3.6), new THREE.MeshBasicMaterial({ map: wt })); wm.material.color.setScalar(1.35); wm.position.set(0, 4.3, D / 2 - .05); wm.rotation.y = PI; sc.add(wm); box(sc, dk, 10.8, 4.1, .2, 0, 4.3, D / 2 + .08);
   HQ.drawWall = () => {
-    const g = wg; g.fillStyle = '#05090c'; g.fillRect(0, 0, 1024, 360); g.fillStyle = '#ffb21a'; g.font = 'bold 26px Menlo,monospace'; g.fillText('FACTION STANDING', 24, 40); g.fillText('SECTOR WIRE', 420, 40); g.fillRect(24, 52, 976, 2); drawLogo(g, 978, 26, 21); g.textAlign = 'right'; g.fillStyle = '#e6dfcf'; g.fillText(YARD.name, 946, 40, 300); g.textAlign = 'left';
-    EMPS.forEach((f, i) => { const y = 92 + i * 52, r = CO.rep[f]; g.fillStyle = FAC[f].col; g.font = '20px Menlo,monospace'; g.fillText(FAC[f].short, 24, y); g.fillStyle = '#12303a'; g.fillRect(180, y - 16, 200, 14); g.fillStyle = r < 0 ? '#ff5a1f' : '#8dff6a'; g.fillRect(280, y - 16, r, 14); g.fillStyle = '#fff'; g.fillRect(279, y - 20, 2, 22); });
+    const g = wg; g.fillStyle = '#05090c'; g.fillRect(0, 0, 1024, 360); g.fillStyle = '#ffb21a'; g.font = 'bold 26px Menlo,monospace'; g.fillText('STANDING', 24, 40); g.fillText('SECTOR WIRE', 420, 40); g.fillRect(24, 52, 976, 2); drawLogo(g, 978, 26, 21); g.textAlign = 'right'; g.fillStyle = '#e6dfcf'; g.fillText(YARD.name, 946, 40, 300); g.textAlign = 'left';
+    [...EMPS.map(f => [FAC[f].short, FAC[f].col, CO.rep[f], 0]), ...RIVS.map(k => [RIV[k].short, RIV[k].col, CO.riv[k].rel, 1])].forEach(([n, col, r, co], i) => { const y = 86 + i * 33 + co * 13; g.fillStyle = col; g.font = '19px Menlo,monospace'; g.fillText(n, 24, y); g.fillStyle = '#12303a'; g.fillRect(180, y - 14, 200, 12); g.fillStyle = r < 0 ? '#ff5a1f' : co ? col : '#8dff6a'; g.fillRect(280, y - 14, r, 12); g.fillStyle = '#fff'; g.fillRect(279, y - 17, 2, 18); });
+    g.fillStyle = 'rgba(255,178,26,.4)'; g.fillRect(24, 240, 356, 1);
     g.font = '17px Menlo,monospace'; CO.news.slice(0, 8).forEach((s, i) => { g.fillStyle = i ? '#9fb7bd' : '#ffffff'; let y = 86 + i * 34; g.fillText(s.length > 58 ? s.slice(0, 57) + '…' : s, 420, y); }); wt.needsUpdate = true;
   };
   /* stations */
@@ -4114,26 +4664,26 @@ let dlgCur = null;
 function dlg(who, text, opts, person) {
   dlgCur = { who, text, opts, t: 0 }; drawFace($('dlgFace'), who); $('dlgWho').textContent = `${who.name} · ${who.role}`; $('dlgWho').style.color = who.col; $('dlg').classList.remove('hid'); $('dlgOpts').innerHTML = '';
   opts.forEach(([label, fn, dis], i) => { const b = document.createElement('button'); b.innerHTML = `<b>${i + 1}</b>${label}`; b.disabled = !!dis; b.onclick = () => { sfx.play('ui'); fn(); }; $('dlgOpts').appendChild(b); });
-  sfx.play('comm'); if (person) { focusOn(person); if (person.cam) hq.focus.pos.set(...person.cam); }
+  sfx.play('comm'); vox.say(who, text, mode === 'hq' && HQ.contact && HQ.contact.ch.seed === who.seed ? 'holo' : undefined); if (person) { focusOn(person); if (person.cam) hq.focus.pos.set(...person.cam); }
 }
-function dlgClose() { dlgCur = null; $('dlg').classList.add('hid'); focusOn(null); removeContact(); }
+function dlgClose() { dlgCur = null; vox.stop(); $('dlg').classList.add('hid'); focusOn(null); removeContact(); }
 const unknown = c => ['plot', ...c.twists].filter(k => !c.intel.some(i => i.k === k));
-const hintOf = (c, k) => HINT[k === 'plot' ? `${c.type}.${c.plot}` : k];
+const hintOf = (c, k) => k === 'rival' && RIV[c.rival] ? `${RIV[c.rival].name} has taken an interest in this one. Expect ${RIV[c.rival].ch.last}'s lance on the ground — and not necessarily on our side.` : k === 'plot' && c.type === 'recovery' && c.plot === 'race' && RIV[c.rival] ? `${RIV[c.rival].name} has filed for the same salvage.` : HINT[k === 'plot' ? `${c.type}.${c.plot}` : k];
 const learn = (c, k, src, s) => { c.intel.push({ k, s: s || hintOf(c, k), src }); CO.dirty = true; };
 const repWord = r => r > 40 ? 'trusted' : r > 15 ? 'favoured' : r > -15 ? 'neutral' : r > -40 ? 'distrusted' : 'hostile';
 const spend = n => { if (CO.cb < n) return false; CO.cb -= n; CO.dirty = true; saveCO(); return true; };
-function accept(c) { if (CO.active && CO.active !== c) { CO.rep[CO.active.emp] = clamp(CO.rep[CO.active.emp] - 3, -100, 100); news(`${YARD.name} walked away from the ${FAC[CO.active.emp].short} job at ${CO.active.site}.`); } CO.active = CO.sel = c; c.upd = ''; news(`${YARD.name} signed with ${FAC[c.emp].short}: ${TYPES[c.type].name.toLowerCase()} at ${c.site}.`); sfx.play('ok'); }
+function accept(c) { if (CO.active && CO.active !== c) { quitCost(CO.active); news(`${YARD.name} walked away from the ${FAC[CO.active.emp].short} job at ${CO.active.site}.`); } CO.active = CO.sel = c; c.upd = ''; news(`${YARD.name} signed with ${FAC[c.emp].short}: ${TYPES[c.type].name.toLowerCase()} at ${c.site}.`); sfx.play('ok'); }
 
 function talkXO() {
   const c = CO.sel, x = CREW.xo, back = [['Something else', talkXO], ['That is all', dlgClose]], st = player.stats;
   const read = () => { const B = BIOMES[c.biome], risk = c.diff * 24 - st.armor * .06 - st.fire * .13 - (CO.wing ? 18 : 0);
-    return `${TYPES[c.type].name} for ${FAC[c.emp].name}, against ${FAC[c.foe].short}. ${B.name.charAt(0) + B.name.slice(1).toLowerCase()} theatre. ${B.note} Their contact, ${c.contact.name}, is ${PERSONA[c.persona].n}. ` + (risk > 38 ? 'In the machine on the turntable I would call that a hard fight. Think about heavier armor, or hire a second pilot.' : risk > 8 ? 'Inside our weight class — if nothing goes sideways. Something usually does.' : 'We outgun this one comfortably.') + (c.twists.includes('renege') && c.seed % 3 ? ` One more thing: ${FAC[c.emp].short} has been slow to pay lately. Talk to their contact before you launch.` : ''); };
+    return `${TYPES[c.type].name} for ${FAC[c.emp].name}, against ${FAC[c.foe].short}. ${B.name.charAt(0) + B.name.slice(1).toLowerCase()} theatre. ${B.note} Their contact, ${c.contact.name}, is ${PERSONA[c.persona].n}. ` + (c.co && RIV[c.co] ? (c.cok === 'sub' ? `The paper belongs to ${RIV[c.co].name}; we would be flying it for them, and it is them we answer to. ` : `${RIV[c.co].name} would deploy beside us. `) : '') + (risk > 38 ? 'In the machine on the turntable I would call that a hard fight. Think about heavier armor, or hire a second pilot.' : risk > 8 ? 'Inside our weight class — if nothing goes sideways. Something usually does.' : 'We outgun this one comfortably.') + (c.twists.includes('renege') && c.seed % 3 ? ` One more thing: ${FAC[c.emp].short} has been slow to pay lately. Talk to their contact before you launch.` : ''); };
   const best = [...EMPS].sort((a, b) => CO.rep[b] - CO.rep[a]);
   dlg(x, pick(['Commander on deck. What do you need?', 'The board is live. Six offers, and none of them clean.', 'Good timing. Offers move fast out here — and so do the people making them.']), [
     ['What is the word in the sector?', () => dlg(x, CO.news.slice(0, 5).join('\n') || 'Quiet. Which worries me.', back)],
     [c ? `Your read on the ${c.site} job` : 'Your read on a contract (select one first)', () => dlg(x, read(), back), !c],
-    ['Company status', () => dlg(x, `Funds ${fmt(CO.cb)}. ${CO.done} contracts completed, ${CO.fails} failed. ${FAC[best[0]].short} think best of us (${repWord(CO.rep[best[0]])}); ${FAC[best[4]].short} least (${repWord(CO.rep[best[4]])}).${CO.active ? ` We are committed to ${CO.active.site} for ${FAC[CO.active.emp].short}.` : ' Nothing signed yet. Without a contract, a launch is just the proving grounds.'}${CO.wing ? ` ${CO.wing.ch.first} flies with us next drop.` : ''}`, back)],
-    ['How does this work?', () => dlg(x, 'Pick an offer on the board or a marker on the table. Open a channel to the client to bargain — fee, salvage, support — or just accept. Then go down to the bay, fit the mech for the theatre, and launch. Mira sells intelligence, Dutch runs the stores and the market, and the two in the corner fly for money. Downstairs in the Last Round there are more pilots for hire, and people who talk about the jobs on this board — some of it is even true. Whatever the recovery crews pull off the field, the salvage rights in the contract decide how much of it we keep. No brief ever tells the whole story.', back)],
+    ['Company status', () => dlg(x, `Funds ${fmt(CO.cb)}. ${CO.done} contracts completed, ${CO.fails} failed. ${FAC[best[0]].short} think best of us (${repWord(CO.rep[best[0]])}); ${FAC[best[4]].short} least (${repWord(CO.rep[best[4]])}). Of the other companies: ${RIVS.map(k => `${RIV[k].name}, ${relWord(CO.riv[k].rel)}`).join('; ')}.${CO.active ? ` We are committed to ${CO.active.site} for ${FAC[CO.active.emp].short}.` : ' Nothing signed yet. Without a contract, a launch is just the proving grounds.'}${CO.wing ? ` ${CO.wing.ch.first} flies with us next drop.` : ''}`, back)],
+    ['How does this work?', () => dlg(x, 'Pick an offer on the board or a marker on the table. Open a channel to the client to bargain — fee, salvage, support — or just accept. Then go down to the bay, fit the mech for the theatre, and launch. Mira sells intelligence, Dutch runs the stores and the market, and the two in the corner fly for money. Downstairs in the Last Round there are more pilots for hire, and people who talk about the jobs on this board — some of it is even true. Three other companies fly this sector — Cobalt Lance, the Carnival and Verdigris Salvage. Sometimes they want the same job we do, sometimes they have work for us; the STANDING tab on the board shows where we are with them and with the factions, and why. Whatever the recovery crews pull off the field, the salvage rights in the contract decide how much of it we keep. No brief ever tells the whole story.', back)],
     ['Disband and start a new company', () => dlg(x, 'That wipes the ledger, our standing with every faction, the stores, and every machine in the bays. A clean slate and one light mech. Are you sure?', [['Yes — start over', () => { dlgClose(); newGame(); }], ['No. Forget I asked', talkXO]])],
     ['That is all', dlgClose]], HQ.P.xo);
 }
@@ -4141,8 +4691,8 @@ function talkIntel() {
   const c = CO.sel, s = CREW.intel, cost = c ? 5000 + c.diff * 2500 : 0, left = c ? unknown(c) : [], back = [['Something else', talkIntel], ['Thanks, Mira', dlgClose]];
   dlg(s, pick(['I have six files open and I trust none of them. Which one are we talking about?', 'Everything on that board was written by someone who wants something. Ask.', 'Signals are noisy today. Somebody is moving a lot of metal.']), [
     [c ? (left.length ? `Buy confirmed intel on ${c.site} (${fmt(cost)})` : `Nothing more to learn about ${c.site}`) : 'Buy intel (select a contract first)', () => { if (!spend(cost)) return dlg(s, 'My sources do not work on credit, and neither do I.', back); const k = pick(left); learn(c, k, 'sato'); dlg(s, `Confirmed, and it cost me a favour: ${hintOf(c, k)}`, back); }, !c || !left.length],
-    ['Any rumours?', () => { const L = CO.board.filter(o => !o.rum && o.twists.some(t => !o.intel.some(i => i.k === t))), o = L.length && Math.random() < .7 ? pick(L) : null; if (!o) return dlg(s, pick(['Nothing I would stake a mech on.', 'Only that everyone is hiring and nobody is paying on time.', 'The Red Maw are bolder this season. That is all I have.']), back); o.rum = true; const k = pick(o.twists.filter(t => !o.intel.some(i => i.k === t))); learn(o, k, 'sato'); dlg(s, `About ${o.site}, for free: ${HINT[k]}`, back); }],
-    ['How do the factions see us?', () => dlg(s, EMPS.map(f => `${FAC[f].short}: ${repWord(CO.rep[f])} (${CO.rep[f] > 0 ? '+' : ''}${Math.round(CO.rep[f])})`).join('\n') + '\nGood standing means better fees and softer negotiators.', back)],
+    ['Any rumours?', () => { const G = barGossip('intel'); if (G.length && Math.random() < .3) { const [rk, f] = pick(G); rivKnow(rk, f[0]); return dlg(s, `About ${RIV[rk].name}, for what it is worth: ${f[1]} I have put it in their file.`, back); } const L = CO.board.filter(o => !o.rum && o.twists.some(t => !o.intel.some(i => i.k === t))), o = L.length && Math.random() < .7 ? pick(L) : null; if (!o) return dlg(s, pick(['Nothing I would stake a mech on.', 'Only that everyone is hiring and nobody is paying on time.', 'The Red Maw are bolder this season. That is all I have.']), back); o.rum = true; const k = pick(o.twists.filter(t => !o.intel.some(i => i.k === t))); learn(o, k, 'sato'); dlg(s, `About ${o.site}, for free: ${hintOf(o, k)}`, back); }],
+    ['How do the factions and the other companies see us?', () => dlg(s, EMPS.map(f => `${FAC[f].short}: ${repWord(CO.rep[f])} (${sdNum(CO.rep[f])})`).join(' · ') + '\n' + RIVS.map(k => `${RIV[k].name}: ${relWord(CO.riv[k].rel)} (${sdNum(CO.riv[k].rel)})`).join(' · ') + '\nGood standing with a faction means better fees and softer negotiators. With a company it decides whether they talk or shoot when we meet them. The STANDING tab on the board has the detail, and the reasons.', back)],
     ['Thanks, Mira', dlgClose]], HQ.P.intel);
 }
 function talkChief() {
@@ -4170,10 +4720,10 @@ function talkPilot(i) {
 }
 /* negotiation: every push spends the contact's patience; run out and the offer is gone */
 function talkContact(c) {
-  if (!c || !CO.board.includes(c)) return; const ch = c.contact, Q = PERSONA[c.persona], E = FAC[c.emp].short; showContact(ch);
+  if (!c || !CO.board.includes(c)) return; const ch = dealer(c), sub = ch !== c.contact, Q = PERSONA[c.persona], E = sub ? RIV[c.co].short : FAC[c.emp].short; showContact(ch);
   const menu = line => {
-    if (c.pat <= 0) { dropContract(c); CO.rep[c.emp] = clamp(CO.rep[c.emp] - 2, -100, 100); news(`${E} broke off talks over ${c.site}.`); return dlg(ch, Q.bye, [['Close channel', dlgClose]]); }
-    const odds = k => clamp(k + CO.rep[c.emp] / 150 + CO.done * .02 - c.pushes * .17, .05, .9), act = CO.active === c;
+    if (c.pat <= 0) { dropContract(c); sub ? rivRel(c.co, -3, `talks over ${c.site} broke down`) : repAdd(c.emp, -2, `talks over ${c.site} broke down`); news(`${E} broke off talks over ${c.site}.`); return dlg(ch, Q.bye, [['Close channel', dlgClose]]); }
+    const odds = k => clamp(k + (sub ? CO.riv[c.co].rel : CO.rep[c.emp]) / 150 + CO.done * .02 - c.pushes * .17, .05, .9), act = CO.active === c;
     const push = (k, okFn, cost) => () => { c.pushes++; if (Math.random() < odds(k)) { okFn(); c.pat -= cost; CO.dirty = true; menu(Q.yes); } else { c.pat -= cost * 1.6; CO.dirty = true; menu(Q.no); } };
     const n = clamp(Math.ceil(c.pat / 18), 0, 5); dlg({ ...ch, role: `${ch.role} · PATIENCE ${'▮'.repeat(n)}${'▯'.repeat(5 - n)}` }, line, [
       [`Push for a higher fee (now ${fmt(c.pay)})`, push(Q.pay, () => { c.pay = Math.round(c.pay * 1.12 / 1000) * 1000; }, 12)],
@@ -4188,15 +4738,15 @@ function talkContact(c) {
       [act ? 'Contract already accepted' : 'Accept the contract', () => { accept(c); CO.dirty = true; dlg(ch, pick(['Then we have an agreement. Coordinates are on your board.', 'Good. Do not be late.', "Signed. Bring me my money's worth."]), [['Close channel', dlgClose]]); }, act],
       ['I will think about it', dlgClose]], null);
   };
-  menu(c.talked ? 'You again. Have you decided?' : `${ch.name}, ${FAC[c.emp].name}. ${Q.hi}`); c.talked = true;
+  menu(c.talked ? 'You again. Have you decided?' : sub ? Q.hi : `${ch.name}, ${FAC[c.emp].name}. ${Q.hi}`); c.talked = true;
 }
 /* after a sortie the XO reads out what happened, then the books — and some clients try to short the invoice */
 function debrief(D) {
   const x = CREW.xo, c = D.c, led = () => D.lines.map(([l, v]) => `${l}: ${fmt(v)}`).join('\n') + `\nNET: ${fmt(D.total)}   ·   FUNDS: ${fmt(CO.cb)}`;
-  const fin = () => dlg(x, `${D.ok ? 'Good work out there.' : 'We live to sign another contract.'} The board shifted while you were gone — look it over.${D.rep.length ? '\n' + D.rep.map(([f, v]) => `${FAC[f].short} standing ${v > 0 ? '+' : ''}${Math.round(v)}`).join(' · ') : ''}`, [['Dismissed', dlgClose]], HQ.P.xo);
+  const fin = () => dlg(x, `${D.ok ? 'Good work out there.' : 'We live to sign another contract.'} The board shifted while you were gone — look it over.${D.rep.length ? '\n' + D.rep.map(([f, v]) => `${FAC[f].short} standing ${v > 0 ? '+' : ''}${Math.round(v)}`).join(' · ') : ''}${D.rel && D.rel.length ? '\n' + RIVS.map(k => [k, D.rel.reduce((s, r) => s + (r[0] === k ? r[1] : 0), 0)]).filter(r => r[1]).map(([k, v]) => `${RIV[k].name} ${v > 0 ? '+' : ''}${v}`).join(' · ') : ''}`, [['Dismissed', dlgClose]], HQ.P.xo);
   const dispute = () => {
     const ch = c.contact, cut = Math.round(D.base * .3); showContact(ch);
-    const res = (paid, line, r) => { if (!paid) { CO.cb -= cut; D.total -= cut; D.lines.push(['Withheld by client', -cut]); } CO.rep[c.emp] = clamp(CO.rep[c.emp] + r, -100, 100); CO.dirty = true; saveCO(); dlg(ch, line, [['Close channel', () => { removeContact(); fin(); }]], null); };
+    const res = (paid, line, r) => { if (!paid) { CO.cb -= cut; D.total -= cut; D.lines.push(['Withheld by client', -cut]); } repAdd(c.emp, r, `the disputed invoice for ${c.site}`); CO.dirty = true; saveCO(); dlg(ch, line, [['Close channel', () => { removeContact(); fin(); }]], null); };
     dlg(ch, `Our accountants have reviewed the engagement. Ammunition overage, collateral, administrative fees. We are remitting seventy percent — ${fmt(cut)} withheld.`, [
       ['Accept the cut', () => res(false, 'A pleasure doing business.', 1)],
       ['Demand payment in full — cite the contract', () => Math.random() < .4 + CO.rep[c.emp] / 120 + (c.talked ? .15 : 0) ? res(true, '...Legal advises me to release the balance. You have your money.', -1) : res(false, 'Then sue us. Seventy percent.', -3)],
@@ -4210,6 +4760,98 @@ function debrief(D) {
   dlg(x, `${D.ok ? 'CONTRACT COMPLETE' : 'CONTRACT FAILED'} — ${c.site}.\n${D.text}${story.length ? '\n\n' + story.map(s => '· ' + s).join('\n') : ''}`, [['Show me the books', () => dlg(x, led(), [['Continue', D.salv ? salv : after]])]], HQ.P.xo);
 }
 
+/* ---- STANDING: the second tab of the board. How each faction and each of the other companies sees us, what that is worth, and why it last moved ---- */
+const HQV = { tab: 'board', sel: 'r.cob' };
+const sdEsc = s => String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+const sdNum = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(Math.round(v));
+const sdPct = x => (x >= 0 ? '+' : '−') + Math.abs(Math.round(x * 100)) + '%';
+/* a meter with zero in the middle: red to the left, the owner's colour to the right */
+const sdBar = (v, col) => `<i class="sdm"><b style="${v < 0 ? `right:50%;width:${-v / 2}%;background:#ff5a1f` : `left:50%;width:${v / 2}%;background:${col || '#8dff6a'}`}"></b></i>`;
+const sdLog = L => L.length ? L.map(([d, v, why]) => `<div class="sdl"><b class="${v < 0 ? 'n' : 'p'}">${sdNum(v)}</b><span>DAY ${d} · ${sdEsc(why)}</span></div>`).join('') : '<p class="nt">Nothing on record yet.</p>';
+const FAC_MEANS = { trusted: 'They ask for us by name. Their liaisons give ground when pushed, and their accountants pay without an argument.', favoured: 'We are on their short list. Better fees than the going rate, and contacts who will listen.', neutral: 'One more hired gun to them. Fees and patience at the going rate.', distrusted: 'They hire us when nobody else is free, pay less for it, and their contacts run out of patience quickly.', hostile: 'They would sooner see us on the wrong end of a contract than sign one. Expect the worst terms on the board.' };
+const RIV_MEANS = { allied: 'They will stand down rather than fight us, lend a lance when they are nearby, and send work our way.', friendly: 'They think well of us. Joint operations and subcontracts come easily, and they talk before they shoot.', wary: 'Competitors. They will take the other side of a contract without a second thought — but they will talk first.', 'bad blood': 'They do not trust us. No favours and no work, and no benefit of the doubt in the field.', feud: 'They will not deal with us at all. Nothing comes from them until that changes — a peace offering is a start.' };
+function renderStand() {
+  const el = $('stand'), row = (id, col, name, sub, v, word, mark) => `<div class="sdr${HQV.sel === id ? ' on' : ''}" data-id="${id}">${mark}<b style="color:${col}">${name}</b><em>${word.toUpperCase()} ${sdNum(v)}</em>${sub ? `<small>${sub}</small>` : ''}${sdBar(v, id[0] === 'r' ? col : '')}</div>`;
+  el.innerHTML = '<div class="sdh">FACTIONS <small>WHO HIRES US</small></div>'
+    + EMPS.map(f => row('f.' + f, FAC[f].col, FAC[f].name, '', CO.rep[f], repWord(CO.rep[f]), `<u style="background:${FAC[f].col}"></u>`)).join('')
+    + `<div class="sdr off"><u style="background:${FAC.maw.col}"></u><b style="color:${FAC.maw.col}">${FAC.maw.name}</b><em>OUTLAWS — NO DEALINGS</em></div>`
+    + '<div class="sdh">MECH COMPANIES <small>WHO ELSE FLIES HERE</small></div>'
+    + RIVS.map(k => row('r.' + k, RIV[k].col, RIV[k].name, RIV[k].ch.name, CO.riv[k].rel, relWord(CO.riv[k].rel), `<canvas width="60" height="60" data-k="${k}"></canvas>`)).join('');
+  el.querySelectorAll('canvas').forEach(cv => drawLogo(cv.getContext('2d'), 30, 30, 27, RIV[cv.dataset.k].logo));
+  el.querySelectorAll('.sdr[data-id]').forEach(d => d.onclick = () => { sfx.play('ui'); HQV.sel = d.dataset.id; CO.dirty = true; });
+}
+function renderStandDetail() {
+  const el = $('detail'), id = HQV.sel, hex = h => '#' + h.toString(16).padStart(6, '0');
+  if (id[0] === 'f' && FAC[id.slice(2)]) {
+    const f = id.slice(2), F = FAC[f], r = CO.rep[f], n = CO.board.filter(c => c.emp === f).length, m = CO.board.filter(c => c.foe === f).length;
+    el.innerHTML = `<h2>STANDING <small>FACTION</small></h2><h3 style="color:${F.col}">${F.name.toUpperCase()}</h3><div class="sub">${repWord(r).toUpperCase()} · ${sdNum(r)} ON A SCALE OF ±100</div>${sdBar(r)}
+<p>${FAC_MEANS[repWord(r)]}</p>
+<div class="kv">FEES THEY OFFER US <b>${sdPct(r / 250)}</b></div><div class="kv">ODDS WHEN WE PUSH THEIR CONTACTS <b>${sdPct(r / 150)}</b></div><div class="kv">ODDS IN A DISPUTED INVOICE <b>${Math.round(clamp(.4 + r / 120, 0, 1) * 100)}%</b></div><div class="kv">ON THE BOARD NOW <b>${n} FOR THEM · ${m} AGAINST</b></div>
+<p class="nt">Standing rises when their contracts are completed and falls when they fail, are abandoned, or we change sides mid-contract. Every job flown against a faction costs a little with it.</p>
+<div class="sdh">WHY IT MOVED <small>LAST ${(CO.hist[f] || []).length || ''}</small></div>${sdLog(CO.hist[f] || [])}`;
+    return;
+  }
+  const k = RIV[id.slice(2)] ? id.slice(2) : RIVS[0], V = RIV[k], R = CO.riv[k], t = rivTier(k), st = mechStats(V.roster[t]), w = relWord(R.rel), facts = V.facts.filter(f => R.know.includes(f[0]));
+  const jobs = CO.board.filter(c => c.co === k || (c.rival === k && c.intel.some(i => i.k === 'rival' || (c.type === 'recovery' && c.plot === 'race' && i.k === 'plot')))).map(c => `${c.co ? (c.cok === 'sub' ? 'SUBCONTRACT' : 'JOINT OP') : 'EXPECTED'} · ${c.site}`);
+  el.innerHTML = `<h2>STANDING <small>MECH COMPANY</small></h2><div class="sdt"><canvas id="sdLogo" width="132" height="132"></canvas><canvas id="sdFace" width="144" height="144"></canvas><div><h3 style="color:${V.col}">${V.name.toUpperCase()}</h3><div class="sub">${V.tag}</div><div class="sdc">${['pri', 'sec', 'acc', 'glow'].map(c => `<u style="background:${hex(V.paint[c])}"></u>`).join('')}</div></div></div>
+<div class="kv">COMMANDER <b>${V.ch.name}</b></div><div class="kv">STANDING <b style="color:${V.col}">${w.toUpperCase()} · ${sdNum(R.rel)}</b></div>${sdBar(R.rel, V.col)}
+<p>${V.blurb}</p><p>${RIV_MEANS[w]}</p>
+<div class="kv">THEY WOULD BRING <b>${V.roster[t].name} · ${st.cls} ${st.tons.toFixed(0)} t</b></div><div class="kv">POWER · THEIRS / OURS <b>${mechPower(V.roster[t])} / ${mechPower(player.cfg)}</b></div><div class="kv">ON THE BOARD <b>${jobs.length ? jobs.join('<br>') : 'NOTHING WE KNOW OF'}</b></div>
+<p class="nt">${V.style} They field whichever of their machines best matches the one on our turntable.</p>
+<div class="sdh">DOSSIER <small>${facts.length} OF ${V.facts.length} ON FILE</small></div>${facts.map(f => `<div class="intel">${f[1]}</div>`).join('')}${facts.length < V.facts.length ? `<p class="nt">${facts.length ? 'There is more to learn.' : 'Nothing on file.'} People in the Last Round talk about the other companies, and Mira hears things.</p>` : ''}
+<div class="sdh">WHY IT MOVED</div>${sdLog(R.log)}
+<div class="row"><button id="sdHail">OPEN CHANNEL — ${V.ch.last.toUpperCase()}</button></div>`;
+  drawLogo($('sdLogo').getContext('2d'), 66, 66, 60, V.logo); drawFace($('sdFace'), V.ch); $('sdHail').onclick = () => { sfx.play('ui'); talkRival(k); };
+}
+/* a channel to another company's commander: where we stand, work they cannot cover, a joint operation on the selected offer, and making amends */
+const RIV_TALK = {
+  cob: {
+    hi: ['Ironworks. It is good to hear from a company that keeps its word. What do you need?', 'Ironworks. Cobalt Lance actual. State your business.', 'Ironworks. I am listening, which is more than you have earned. Be brief.'],
+    stand: { allied: 'Cobalt counts you a friend. I do not use the word lightly.', friendly: 'You have dealt fairly with us. I intend to return it.', wary: 'We are competitors. I bear you no ill will, and I extend you no credit.', 'bad blood': 'You have given me reasons to doubt you. Give me better ones.', feud: 'You are on a short list, Ironworks. I do not forget what was done.' },
+    subYes: (t, E, s) => `I hold a ${t} contract for ${E} at ${s} and cannot staff it. It is on your board now: eighty-five percent of my fee, and my name stays on the paper. Do not embarrass it.`, subNo: 'Nothing I would hand to another company this week.', subCold: 'I do not pass work to companies I cannot vouch for.',
+    jYes: 'Agreed. Thirty percent, and Cobalt flies on your lead. I will hold you to the brief as written.', jRival: 'As it happens, I was offered the other side of that contract. I had not signed. Now I will not. Thirty percent, on your lead.', jNo: 'We have not earned that from each other yet. Ask me again when we have.', jType: 'That is not work for two lances.', jCold: 'Cobalt does not fly beside a company it cannot trust. Mend that first.',
+    gift: 'Reparations, paid to her wounded', giftYes: 'It is not the money. It is that you thought to. Noted, Ironworks.', bye: 'Cobalt out.',
+  },
+  car: {
+    hi: ['Ironworks! My favourite co-stars. To what do I owe the pleasure?', 'Ironworks! Calling the Carnival? You must want something. How delicious.', 'Oh. It is you. I am in the middle of hating you — make it quick.'],
+    stand: { allied: 'Darling, we are a double act. The sector simply has not noticed yet.', friendly: 'I like you! You have timing.', wary: 'You are in the chorus. Do something memorable and we shall see.', 'bad blood': 'You have been a terrible audience.', feud: 'You are the villain of my next three shows. I have written songs about it.' },
+    subYes: (t, E, s) => `I am double-booked, would you believe. There is a ${t} for ${E} at ${s} that I simply cannot fit in. It is yours — eighty-five percent, and do try to make it look good.`, subNo: 'Hand you one of my shows? Not this week. I am using all of them.', subCold: 'Work? For you? I would sooner cancel the tour.',
+    jYes: 'A double bill! Thirty percent and second billing — for you, I will bear it. We open at your signal.', jRival: 'Oh, you sly thing. I was going to turn up there anyway — on the other side. This is better. Thirty percent!', jNo: 'For that? Darling, it is a matinee. Bring me something with a little danger in it.', jType: 'There is no audience for that sort of work.', jCold: 'Share a bill with you? After everything? Absolutely not.',
+    gift: 'A crate of the good stuff, and a public apology', giftYes: 'An apology! In public! Oh, do it again. ...Very well. A little forgiven.', bye: 'Ta!',
+  },
+  ver: {
+    hi: ['Ironworks. Always a pleasure doing business, love. What have you got for me?', 'Jackdaw. If this is about money, keep talking.', 'You have a nerve, calling here. This had better be worth something.'],
+    stand: { allied: 'You pay, you share, and you do not shoot at me. That makes you my favourite, love.', friendly: 'We have done good business. Long may it last.', wary: 'You are a name on a board. Nothing wrong with that.', 'bad blood': 'You have cost me money. I keep a list.', feud: 'Top of the list, you are. In red.' },
+    subYes: (t, E, s) => `Funny you should ask. I have a ${t} for ${E} at ${s} that is more shooting than salvage. Not my sort of thing. It is on your board — eighty-five percent, and I keep the finder’s fee.`, subNo: 'Nothing going spare. I am not a charity, love.', subCold: 'I do not hand paper to people who cost me money.',
+    jYes: 'Thirty percent for following you about and picking up after? Done. Do not expect me to go first.', jRival: 'Ha. I had an offer to be there on the other side. Yours pays better. Thirty percent, done.', jNo: '', jType: 'No salvage in that worth two crews. Pass.', jCold: 'Fly beside you? I would spend the whole job watching my back. No.',
+    gift: 'Money. Just money', giftYes: 'There. Was that so hard? Consider it a start.', bye: 'Mind how you go.',
+  },
+};
+function talkRival(k) {
+  if (!RIV[k]) return; const V = RIV[k], ch = V.ch, R = CO.riv[k], T = RIV_TALK[k], c = CO.sel, cost = 12000, close = [['Close channel', dlgClose]], back = [['Something else', () => talk()], ...close]; showContact(ch);
+  const said = (line, o = back) => dlg(ch, line, o, null);
+  const work = () => {
+    R.ask = now(); if (R.rel < -15) return said(T.subCold); if (CO.board.some(o => o.cok === 'sub')) return said('You already have a subcontract on your board. One at a time.');
+    if (Math.random() > clamp(.45 + R.rel / 90, .15, .95)) return said(T.subNo);
+    let o = pick(CO.board.filter(o => o !== CO.active && !o.co && !o.talked)); if (!o) { o = genContract(); CO.board.push(o); } rivCo(o, k, 'sub'); CO.sel = o; HQV.tab = 'board'; saveCO(); said(T.subYes(TYPES[o.type].name.toLowerCase(), FAC[o.emp].short, o.site));
+  };
+  const joint = () => {
+    if (R.rel < -15) return said(T.jCold); if (!['strike', 'garrison', 'escort', 'headhunt'].includes(c.type)) return said(T.jType);
+    if (!(k === 'cob' ? R.rel >= 10 : k === 'car' ? c.diff >= 3 || R.rel >= 20 : true)) return said(T.jNo);
+    const was = c.rival === k; rivCo(c, k, 'joint', .3); HQV.tab = 'board'; saveCO(); said(was ? T.jRival : T.jYes);
+  };
+  const gift = () => { if (!spend(cost)) return said('Come back when the gesture would not bounce.'); R.gift = now(); rivRel(k, k === 'ver' ? 9 : k === 'car' ? 8 : 7, 'a peace offering'); saveCO(); said(T.giftYes); };
+  const talk = () => {
+    const w = relWord(R.rel), askH = Math.ceil(24 - (now() - R.ask)), giftH = Math.ceil(48 - (now() - R.gift));
+    dlg(ch, T.hi[R.rel > 15 ? 0 : R.rel > -15 ? 1 : 2], [
+      ['Where do we stand?', () => said(T.stand[w] + (R.log.length ? `\n\n(${w.toUpperCase()} ${sdNum(R.rel)} — last change: ${R.log[0][2]}, ${sdNum(R.log[0][1])}.)` : `\n\n(${w.toUpperCase()} ${sdNum(R.rel)}.)`))],
+      [askH > 0 ? `Any work you cannot cover? (asked — try again in ${askH} h)` : 'Any work you cannot cover?', work, askH > 0],
+      [!c ? 'Propose a joint operation (select a contract first)' : c.co ? `The ${c.site} job already involves a company` : c === CO.active ? `Bring them in on the ${c.site} job — 30% of the fee` : `Fly the ${c.site} job together — 30% of the fee`, joint, !c || !!c.co],
+      [R.rel >= 20 ? 'Make amends (nothing to mend)' : giftH > 0 ? `Make amends (too soon — ${giftH} h)` : `Make amends: ${T.gift.toLowerCase()} — ${fmt(cost)}`, gift, R.rel >= 20 || giftH > 0],
+      ['Close channel', dlgClose]], null);
+  };
+  talk();
+}
 /* ---- panels ---- */
 const pipStr = n => '◆'.repeat(n) + '◇'.repeat(5 - n);
 function renderHangarContract() {
@@ -4217,27 +4859,29 @@ function renderHangarContract() {
   deployLabel();
 }
 function renderDetail() {
+  if (HQV.tab === 'stand') return renderStandDetail();
   const c = CO.sel, el = $('detail'); if (!c) { el.innerHTML = '<h2>CONTRACT DETAIL <small>NONE SELECTED</small></h2><p>Select an offer on the board, or a marker on the map table.</p>'; return; }
   const T = TYPES[c.type], B = BIOMES[c.biome], m = B.wx[c.mood] || B.wx[0], h = Math.max(0, c.exp - now()), act = c === CO.active;
   el.innerHTML = `<h2>CONTRACT DETAIL <small>OP. ${c.op}</small></h2><h3>${T.name.toUpperCase()} — ${c.site.toUpperCase()}</h3><div class="sub">${T.desc}</div>
-<div class="kv">CLIENT <b style="color:${FAC[c.emp].col}">${FAC[c.emp].name}</b></div><div class="kv">OPPOSITION <b style="color:${FAC[c.foe].col}">${FAC[c.foe].name}</b></div><div class="kv">THEATRE <b style="color:${B.css}">${B.name} · ${m[0]}</b></div>
+<div class="kv">CLIENT <b style="color:${FAC[c.emp].col}">${FAC[c.emp].name}</b></div>${c.co && RIV[c.co] ? `<div class="kv">${c.cok === 'sub' ? 'PRIME CONTRACTOR' : 'FLYING WITH'} <b style="color:${RIV[c.co].col}">${RIV[c.co].name}${c.share ? ` · ${Math.round(c.share * 100)}% SHARE` : ''}</b></div>` : ''}<div class="kv">OPPOSITION <b style="color:${FAC[c.foe].col}">${FAC[c.foe].name}</b></div><div class="kv">THEATRE <b style="color:${B.css}">${B.name} · ${m[0]}</b></div>
 <div class="kv">THREAT <b class="pips">${pipStr(c.diff)}</b></div><div class="kv">FEE <b>${fmt(c.pay)}</b></div><div class="kv">SALVAGE <b>${c.salv}%</b></div><div class="kv">SUPPORT <b>${c.support ? 'REPAIR DROP' : 'NONE'}</b></div><div class="kv">${act ? 'STATUS' : 'OFFER CLOSES IN'} <b>${act ? 'ACCEPTED' : h.toFixed(0) + ' h'}</b></div>
 <p>${c.brief}</p><p class="nt">${B.note}</p>${c.intel.map(i => `<div class="intel${i.src === 'contact' || i.src === 'bar' ? ' q' : ''}">${i.src === 'contact' ? 'CLIENT CLAIMS' : i.src === 'bar' ? 'BAR TALK' : i.src === 'terms' ? 'TERMS' : 'CONFIRMED'} — ${i.s}</div>`).join('')}
-<div class="row"><button id="dNeg">OPEN CHANNEL — ${c.contact.name.toUpperCase()}</button></div><div class="row"><button id="dAcc">${act ? 'ABANDON CONTRACT' : 'ACCEPT AS OFFERED'}</button><button id="dGo">TO THE MECH BAY ▶</button></div>`;
+<div class="row"><button id="dNeg">OPEN CHANNEL — ${dealer(c).name.toUpperCase()}</button></div><div class="row"><button id="dAcc">${act ? 'ABANDON CONTRACT' : 'ACCEPT AS OFFERED'}</button><button id="dGo">TO THE MECH BAY ▶</button></div>`;
   $('dNeg').onclick = () => { sfx.play('ui'); talkContact(c); }; $('dGo').onclick = toBay;
-  $('dAcc').onclick = () => { if (act) { CO.active = null; CO.rep[c.emp] = clamp(CO.rep[c.emp] - 3, -100, 100); news(`${YARD.name} walked away from the ${FAC[c.emp].short} job at ${c.site}.`); sfx.play('deny'); } else accept(c); CO.dirty = true; };
+  $('dAcc').onclick = () => { if (act) { CO.active = null; quitCost(c); news(`${YARD.name} walked away from the ${FAC[c.emp].short} job at ${c.site}.`); sfx.play('deny'); } else accept(c); CO.dirty = true; };
 }
 function renderBoard() {
+  for (const b of $('hqTabs').children) b.classList.toggle('on', b.dataset.t === HQV.tab); $('cards').classList.toggle('hid', HQV.tab !== 'board'); $('stand').classList.toggle('hid', HQV.tab !== 'stand'); if (HQV.tab === 'stand') renderStand();
   $('cards').innerHTML = '';
   for (const c of CO.board) {
     const d = document.createElement('div'), T = TYPES[c.type], B = BIOMES[c.biome], h = c.exp - now(); d.className = 'card' + (c === CO.sel ? ' on' : '') + (c === CO.active ? ' act' : '');
-    d.innerHTML = `<span class="tg" style="color:${FAC[c.emp].col}">${T.tag}</span><b>${T.name} · ${c.site}</b><em>${fmt(c.pay)}</em><small>${FAC[c.emp].short} ▸ ${FAC[c.foe].short} · <span style="color:${B.css}">${B.name}</span> · <span class="pips">${pipStr(c.diff)}</span></small><u>${c === CO.active ? 'ACCEPTED' : c.upd || (h < 6 ? 'CLOSING' : '')}</u>`;
+    d.innerHTML = `<span class="tg" style="color:${FAC[c.emp].col}">${T.tag}</span><b>${T.name} · ${c.site}</b><em>${fmt(c.pay)}</em><small>${FAC[c.emp].short} ▸ ${FAC[c.foe].short} · <span style="color:${B.css}">${B.name}</span> · <span class="pips">${pipStr(c.diff)}</span></small><u${c.co && RIV[c.co] && c !== CO.active ? ` style="color:${RIV[c.co].col}"` : ''}>${c === CO.active ? 'ACCEPTED' : c.co && RIV[c.co] ? (c.cok === 'sub' ? 'VIA ' : 'WITH ') + RIV[c.co].short : c.upd || (h < 6 ? 'CLOSING' : '')}</u>`;
     d.onclick = () => { sfx.play('ui'); CO.sel = c; CO.dirty = true; }; $('cards').appendChild(d);
   }
   renderDetail(); renderHangarContract();
   const host = $('tags'); host.innerHTML = ''; HQ.tagL = [];
   const mk = (cls, html, col, fn, obj) => { const d = document.createElement('div'); d.className = 'tag ' + cls; d.innerHTML = `<span>${html}</span>`; d.style.color = col; d.onclick = () => { sfx.play('ui'); fn(); }; host.appendChild(d); HQ.tagL.push({ d, obj }); };
-  for (const p of HQ.pins) mk(p.c === CO.sel ? 'on' : '', `${TYPES[p.c.type].tag} ${'◆'.repeat(p.c.diff)}`, FAC[p.c.emp].col, () => { CO.sel = p.c; CO.dirty = true; }, p.head);
+  for (const p of HQ.pins) mk(p.c === CO.sel ? 'on' : '', `${TYPES[p.c.type].tag} ${'◆'.repeat(p.c.diff)}`, FAC[p.c.emp].col, () => { HQV.tab = 'board'; CO.sel = p.c; CO.dirty = true; }, p.head);
   for (const [k, fn] of [['xo', talkXO], ['intel', talkIntel], ['chief', talkChief], ['p0', () => talkPilot(0)], ['p1', () => talkPilot(1)]]) mk('', HQ.P[k].ch.name.toUpperCase(), HQ.P[k].ch.col, fn, HQ.P[k].head);
 }
 function renderStat() {
@@ -4248,7 +4892,7 @@ function updateHQ(dt, t) {
   if (CO.dirty) { CO.dirty = false; HQ.syncPins(); renderBoard(); renderStat(); HQ.drawWall(); }
   if ((HQ.clk = (HQ.clk || 0) - dt) < 0) { HQ.clk = 1; renderStat(); if ((HQ.clk2 = (HQ.clk2 || 0) + 1) % 5 === 0 && !dlgCur) renderDetail(); }
   for (const p of HQ.pins) { const sel = p.c === CO.sel, act = p.c === CO.active; p.head.rotation.y += dt * 2; p.head.scale.setScalar(sel ? 1.8 + Math.sin(t * 6) * .3 : act ? 1.4 : 1); p.ring.visible = sel || act; p.ring.scale.setScalar(1 + (t * 1.1 % 1) * 1.8); }
-  if (dlgCur) { dlgCur.t += dt; const n = Math.floor(dlgCur.t * 95); $('dlgTxt').textContent = dlgCur.text.slice(0, n); HQ.speaking = n < dlgCur.text.length; } else HQ.speaking = false;
+  if (dlgCur) { dlgCur.t += dt; const n = Math.floor(dlgCur.t * 95); $('dlgTxt').textContent = dlgCur.text.slice(0, n); HQ.speaking = n < dlgCur.text.length || vox.busy(); } else HQ.speaking = false;
   HUM.holo.uniforms.uT.value = t; HUM.holo.uniforms.uOp.value = .9 + Math.sin(t * 31) * .08 + (Math.random() < .04 ? -.45 : 0);
   const W = HQ.crowd; W.cam.copy(HQ.camera.position); W.talk = HQ.talk; W.speaking = HQ.speaking; W.update(dt);
   HQ.fill.position.copy(HQ.camera.position); HQ.fill.position.y += .35; HQ.fill.intensity = damp(HQ.fill.intensity, HQ.talk && !HQ.talk.holo ? 15 : 0, 4, dt);   /* a soft key from the camera so whoever is speaking can be seen */
@@ -4281,6 +4925,7 @@ async function toBay() {
   });
   cv.addEventListener('wheel', e => { if (mode !== 'hq' || hq.focus) return; e.preventDefault(); hq.r = clamp(hq.r * (1 + Math.sign(e.deltaY) * .07), 5.5, 11.5); }, { passive: false });
   addEventListener('keydown', e => { if ((mode !== 'hq' && mode !== 'bar') || !dlgCur || uiModal()) return; if (e.code === 'Escape') return dlgClose(); const b = e.code.startsWith('Digit') && $('dlgOpts').children[+e.code[5] - 1]; if (b && !b.disabled) b.click(); });
+  for (const b of $('hqTabs').children) b.onclick = () => { sfx.play('ui'); HQV.tab = b.dataset.t; CO.dirty = true; };
   $('btnToBay').onclick = toBay; $('btnHQ').onclick = toHQ; $('bMkt').onclick = () => { sfx.play('ui'); storesOpen({ mode: 'shop' }); }; $('bSet').onclick = () => { sfx.play('ui'); settingsOpen(); };
   for (const [id, fn] of [['bXO', talkXO], ['bIntel', talkIntel], ['bChief', talkChief], ['bP0', () => talkPilot(0)], ['bP1', () => talkPilot(1)]]) $(id).onclick = () => { sfx.play('ui'); fn(); };
   renderHangarContract();
@@ -4462,26 +5107,35 @@ const BAR_WHO = {
 };
 const BAR_SRC = {
   keep: { acc: .72, cost: 150, knows: () => true },
-  load: { acc: .8, cost: 150, knows: (c, k) => k === 'plot' ? ['escort', 'recovery', 'garrison'].includes(c.type) : ['reinf', 'supply', 'pirates'].includes(k) },
+  load: { acc: .8, cost: 150, knows: (c, k) => k === 'plot' ? ['escort', 'recovery', 'garrison'].includes(c.type) : ['reinf', 'supply', 'pirates', 'rival'].includes(k) },
   sig: { acc: .86, cost: 150, knows: (c, k) => k === 'plot' ? ['recon', 'headhunt', 'strike'].includes(c.type) : ['storm', 'ace', 'side'].includes(k) },
   broker: { acc: 1, cost: 1200, paid: true, who: true, knows: (c, k) => k === 'renege' },
   host: { acc: .82, cost: 0, knows: () => true },   /* what a beaten table boss lets slip */
 };
-/* something this source has not told you yet about a contract on the board. With peek, only whether there is anything */
+/* the room talks about the other companies as well as the board. Each thing somebody tells you goes into that company's dossier on the command deck (STANDING) — and unlike the board talk, it is all true */
+Object.assign(BAR_WHO, {
+  cob: (n, E) => `That one is not ${E}'s own file — Cobalt Lance holds the paper and is passing it down. Ferreira will tell you everything she knows if you ask her, and will not move a credit on the fee.`,
+  car: (n, E) => `The Carnival holds that paper for ${E} and is handing it off. Quintero is loose with the fee if you play up to him. Tight with salvage, and vague about the details.`,
+  ver: (n, E) => `Verdigris picked that one up from ${E} and does not want it. Halloran will give a little on the fee and nothing at all on salvage. Check anything she tells you about the job.`,
+});
+function barGossip(key) { const L = []; if (key !== 'broker') for (const k of RIVS) for (const f of RIV[k].facts) if (!CO.riv[k].know.includes(f[0])) L.push([k, f]); return L; }
+const barFoot = r => r.gossip ? `(Added to the ${RIV[r.gossip].name} dossier — command deck, STANDING.)` : '(Logged against the contract as bar talk — unconfirmed.)';
+/* something this source has not told you yet: about a contract on the board, or about one of the companies. With peek, only whether there is anything */
 function barRumour(key, peek) {
-  const S = BAR_SRC[key], L = [];
+  const S = BAR_SRC[key], L = [], G = barGossip(key);
   for (const c of CO.board) {
     const got = k => c.intel.some(i => i.k === 'r.' + k || i.k === k);
     for (const k of unknown(c)) if (!got(k) && S.knows(c, k)) L.push([c, k]);
     if (S.who) { if (!got('who')) L.push([c, 'who']); if (c !== CO.active && c.exp - now() < 16 && !got('exp')) L.push([c, 'exp']); }
   }
-  if (peek) return L.length; if (!L.length) return null;
+  if (peek) return L.length + G.length; if (!L.length && !G.length) return null;
+  if (G.length && (!L.length || Math.random() < .4)) { const [rk, f] = pick(G); rivKnow(rk, f[0]); return { gossip: rk, s: f[2], head: `About ${RIV[rk].name}.` }; }
   const near = L.filter(e => e[0] === CO.sel || e[0] === CO.active), [c, k] = pick(near.length && Math.random() < .65 ? near : L), E = FAC[c.emp].short; let s;
-  if (k === 'who') s = BAR_WHO[c.persona](c.contact.name, E);
-  else if (k === 'exp') s = `Another outfit has been asking about it. I would not expect that offer to be on your board in ${Math.max(2, Math.ceil(c.exp - now()))} hours.`;
+  if (k === 'who') s = BAR_WHO[c.persona](dealer(c).name, E);
+  else if (k === 'exp') s = `${rivOutfit()} has been asking about it. I would not expect that offer to be on your board in ${Math.max(2, Math.ceil(c.exp - now()))} hours.`;
   else if (Math.random() < S.acc) s = hintOf(c, k);
   else if (k === 'plot') s = HINT[`${c.type}.${pick(TYPES[c.type].plots.filter(p => p !== c.plot))}`];
-  else s = HINT[pick(['reinf', 'ace', 'side', 'supply', 'renege'].filter(t => !c.twists.includes(t)))] || hintOf(c, k);
+  else s = HINT[pick(['reinf', 'ace', 'side', 'supply', 'renege', 'rival'].filter(t => !c.twists.includes(t)))] || hintOf(c, k);
   c.intel.push({ k: 'r.' + k, s, src: 'bar' }); CO.dirty = true; return { c, s, head: `The ${TYPES[c.type].name.toLowerCase()} job at ${c.site}, for ${E}.` };
 }
 
@@ -4497,13 +5151,13 @@ const barTold = key => { BARSV.told[key] = now(); BAR.dirty = true; saveCO(); };
 const barFresh = key => !BAR_SRC[key].paid && now() - (BARSV.told[key] ?? -99) >= 10;   /* everyone has one story in them every ten hours; after that it takes a drink */
 function barTell(key, ch, H, back, lead) {
   const r = barRumour(key); if (!r) return dlg(ch, pick(['Nothing about that board I have not already told you.', 'That is all I have. Ask me after the board turns over.']), back, H);
-  barTold(key); dlg(ch, `${lead}\n\n${r.head} ${r.s}\n\n(Logged against the contract as bar talk — unconfirmed.)`, back, H);
+  barTold(key); dlg(ch, `${lead}\n\n${r.head} ${r.s}\n\n${barFoot(r)}`, back, H);
 }
 function talkKeep() {
   const k = BARC.keep, H = BAR.P.keep, back = [['Something else', talkKeep], ['Thanks, Mother', dlgClose]], fresh = barFresh('keep'), has = barRumour('keep', true), R = barRoster();
   const pour = (cost, d, line) => () => { if (!spend(cost)) return dlg(k, 'Not on the slate. Not for you, not for anyone.', back, H); barBuzzAdd(d); sfx.play(d > 0 ? 'glass' : 'ui'); dlg(k, line, back, H); };
   dlg(k, pick(['Commander. The usual, or are you here to listen?', 'Sit anywhere that is not already bleeding.', 'Upstairs you sign their contracts. Down here you buy the rounds.']), [
-    [!has ? 'What are people saying? (nothing new about the board)' : fresh ? 'What are people saying about the board?' : `Buy a drink and ask what people are saying — ${fmt(150)}`, () => { if (!fresh) { if (!spend(150)) return dlg(k, 'Not on the slate.', back, H); barBuzzAdd(.12); sfx.play('glass'); } barTell('keep', k, H, back, pick(['You did not hear it from me.', 'Three people told me this tonight, which means one person started it.', 'Loadmasters talk when they drink. I only pour.'])); }, !has],
+    [!has ? 'What are people saying? (nothing new)' : fresh ? 'What are people saying?' : `Buy a drink and ask what people are saying — ${fmt(150)}`, () => { if (!fresh) { if (!spend(150)) return dlg(k, 'Not on the slate.', back, H); barBuzzAdd(.12); sfx.play('glass'); } barTell('keep', k, H, back, pick(['You did not hear it from me.', 'Three people told me this tonight, which means one person started it.', 'Loadmasters talk when they drink. I only pour.'])); }, !has],
     [`Stand the house a round — ${fmt(900)}`, () => { if (!spend(900)) return dlg(k, 'A round for this room costs more than you are carrying.', back, H); BARSV.told = {}; barBuzzAdd(.12); sfx.play('glass'); BAR.dirty = true; saveCO(); dlg(k, 'That buys you a room full of friends for about an hour. Strand and Banerjee will talk to you again now — ask around.', back, H); }],
     [`Something strong — ${fmt(150)}`, pour(150, .16, pick(['Reactor coolant, the regulars call it. It is not, quite.', 'There. Do not operate heavy machinery. I am told you own some.']))],
     [`Black coffee — ${fmt(50)}`, pour(50, -.22, 'On the house rate. Drink it slowly and stop looking at Ballast.')],
@@ -4581,7 +5235,7 @@ function barRelax(on) {
 
 function updateBar(dt, t) {
   if (BAR.relax && !dlgCur) tickClock(dt * 11);   /* an hour of sector time every second or so */
-  if (dlgCur) { dlgCur.t += dt; const n = Math.floor(dlgCur.t * 95); $('dlgTxt').textContent = dlgCur.text.slice(0, n); BAR.speaking = n < dlgCur.text.length; } else BAR.speaking = false;
+  if (dlgCur) { dlgCur.t += dt; const n = Math.floor(dlgCur.t * 95); $('dlgTxt').textContent = dlgCur.text.slice(0, n); BAR.speaking = n < dlgCur.text.length || vox.busy(); } else BAR.speaking = false;
   if (BAR.game) barGameTick(dt, t);
   const W = BAR.crowd; W.cam.copy(BAR.camera.position); W.talk = BAR.talk; W.speaking = BAR.speaking; W.beat = music.beat(); W.update(dt); if (BAR.game) barGamePose(BAR.game);
   /* the jukebox keeps time; the sign has a tube that is on its way out */
@@ -4755,7 +5409,7 @@ async function barGameClose() {
   if (out) tickClock(60);   /* out cold: the next thing you know is six hours on */
   BAR.dirty = true; saveCO(); busy = false; await tween(.35, k => fade(1 - k)); blackout(false);
   const bye = [['Leave', dlgClose]]; let r = null;
-  if (G.res === 'win') { r = barRumour('host'); dlg(ch, `${D ? pick(['...Nobody... tell Mother.', 'Fine. Fine! Take it. The room can stop now.']) : pick(['Huh. Papers must be heavier than they look.', 'That does not happen. Take your money.'])}${r ? `\n\nYou earned something for that. ${r.head} ${r.s}\n\n(Logged against the contract as bar talk — unconfirmed.)` : ''}`, [['Collect your winnings', dlgClose]], H); }
+  if (G.res === 'win') { r = barRumour('host'); dlg(ch, `${D ? pick(['...Nobody... tell Mother.', 'Fine. Fine! Take it. The room can stop now.']) : pick(['Huh. Papers must be heavier than they look.', 'That does not happen. Take your money.'])}${r ? `\n\nYou earned something for that. ${r.head} ${r.s}\n\n${barFoot(r)}` : ''}`, [['Collect your winnings', dlgClose]], H); }
   else if (G.res === 'lose') dlg(ch, G.quit ? 'Walking away? The stake stays on the table.' : out ? 'You were out for six hours. I had them put you in the booth. Same time next week?' : D ? pick(['Three on the floor. That is the game. Come back when you can hold a glass.', 'Mother will want that mopped up.']) : pick(['Ice it. Come back when it works again.', 'Stick to signing papers, Commander.']), bye, H);
   else dlg(ch, D ? 'Call it even. I cannot see the table either.' : 'Even. You are stronger than you look.', bye, H);
 }
@@ -4904,14 +5558,14 @@ function settingsDraw() {
     /* a preview button; data-p names what it plays: p3 / c3 a mission score on patrol or in combat, night, amb, win */
     const pvb = (k, label) => `<button data-p="${k}" class="${SET.pv === k ? 'on' : ''}">${SET.pv === k ? '■ STOP' : '▶ ' + label}</button>`;
     const fxd = (k, name, sub, label) => `<div class="trk fxd"><u>♪</u><div><b>${name}</b><small>${sub}</small></div><span class="pvb">${pvb(k, label)}</span></div>`;
-    B.innerHTML = `<div class="sh">LEVELS</div><div class="sg">${rng('sVol', 'MASTER VOLUME', CFG.vol * 100, 0, 100, 1, pc)}${rng('sSfx', 'EFFECTS', CFG.sfx * 100, 0, 100, 1, pc)}${rng('sMus', 'MUSIC', CFG.mus * 100, 0, 100, 1, pc)}</div>
+    B.innerHTML = `<div class="sh">LEVELS</div><div class="sg">${rng('sVol', 'MASTER VOLUME', CFG.vol * 100, 0, 100, 1, pc)}${rng('sSfx', 'EFFECTS', CFG.sfx * 100, 0, 100, 1, pc)}${rng('sMus', 'MUSIC', CFG.mus * 100, 0, 100, 1, pc)}${rng('sVox', 'VOICES', CFG.voice * 100, 0, 100, 1, pc)}</div>
 <div class="sh">WHAT PLAYS WHERE</div><div class="sg">${tog('sAmb', 'COMMAND DECK MUSIC', CFG.amb)}${tog('sJin', 'VICTORY JINGLE', CFG.jingle)}${tog('sRad', 'BAY RADIO · BAR JUKEBOX', CFG.radio)}${tog('sScr', 'MISSION SCORE', CFG.score)}</div>
 <div class="sh">COMMAND DECK <small>NIGHT WATCH FIRST · THEN THE AMBIENCE · AND ROUND AGAIN</small></div><div class="dkl">
 ${fxd('night', 'NIGHT WATCH', 'hand drums, a plucked string and slow synths · 84 bpm', 'PREVIEW')}${fxd('amb', 'DECK AMBIENCE', 'slow pads over a low D, glass, a distant pulse', 'PREVIEW')}${fxd('win', 'CONTRACT WON', 'the jingle at the debrief after a completed contract', 'PLAY')}</div>
 <div class="sh">MISSION SCORE <small>SEVEN TRACKS · EACH SHIFTS TO ITS COMBAT VERSION UNDER FIRE</small></div><div id="trks">
 <div class="trk${CFG.track ? '' : ' on'}" data-i="0"><u></u><div><b>AUTO — MATCH THE THEATRE</b><small>Every biome plays its own score</small></div></div>
 ${SCORES.map(([bk, n, d], i) => `<div class="trk${CFG.track === i + 1 ? ' on' : ''}" data-i="${i + 1}"><u></u><div><b>${String(i + 1).padStart(2, '0')} · ${n}</b><small><span>${BIOMES[bk].name}</span> · ${d}</small></div><span class="pvb">${pvb('p' + i, 'PATROL')}${pvb('c' + i, 'COMBAT')}</span></div>`).join('')}</div>`;
-    bindR('sVol', v => { CFG.vol = v / 100; sfx.vol(); music.vol(); }, pc); bindR('sSfx', v => { CFG.sfx = v / 100; sfx.vol(); }, pc); bindR('sMus', v => { CFG.mus = v / 100; music.vol(); }, pc);
+    bindR('sVol', v => { CFG.vol = v / 100; sfx.vol(); music.vol(); vox.vol(); }, pc); bindR('sVox', v => { CFG.voice = v / 100; vox.vol(); }, pc); $('sVox').onchange = () => { cfgSave(); vox.say(pick([CREW.xo, CREW.intel, CREW.chief]), 'Reading you five by five. How is that?'); }; bindR('sSfx', v => { CFG.sfx = v / 100; sfx.vol(); }, pc); bindR('sMus', v => { CFG.mus = v / 100; music.vol(); }, pc);
     bindT('sAmb', 'amb'); bindT('sJin', 'jingle'); bindT('sRad', 'radio'); bindT('sScr', 'score');
     B.querySelectorAll('.trk').forEach(r => r.onclick = e => {
       sfx.init(); const k = e.target.dataset.p;
@@ -4926,9 +5580,11 @@ ${SCORES.map(([bk, n, d], i) => `<div class="trk${CFG.track === i + 1 ? ' on' : 
   } else if (tab === 'controls') {
     const sx = v => (v / 100).toFixed(2) + '×', K = (L) => `<div class="keys">${L.map(([k, d]) => `<div><b>${k}</b><span>${d}</span></div>`).join('')}</div>`;
     B.innerHTML = `<div class="sh">MOUSE</div><div class="sg">${rng('sSens', 'AIM SENSITIVITY', CFG.sens * 100, 30, 250, 5, sx)}${tog('sInv', 'INVERT VERTICAL AIM', CFG.invY)}</div>
-<div class="sh">IN THE FIELD</div>${K([['W / S', 'Throttle forward / reverse'], ['A / D', 'Turn the legs'], ['MOUSE', 'Twist the torso and aim'], ['LEFT / RIGHT BUTTON', 'Fire left / right arm'], ['F', 'Fire the back unit'], ['SPACE', 'Jump jets'], ['SHIFT', 'Sprint'], ['X', 'Centre legs under the torso'], ['C', 'Cockpit / chase camera'], ['M', 'Tactical map — pauses the sortie'], ['R', 'Field repair kit'], ['V', 'Coolant flush'], ['1 – 3', 'Answer the comms'], ['H', 'Withdraw to base'], ['ESC', 'Pause']])}
+<div class="sh">IN THE FIELD</div>${K([['W / S', 'Throttle forward / reverse'], ['A / D', 'Turn the legs'], ['MOUSE', 'Twist the torso and aim'], ['LEFT / RIGHT BUTTON', 'Fire left / right arm'], ['F', 'Fire the back unit'], ['SPACE', 'Jump jets'], ['SHIFT', 'Sprint'], ['X', 'Centre legs under the torso'], ['C', 'Cockpit / chase camera'], ['M', 'Tactical map — pauses the sortie'], ['R', 'Field repair kit'], ['V', 'Coolant flush'], ['1 – 3', 'Answer the comms'], ['SPACE / ENTER', 'Carry on after a message'], ['H', 'Withdraw to base'], ['ESC', 'Pause']])}
+<div class="sh">COMMS IN THE FIELD</div><div class="sg"><label>HOLD THE SORTIE FOR COMMS</label><span class="seg" id="sHold">${[[2, 'EVERY MESSAGE'], [1, 'QUESTIONS ONLY'], [0, 'NEVER']].map(([v, l]) => `<button data-v="${v}" class="${CFG.hold === v ? 'on' : ''}">${l}</button>`).join('')}</span><em></em></div>
+<p class="snt">${['The fight carries on while people talk, and a question you do not answer in time answers itself.', 'Chatter plays over the fight. When somebody needs a decision, everything stops until you have made it.', 'Whenever anybody comes on the radio, everything stops until you have read it. Nothing moves and no clock runs while you choose a reply.'][CFG.hold]}</p>
 <div class="sh">BAY AND COMMAND DECK</div>${K([['DRAG', 'Orbit the camera'], ['WHEEL', 'Zoom'], ['RIGHT-DRAG', 'Raise / lower the view'], ['1 – 6', 'Pick a reply in conversation'], ['ESC', 'Close a window']])}`;
-    bindR('sSens', v => { CFG.sens = v / 100; }, sx); bindT('sInv', 'invY');
+    bindR('sSens', v => { CFG.sens = v / 100; }, sx); bindT('sInv', 'invY'); $('sHold').querySelectorAll('button').forEach(b => b.onclick = () => { CFG.hold = +b.dataset.v; cfgSave(); sfx.play('ui'); settingsDraw(); });
   } else if (tab === 'display') {
     B.innerHTML = `<div class="sh">RENDERING</div><div class="sg">${rng('sScale', 'RENDER SCALE', CFG.scale * 100, 50, 150, 10, pc)}${tog('sBloom', 'BLOOM AND GLOW', CFG.bloom)}${tog('sShadow', 'DYNAMIC SHADOWS', CFG.shadow)}</div>
 <p class="snt">If the field runs slowly, drop the render scale first, then shadows. Changes apply at once.</p>`;
@@ -5036,7 +5692,7 @@ function mapDraw() {
     const lb = `${n.label} ${dist.toFixed(0)}m`; g.fillStyle = 'rgba(0,0,0,.65)'; g.fillRect(px + 10, pz - 7, g.measureText(lb).width + 6, 13); g.fillStyle = n.col; g.fillText(lb, px + 13, pz); hits.push([px, pz, `${n.label} — ${dist.toFixed(0)} m`]); }
   /* contacts: friendlies always report in; everything else only inside the sensor envelope */
   for (const e of FD.ents) { const dist = Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z), inR = dist < rng; if (e.team !== 0 && (jam || !inR)) continue; const px = X(e.pos.x), pz = Z(e.pos.z);
-    g.fillStyle = e.team === 1 ? '#ff4a2a' : e.team === 0 ? '#5ac8ff' : '#d2d2d2'; g.strokeStyle = 'rgba(0,0,0,.8)'; g.lineWidth = 1; g.beginPath();
+    g.fillStyle = e.team === 1 ? '#ff4a2a' : e.rh || (e.team === 0 ? '#5ac8ff' : '#d2d2d2'); g.strokeStyle = 'rgba(0,0,0,.8)'; g.lineWidth = 1; g.beginPath();
     if (e.kind === 'mech') { g.moveTo(px, pz - 7); g.lineTo(px + 6, pz + 5); g.lineTo(px - 6, pz + 5); g.closePath(); } else if (e.kind === 'struct') g.rect(px - 5, pz - 5, 10, 10); else g.arc(px, pz, e.kind === 'drone' ? 3 : 4.5, 0, TAU); g.fill(); g.stroke();
     hits.push([px, pz, `${e.name} — ${e.team === 1 ? 'hostile' : e.team === 0 ? 'friendly' : 'neutral'} · ${Math.round(clamp(e.hp / e.max, 0, 1) * 100)}% · ${dist.toFixed(0)} m`]); }
   if (jam) { g.fillStyle = '#ff5a1f'; g.font = '12px Menlo,monospace'; g.textAlign = 'center'; g.fillText('— SENSORS JAMMED: NO CONTACT DATA —', pxp, pzp - rng * k - 12); g.textAlign = 'left'; g.font = '10px Menlo,monospace'; }
@@ -5122,11 +5778,13 @@ const STATS = [['TONNAGE', s => s.tons, 110, v => v.toFixed(0) + ' t'], ['ARMOR'
   fieldLock = lock; fieldUnlock = () => { if (soft) { soft = false; setLock(false); } else if (document.pointerLockElement) document.exitPointerLock(); else setLock(false); };
   document.addEventListener('pointerlockchange', () => { const on = document.pointerLockElement === cvs; if (on) lockFail = 0; if (!soft) setLock(on); });
   document.addEventListener('pointerlockerror', lockFailed);
-  addEventListener('mousemove', e => { if (mode !== 'field' || !locked || P.dead) return; P.twist -= e.movementX * .0022 * CFG.sens; P.pitch = clamp(P.pitch - e.movementY * .0018 * CFG.sens * (CFG.invY ? -1 : 1), -.38, .5); });
-  addEventListener('mousedown', e => { if (mode === 'field' && locked) { P.md[e.button] = true; e.preventDefault(); } });
+  addEventListener('mousemove', e => { if (mode !== 'field' || !locked || P.dead) return; if (commHold) return commMouse(e); P.twist -= e.movementX * .0022 * CFG.sens; P.pitch = clamp(P.pitch - e.movementY * .0018 * CFG.sens * (CFG.invY ? -1 : 1), -.38, .5); });
+  addEventListener('mousedown', e => { if (mode === 'field' && locked) { if (commHold) return commClick(e); P.md[e.button] = true; e.preventDefault(); } });
+  addEventListener('wheel', e => { if (mode === 'field' && locked && commHold && !uiModal()) commMove(Math.sign(e.deltaY)); }, { passive: true });
   addEventListener('mouseup', e => { P.md[e.button] = false; });
   addEventListener('keydown', e => {
-    if (uiModal()) return; if (mode === 'field' && mapKey(e)) return; keys[e.code] = true; if (mode !== 'field') return; if (e.code === 'Space' || e.code === 'Tab') e.preventDefault();
+    if (uiModal()) return; if (mode === 'field' && commHold && locked && e.code !== 'Escape') { e.preventDefault(); return commHoldKey(e); }
+    if (mode === 'field' && mapKey(e)) return; keys[e.code] = true; if (mode !== 'field') return; if (e.code === 'Space' || e.code === 'Tab') e.preventDefault();
     if (e.code.startsWith('Digit')) commKey(+e.code[5] - 1);
     if (e.code === 'KeyR' && locked && CO.kit > 0 && !P.dead && P.armor < P.max * .98) { CO.kit--; P.armor = Math.min(P.max, P.armor + P.max * .4); msg(`REPAIR KIT USED — ${CO.kit} LEFT`, 2.5); sfx.play('ok'); }
     if (e.code === 'KeyV' && locked && !P.dead && invN('gear.cool') > 0 && P.heat > 20) { invAdd('gear.cool', -1); P.heat = Math.max(0, P.heat - 60); msg(`COOLANT FLUSH — ${invN('gear.cool')} LEFT`, 2.5); sfx.play('steam'); }
@@ -5141,7 +5799,8 @@ const STATS = [['TONNAGE', s => s.tons, 110, v => v.toFixed(0) + ' t'], ['ARMOR'
 let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame); const dt = clamp((now - last) / 1000, 0, .05); last = now; T += dt; updateTweens(dt); music.update(dt, mode, mode === 'bar' ? BAR.camera : HG.camera, mode === 'bar' ? BAR.jukePos : HG.radioPos, mode === 'field' ? scoreHeat(dt) : 0); if (mode === 'field' && locked) mapTick();
-  if (mode === 'field') { if (locked || P.dead || MS.over) updateField(dt, T); renderPass.scene = FD.scene; renderPass.camera = FD.camera; bloom.strength = .42; }
+  if (mode === 'field' && commHold && (P.dead || MS.over || !MS.on)) commFree();
+  if (mode === 'field') { if (commHold) { if (locked) updateComm(dt); } else if (locked || P.dead || MS.over) updateField(dt, T); renderPass.scene = FD.scene; renderPass.camera = FD.camera; bloom.strength = .42; }
   else {
     if (!dlgCur) tickClock(dt);
     if (mode === 'hangar' && HG.walk) { const r = player.root.position; r.z += HG.walk * dt; r.y = MECH_Y - .6 * smooth(clamp((r.z - 9.6) / 4.6, 0, 1)); orb.look.set(0, player.height * .55, -r.z - 3); }
