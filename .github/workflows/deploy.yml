@@ -1,0 +1,50 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check release build
+        run: |
+          if grep -n 'window\.__' index.html; then
+            echo '::error::index.html contains debug hooks (window.__); commit a release build'
+            exit 1
+          fi
+
+      - name: Run update script on server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: ~/update-ironworks.sh
+
+      - name: Smoke test
+        run: |
+          want=$(sha256sum index.html | cut -d' ' -f1)
+          for i in 1 2 3 4 5; do
+            got=$(curl -fsS --max-time 10 -H 'Cache-Control: no-cache' https://ironworks.graham.pub/ | sha256sum | cut -d' ' -f1) || got=
+            if [ "$got" = "$want" ]; then
+              echo "Smoke test passed on attempt $i"
+              exit 0
+            fi
+            echo "Attempt $i: live page doesn't match this commit yet, retrying in 5s..."
+            sleep 5
+          done
+          echo "Smoke test failed after 5 attempts"
+          exit 1
