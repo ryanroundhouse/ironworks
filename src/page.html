@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IRONWORKS — Mech Bay 03</title>
+<style>
+@@STYLE@@
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+
+<div id="hangarUI">
+ <div class="ttl"><canvas width="100" height="100"></canvas><b>IRONWORKS</b><span>HANGAR 03 // ASSEMBLY CONTROL</span><i></i></div>
+ <div id="panelL" class="pn">
+  <h2>MECH BAYS <small>BRING ONE TO THE STAND</small></h2>
+  <div id="bays"></div>
+  <h2>COMPONENT FITTING <small>FROM STORES</small></h2>
+  <div id="slots"></div>
+  <h2 style="margin-top:10px">PAINT SHOP <small id="paintName"></small></h2>
+  <div id="paints"></div>
+ </div>
+ <div id="panelR" class="pn">
+  <h2>UNIT READOUT <small id="ovw"></small></h2>
+  <div id="mechName">—</div><div id="mechClass">—</div>
+  <div id="stats"></div>
+  <div id="loadout"></div>
+  <div id="warns"></div>
+  <div class="row"><button id="btnStores">STORES · MARKET</button><button id="btnSpin">TURNTABLE</button></div>
+  <div class="row"><button id="btnTest">SYSTEMS TEST</button><button id="btnSet">⚙ SETTINGS</button></div>
+  <div id="ctr"></div><div class="row"><button id="btnHQ">▲ COMMAND DECK — CONTRACTS</button></div><div class="row"><button id="btnBar">◆ THE LAST ROUND — BAR</button></div>
+  <button id="btnDeploy">LAUNCH FIELD TEST</button>
+ </div>
+ <div id="status" class="pn">STAND READY</div>
+ <div id="hint">DRAG orbit · WHEEL zoom · RIGHT-DRAG pan height</div>
+</div>
+
+<div id="fieldUI" class="hid">
+ <div id="cock"></div><div id="dmg"></div>
+ <div id="ret"><i></i><i></i><i></i><i></i><b></b></div>
+ <div id="twist"><b id="hdg">000</b><i id="twI"></i></div>
+ <div id="obj" class="pn"><div id="objW">HOSTILES <b id="hCnt">0</b>KILLS <b id="kCnt">0</b>WAVE <b id="wCnt">1</b></div><div id="objM" class="hid"><h2><span id="msTitle">CONTRACT</span><small id="msClock"></small></h2><div id="objList"></div></div></div>
+ <div id="help" class="pn"><b>W/S</b> throttle · <b>A/D</b> turn legs<br><b>MOUSE</b> torso twist / aim<br><b>LMB</b> left arm · <b>RMB</b> right arm<br><b>F</b> back unit · <b>SPACE</b> jump jets<br><b>SHIFT</b> sprint, which builds heat<br><b>C</b> camera · <b>X</b> center legs<br><b>R</b> repair kit · <b>V</b> coolant flush<br>Aim at an arm or the legs to shoot them off<br><b>M</b> tactical map · <b>1-3</b> answer comms<br><b>SPACE</b> carry on after a message<br><b>H</b> withdraw to base · <b>ESC</b> pause</div>
+ <canvas id="radar" width="190" height="190"></canvas>
+ <div id="gauges" class="pn">
+  <div class="st" id="gArm"><span>ARMOR</span><i><b></b></i><em></em></div>
+  <div class="st" id="gHeat"><span>HEAT</span><i><b></b></i><em></em></div>
+  <div class="st" id="gJet"><span>JETS</span><i><b></b></i><em></em></div>
+  <div class="st" id="gSpd"><span>SPEED</span><i><b></b></i><em></em></div>
+  <div id="zdoll"><i id="zdHead">CPT</i><i id="zdBack">BACK</i><i id="zdArmL">L ARM</i><i id="zdTorso">HULL</i><i id="zdArmR">R ARM</i><i id="zdLegs">LEGS</i></div>
+ </div>
+ <div id="weps" class="pn"></div>
+ <div id="msg"></div>
+ <div id="navs"></div>
+ <div id="tgt" class="hid"><span id="tgtN"></span><i><b id="tgtB"></b></i><span id="tgtZ"></span><i id="tgtZi"><b id="tgtZb"></b></i></div>
+ <div id="commDim" class="hid"></div>
+ <div id="comm" class="pn hid"><canvas id="commFace" width="144" height="144"></canvas><div><b id="commWho"></b><p id="commTxt"></p><div id="commOpts"></div><i id="commBar"></i><em id="commHint"></em></div></div>
+</div>
+
+<div id="hqUI" class="hid">
+ <div class="ttl"><canvas width="100" height="100"></canvas><b>IRONWORKS</b><span>COMMAND DECK // CONTRACT OPERATIONS</span><i></i></div>
+ <div id="tags"></div>
+ <div id="hqStat" class="pn"></div>
+ <div id="board" class="pn"><div id="hqTabs"><button data-t="board" class="on">CONTRACT BOARD</button><button data-t="stand">STANDING</button></div><div id="cards"></div><div id="stand" class="hid"></div></div>
+ <div id="detail" class="pn"></div>
+ <div id="hqBar"><button id="btnToBay">◀ MECH BAY</button><button id="btnToBar">▼ THE BAR</button><button id="bXO">XO VARGA</button><button id="bIntel">INTEL · SATO</button><button id="bChief">CHIEF · DUTCH</button><button id="bP0">PILOT · ROOK</button><button id="bP1">PILOT · ANVIL</button><button id="bMkt">MARKET</button><button id="bSet">⚙ SETTINGS</button></div>
+</div>
+<div id="brfUI" class="hid">
+ <div id="brfHead" class="pn"></div>
+ <div id="brfBar"><button id="brfBack">▲ COMMAND DECK</button><button id="brfSkip">MECH BAY ▶</button></div>
+</div>
+<div id="cutTag"></div>
+<div id="sndHint">♪ SOUND STARTS WITH YOUR FIRST CLICK OR KEY</div>
+<div id="dlg" class="pn hid"><canvas id="dlgFace" width="144" height="144"></canvas><div><b id="dlgWho"></b><p id="dlgTxt"></p><div id="dlgOpts"></div></div></div>
+<div id="barUI" class="hid">
+ <div class="ttl"><canvas width="100" height="100"></canvas><b>IRONWORKS</b><span>THE LAST ROUND // PILOTS' BAR</span><i></i></div>
+ <div id="barTags"></div>
+ <div id="barStat" class="pn"></div>
+ <div id="barRoom" class="pn"><h2>THE ROOM <small>TALK · RUMOURS · GAMES</small></h2><div id="barWho"></div></div>
+ <div id="barHire" class="pn"><h2>PILOTS FOR HIRE <small id="barHireN"></small></h2><div id="barPil"></div><p>One wingman per drop. The better the pilot and the more machine they bring, the higher the fee. The faces change every few days.</p></div>
+ <div id="barBar"><button id="bbHQ">▲ COMMAND DECK</button><button id="bbBay">◀ MECH BAY</button><button id="bbRelax">TAKE A SEAT — RELAX</button><button id="bbSet">⚙ SETTINGS</button></div>
+ <div id="barChill"></div>
+</div>
+<div id="barGame" class="ovl hid"><div class="pn"><h2><span id="bgName"></span><small id="bgStake"></small></h2><canvas id="bgCv" width="1440" height="264"></canvas><p id="bgMsg"></p><div class="row"><button id="bgHit"></button><button id="bgQuit">FORFEIT THE STAKE</button></div></div></div>
+
+<div id="pause" class="hid"><div class="pn">
+ <h2>SORTIE PAUSED <small>STANDBY</small></h2>
+ <p id="pauseTxt">Click RESUME to lock controls.<br>Mouse aims the torso; the legs steer separately.</p>
+ <button id="btnResume">RESUME</button><button id="btnMap">TACTICAL MAP · M</button><button id="btnPSet">SETTINGS</button><button id="btnHangar">RETURN TO HANGAR</button>
+</div></div>
+
+<div id="stores" class="ovl hid"><div class="pn win">
+ <h2><span id="stTitle">COMPANY STORES</span><small id="stFunds"></small></h2>
+ <div id="stTabs"></div>
+ <div id="stBar"><div id="stCats"></div><input id="stFind" placeholder="SEARCH" size="14" spellcheck="false"><select id="stSort"></select><button id="stDir"></button></div>
+ <div id="stNote"></div>
+ <div id="stGrid"></div>
+ <div class="foot"><span id="stInfo"></span><button id="stRem" class="hid">REMOVE FITTED PART — BACK TO STORES</button><button id="stClose">CLOSE</button></div>
+</div></div>
+
+<div id="setUI" class="ovl hid"><div class="pn win" id="setWin">
+ <h2><span id="setTitle">SETTINGS</span><small id="setSub"></small></h2>
+ <div id="setTabs"></div>
+ <div id="setBody"></div>
+ <div class="foot"><span id="setInfo"></span><button id="setClose">CLOSE</button></div>
+</div></div>
+<input type="file" id="saveFile" accept=".json,application/json" class="hid">
+<div id="mapUI" class="hid">
+ <canvas id="mapCv"></canvas>
+ <div id="mapHead"><b>TACTICAL MAP</b><span id="mapSub"></span></div>
+ <div id="mapSide" class="pn">
+  <h2><span id="mapOp">PROVING GROUNDS</span><small id="mapClk"></small></h2><div id="mapObj"></div>
+  <h2>SENSORS <small id="mapSen"></small></h2><div id="mapCon"></div>
+  <h2>UNIT <small id="mapUnit"></small></h2><div id="mapSt"></div>
+  <h2>LEGEND <small>SORTIE PAUSED</small></h2><div id="mapLeg"></div>
+  <div class="row"><button id="mapGo">RESUME · M</button><button id="mapCtr">CENTRE · F</button></div>
+  <div class="row"><button id="mapWp">CLEAR WAYPOINT</button><button id="mapEsc">PAUSE MENU</button></div>
+ </div>
+ <div id="mapTip" class="hid"></div>
+ <div id="mapHint">DRAG pan · WHEEL zoom · CLICK set a waypoint · RIGHT-CLICK clear it · M resume · ESC pause menu</div>
+</div>
+<div id="fade"></div>
+<div id="boot"><div>INITIALIZING BAY SYSTEMS<small>loading three.js from CDN — an internet connection is required</small></div></div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+@@SCRIPT@@
+</script>
+<script>
+/* surface load/runtime failures instead of a silent black screen */
+addEventListener('error', function (e) { var b = document.getElementById('boot'); if (b) b.innerHTML = '<div style="color:#ff5a1f">SYSTEM FAULT<small>' + (e.message || 'failed to load three.js from CDN') + '</small></div>'; }, true);
+</script>
+</body>
+</html>

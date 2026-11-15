@@ -9,64 +9,68 @@ beside you, and five story threads: connected chapters that come up on the board
 are briefed in a briefing room and are flown on a theatre 2.4 times the usual size. Everybody who
 speaks does so aloud, in a made-up language.
 `index.html` is the whole deliverable. It loads three.js (and one add-on, `RoomEnvironment`) from
-a CDN, so view it through a local web server with an internet connection.
+a CDN, so view it through a local web server with an internet connection. It is built from the
+sources in `src/` by `build.py`; edit `src/`, never `index.html`.
 
 ## Scratch space: use `.scratch/`
 
-- Keep every working file in `.scratch/` at the repo root: build scripts, part files, debug
-  builds, browser test profiles, screenshots, notes. It is gitignored.
+- Keep every working file in `.scratch/` at the repo root: debug builds, test drivers, browser
+  test profiles, screenshots, notes. It is gitignored.
 - Do not use the system temp directory or a session scratchpad for this project. Those are wiped
   between sessions, and the build pipeline was lost that way once.
-- `.scratch/` is never committed. On a fresh clone it will be missing: create it, and treat
-  `index.html` as the source of truth.
+- `.scratch/` is never committed. On a fresh clone it will be missing; `build.py` creates it.
+  Nothing needed to build the game lives there: the source is `src/`, and it is committed.
 
 ## How `index.html` is built
 
-While `.scratch/` exists, `index.html` is generated rather than hand-edited:
+`index.html` is generated from `src/` and committed alongside it, so the repo always holds a
+playable page. Never hand-edit it.
 
-- `.scratch/base.html` is a snapshot of the page from before the current round of work.
-- `.scratch/v12/build.py` applies asserted string patches to the base and places four part
-  files. A part file is cut into sections by lines reading `//@@ NAME`, and each section goes
-  in at its own anchor (`sec('file.js:NAME')`); the build fails if a section is never placed.
-  - `w1_parts.js`: four chassis, five hulls, four cockpits, five back units, forty-four arm
-    weapons from one table (`ARM_FAM`), twelve more `PRESETS`, their prices and their icons.
-  - `c1_combat.js`: the weapons engine (`emitShot`, `fire`, `fireFrom`, `updateShots`) and
-    component damage (`mechZones`, `zoneBreak`, `damage`, `entTick`).
-  - `u1_units.js`: every vehicle (`AIR`, `TANKS`, `TUR`), `mkCentipede`, `mkFactory`,
-    `mkCapital`, and who turns up where (`UNIT_POOL`, `foeCfg`, `spawn`).
-  - `m4_ops.js`: the `assault` and `intercept` contracts, the `air`, `worm` and `works`
-    twists, and the rules a contract sets for the machine that flies it (`capFor`, `wingRec`).
-  - `python3 .scratch/v12/build.py` writes `index.html` (release).
-  - `python3 .scratch/v12/build.py --debug` writes `.scratch/debug.html` with the test hooks from
-    `harness.js` (`__ev`, `__errs`, `__ff`, `__cam`, `__see`, `__strip`, `__poses`, `__mus`,
-    `__render`, `__wav`, `__mk`, `__sim`, `__vox`, `__story`, `__smk`, `__sites`, `__fcam`,
-    `__fsee`, `__sheet`, `__mechs`, `__parts`, `__aim`, `__arena`, `__dummy`).
-  - Follow every build with `node --check .scratch/check.mjs`.
-  - The build refuses a section whose top-level name is already taken in the page. To replace
-    existing functions, `cut()` the old text to a placeholder first and put the section there.
-    A new top-level name in a patch is checked with `fresh(name)` first.
-  - Do not put a `//` comment in the middle of a long one-line statement in a part file: it
-    swallows the rest of the line without a syntax error. Use `/* */`, or a line of its own.
-    The build refuses the ones it can see.
-- Earlier rounds (`.scratch/v11/` and before) are history; their output is already in the base.
-  Each folder keeps the base it patched (`v11/base_v11.html`) next to its part files. The
-  `v11` build has no part file: it made a sprint cost heat (`SPRINT_K`, `sprintFor`).
-  `r1_race.js` (`stRace` and `RACE_K`: the Iron Derby's pack, which holds round the player until
-  the last gate) is in `.scratch/v10/`, whose build also seated each Derby car in the pack and
-  added the calls from the pit wall (`dbCall`), the gaps on the board (`dbBy`) and the time a
-  detour costs (`dbBank`). `p1_post.js`
-  (the post chain `POST`: the scene target, the bloom, the pass that writes the canvas, and the
-  hold that leaves a paused sortie's picture standing) is in `.scratch/v9/`; the other part
-  files named further down are in `.scratch/v8/`: `a1_wake.js` (the sound notice), `v2_cast.js`
-  (voices for the story cast), `f2_scale.js` (the field in two sizes), `m2_brief.js` (the
-  briefing march), `m3_cut.js` (the comm camera), `s1_story.js` (thread state, the board, the
-  books, the save), `s2_brief.js` (the briefing room), `s3_kit.js` (the story cast and set
-  pieces), `t1_mar.js` to `t5_maw.js` (one thread each). The test drivers there (`cdp.mjs`,
-  `ff.mjs`, `run.sh` and the rest) are still the ones to use.
-- Every patch asserts its anchor text, so a build fails loudly instead of drifting. Keep that.
-- Starting a new round of work: move `.scratch/base.html` into the round it belonged to, copy the
-  current `index.html` to `.scratch/base.html`, make a new `.scratch/vN/` folder with its own
-  `build.py`, and patch from there. If `.scratch/` is gone, start the same way from `index.html`.
+- `src/page.html` is the page: head, the markup, the import map and the two script
+  tags, with two placeholder lines, `@@STYLE@@` (replaced by `src/style.css`) and `@@SCRIPT@@`
+  (replaced by every `src/js/*.js`, joined in file-name order).
+- `src/js/NNN_name.js` are fragments of ONE `<script type="module">`, not ES modules. They share
+  one top-level scope: a name defined in any file is visible in every other, there are no
+  `import`/`export` between them, and file-name order is execution order. Each file starts at
+  one of the `/* ============ TITLE ============ */` section banners. A new file goes in at a
+  number between its neighbours (`255_thing.js`); keep the gaps. Every file ends with a newline.
+  Where things are: `020_post.js` the post chain `POST`; `050_audio.js` `sfx` and the sound
+  notice; `060_voices.js` and `070_music.js`; `080`/`090` mech parts (`ARM_FAM`, the extra
+  chassis); `110_yard.js` the yard, stores, bays, `SPRINT_K`, `capFor`; `150_field_env.js`
+  terrain and `fieldScale`; `160_field_weapons.js` the weapons engine (`emitShot`, `fire`) and
+  component damage (`mechZones`, `damage`); `170_units.js` vehicles, `UNIT_POOL`, `spawn`;
+  `190_mission_engine.js` comms, objectives and the comm camera (`cutWho`); `200_story_kit.js`
+  the story helpers, `stLook` and `stRace`/`RACE_K`; `210_missions.js` and `240_ops.js` the
+  contract types and twists; `230`/`250` the rival companies; `260_story.js` thread state, the
+  board and the save; `280`-`310` people and crews; `330_bar.js`, `340_bar_games.js`;
+  `350_brief.js` the briefing room; `360`-`400` the five threads (`stKeep` is in `400`, the
+  Derby's `dbCall` in `390`); `450_main.js` the main loop. `grep -l name src/js/*.js` finds
+  anything else.
+- `python3 build.py` writes `index.html` (release).
+- `python3 build.py --debug` writes `.scratch/debug.html` with the test hooks from
+  `src/debug/harness.js` (`__ev`, `__errs`, `__ff`, `__cam`, `__see`, `__strip`, `__poses`,
+  `__mus`, `__render`, `__wav`, `__mk`, `__sim`, `__vox`, `__story`, `__smk`, `__sites`,
+  `__fcam`, `__fsee`, `__sheet`, `__mechs`, `__parts`, `__aim`, `__arena`, `__dummy`). It also
+  makes `music.KIT` reachable. Its two anchors are asserted; if one moves, fix `build.py`.
+- Every build writes `.scratch/check.mjs` (the module script alone). Follow every build with
+  `node --check .scratch/check.mjs`: in a module a second top-level declaration of a name is a
+  syntax error, so this is what catches collisions between files. Check a new top-level name
+  with `grep -n "name" src/js/*.js` before using it anyway.
+- `python3 build.py --verify` fails unless `index.html` is exactly what `src/` builds. Run it
+  before committing, and commit `src/` and `index.html` together.
+- Do not put a `//` comment in the middle of a long one-line statement: it swallows the rest of
+  the line without a syntax error. Use `/* */`, or a line of its own.
+- History: before `src/` existed, each round of work was a set of asserted string patches and
+  part files applied to a snapshot of the page, in `.scratch/v3/` to `.scratch/v12/` (the last
+  of them built exactly what `src/` was split from). Those folders are no longer used to build
+  anything, but their test drivers (`cdp.mjs`, `ff.mjs`, `run.sh` in `v8`, and the rest below)
+  are still the ones to use. Old part-file names in notes map to `src/js/` like this:
+  `p1_post.js` is `020_post.js`, `a1_wake.js` `050_audio.js`, `v2_cast.js` `060_voices.js`,
+  `f2_scale.js` `150_field_env.js`, `m3_cut.js` `190_mission_engine.js`, `s3_kit.js` and
+  `r1_race.js` `200_story_kit.js`, `s1_story.js` `260_story.js`, `s2_brief.js` and
+  `m2_brief.js` `350_brief.js` (the march is in `070_music.js`), `b2_games.js`
+  `340_bar_games.js`, `t1_mar.js` to `t5_maw.js` `360` to `400`, `w1_parts.js` `090`,
+  `c1_combat.js` `160`, `u1_units.js` `170`, `m4_ops.js` `240`.
 
 ## Testing
 
@@ -205,7 +209,7 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   `t_talk.sh 'BAR.P.keep' 'BAR.pil[0]' ...` captures a conversation with each. A contest can be
   played out without waiting by calling `barGameHit()` and `barGameTick(dt, t)` in a loop.
   How hard each stake is was set with `sim_drink.py` and `sim_arm.py`, which mirror the rules in
-  `b2_games.js`; change the two together.
+  `src/js/340_bar_games.js`; change the two together.
 - Animation is easiest to judge from contact sheets: `__strip(person, frames, dt, dist, angle)`
   and `__poses(person, [acts])` in the debug build tile many frames into one screenshot.
 - Audio cannot be heard headlessly. `__mus(which, seconds, seed, track, heat)` renders a score
@@ -232,7 +236,7 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
     up three's own EffectComposer chain from the CDN, as the page used to have it, and compares
     it with `POST` at the same instant, every pixel. With bloom off the two must be identical;
     with it on, no channel may differ by more than one step. Run it in both browsers after any
-    change to `p1_post.js`.
+    change to `src/js/020_post.js`.
   - `t_hold.js` (from a clean page, either browser) counts pictures drawn against frames passed
     with the sortie ready, playing, paused and under the map, and after each thing that must
     wake a held picture. `r_hold.js` is the same walk for `ffreal.mjs`, with real clicks and
@@ -249,8 +253,9 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
 
 ## Conventions
 
-- Everything lives in one `<script type="module">`. Top-level names are shared across the whole
-  file, so new helpers need distinctive names; `node --check` catches collisions.
+- Everything lives in one `<script type="module">`, split across `src/js/` but still one scope.
+  Top-level names are shared across every file, so new helpers need distinctive names;
+  `node --check .scratch/check.mjs` catches collisions.
 - People are built by `Human` from a seeded `lookOf(seed)`. Crew portraits (`drawFace`) use the
   same seeded draws, so keep the two in step when changing either. A seed's draws are blind to
   who the person is (one gave an eleven-year-old a grey beard), so a named character's looks
@@ -274,7 +279,7 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   `updateBar`) is built like the deck. The conversation box `#dlg` and `dlg()` serve both rooms;
   `focusOn` hands over to `barFocusOn` in the bar. People there are `Human`s in `BAR.crowd`; the
   regulars are in `BARC`, and seated ones keep their seat through `barStay`.
-- The picture reaches the canvas through `POST` (`p1_post.js`) and nothing else. The main loop
+- The picture reaches the canvas through `POST` (`src/js/020_post.js`) and nothing else. The main loop
   sets `POST.scene`, `POST.camera` and `POST.strength` (the bloom) for the room and calls
   `POST.frame(dt, still)`; `POST.draw(scene, camera)` draws any scene through the whole chain,
   which is what the contact sheets use. The canvas has no depth buffer and no antialiasing of
@@ -345,15 +350,15 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   sites are given in metres from the centre; `storyLay()` flattens a pad at each and along
   every `roads` entry (a list of site keys) and keeps props off them. Keep sites within about
   800 m: the rim hills start at 864.
-- Chapters are written with the helpers in `s3_kit.js` on top of the mission ones (`until`,
+- Chapters are written with the helpers in `src/js/200_story_kit.js` on top of the mission ones (`until`,
   `after`, `say`, `ask`, `tell` (awaitable `say`), `setObj`, `nav`, `foes`, `spawn`,
   `dropship`): `stFrom` (alerted hostiles from a bearing), `stHold` and `stBar` (meters),
   `stPay`, `stGift`, `stMend`, `stRoad`, `stBeacon`, `stGate`, `stFire`, `stShow`, `stTick`,
   `stRace` (gates, laps, a pack: see below), and the big machines `stCrawler`, `stWalker`,
-  `stLantern`, `stDread`. An ally who must not die is wrapped in `stKeep` (`t5_maw.js`): at a
+  `stLantern`, `stDread`. An ally who must not die is wrapped in `stKeep` (`src/js/400_thread5_night.js`): at a
   quarter armour they are out of the fight and nobody shoots at them. A new named character
   goes in `STC`, `CAST` (the body and the looks) and `VOX_WHO` / `VOX_CAST` (the voice).
-- A Derby race (`stRace`, `r1_race.js`) is rubber-banded the way kart racers are. Every car has a
+- A Derby race (`stRace`, `src/js/200_story_kit.js`) is rubber-banded the way kart racers are. Every car has a
   place in the pack, `st`: seconds of the player's top speed in front of them (behind, if
   negative), given as `[off the grid, settled, at the last gate]` and swinging by `sw` once
   settled. It takes the player's measured pace plus `RACE_K.gain` for each second it is off that
@@ -385,7 +390,7 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   `['face', character, [lines]]`, `['clear']`). The map is the theatre's real ground, sampled
   from its seed. A step may be a getter when it depends on a flag, and a briefing should
   leave things out: what the script springs later is the point.
-- The comm camera (`m3_cut.js`): while a held line is up, the view goes to the speaker if they
+- The comm camera (`src/js/190_mission_engine.js`): while a held line is up, the view goes to the speaker if they
   are on the field, or to the event the line is about. `cutWho` finds a speaker by
   `fieldWho(ch, ent)`, as the wingman, as a company commander, or by a machine carrying their
   surname; give anybody else who is physically out there a `fieldWho`. An event is
