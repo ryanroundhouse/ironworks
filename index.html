@@ -3100,7 +3100,7 @@ function mkMech(x, z, cfg, team = 1, o = {}) {
   e.max = e.hp; m.root.rotation.y = e.yaw;
   m.onStep = L => { if (e.pos.distanceTo(P.pos) < 140) { L.ankP.getWorldPosition(_v); puff(FD.fx, _v, 2, 1.6, .5, .25); sfx.play('step', .25); } };
   e.update = dt => {
-    const tg = seek(e, dt), top = st.speed * ERUN; let d = 1e9, to = e.yaw, want = e.yaw, spd = 0;
+    const tg = seek(e, dt), top = st.speed * ERUN * (e.vk || 1); let d = 1e9, to = e.yaw, want = e.yaw, spd = 0;
     if (tg) { const dx = tg.pos.x - e.pos.x, dz = tg.pos.z - e.pos.z; d = Math.hypot(dx, dz); to = Math.atan2(dx, dz); }
     const eng = tg && (d < 330 || e.alert), fight = () => { e.flipT -= dt; if (e.flipT < 0) { e.flipT = rand(4, 9); e.strafe *= -1; } want = d > 110 ? to : d > 55 ? to + e.strafe * 1.35 : to + e.strafe * 2.5; spd = .85; };
     const head = (p, s) => { const dx = p.x - e.pos.x, dz = p.z - e.pos.z, dd = Math.hypot(dx, dz); if (dd > 9) { want = Math.atan2(dx, dz); spd = s; } return dd; };
@@ -3109,7 +3109,7 @@ function mkMech(x, z, cfg, team = 1, o = {}) {
     else if (e.ai === 'hold') { }
     else if (eng) fight();
     else if (e.ai === 'guard') head(e.home, .5);
-    const turn = drive(e, want, top * spd, dt, m.radius * .7, st.turn); m.root.rotation.y = e.yaw; m.gait.amt = e.v / top; m.gait.turn = turn;
+    const turn = drive(e, want, top * spd, dt, m.radius * .7, st.turn * Math.max(1, e.vk || 1)); m.root.rotation.y = e.yaw; m.gait.amt = e.v / (st.speed * ERUN); m.gait.turn = turn;
     if (tg && d < 330) {
       const tw = st.twist > 3 ? angDiff(e.yaw, to) : clamp(angDiff(e.yaw, to), -st.twist, st.twist); m.twist += angDiff(m.twist, tw) * Math.min(1, 3 * dt); m.pitch = clamp(Math.atan2(tg.pos.y + tg.cy - e.pos.y - e.cy, d), -.4, .4);
       if (!e.pacify && d < 210 && Math.abs(angDiff(e.yaw + m.twist, to)) < .14) for (const k of ['armL', 'armR', 'back']) {
@@ -3620,20 +3620,40 @@ function stLantern(at, o = {}) {
 }
 
 /* ---- THE IRON DERBY. A course is a ring of gates taken in order for so many laps. Everybody on it — you included — is placed by gates cleared, then by how close the next one is.
-   The other cars are paced off your own machine's top speed (f is the fraction they hold), so the race is the same race whatever you brought: sprinting, lines and heat decide it ---- */
+   Nobody gets away in a Derby, and nobody is let go. Every car has a place in the pack: so many seconds of your own top speed in front of you, or behind (st, negative). It takes whatever speed keeps that place,
+   more than its machine honestly has when it is short of it and less when it is past it, so the grid is round you whatever you brought and however you drive it. A place is [off the grid, settled, at the last gate]:
+   the settled one swings by sw seconds either way, which is how places change hands, and the last is where the car means to be as you reach the final gate. `at` is the share of the race over which it settles.
+   From the final gate the pack is over. Every car drops to the pace it can honestly hold (f, a share of your walking top speed) and the run to the flag belongs to whoever goes straight at it.
+   A car with `flat` set is outside all of this and simply runs at f. One that has been turned loose with its weapons (dbHot) keeps its place like any other and fires from it, `gun` times as often as it would at a stand ---- */
+const RACE_K = {
+  gain: .25,    /* speed taken or given, in shares of your top speed, for each second a car is off its place */
+  ff: .3,       /* how quickly the grid picks up a change in your own pace (1/s). With the gain, this is the give in the band: a burst of sprint buys about half a second for a few seconds */
+  lo: .7,       /* a car past its place eases off to this and no further: a pilot who stops is left at fifteen metres a second, and has it all to do again */
+  hi: 1.75,     /* the most a car in sight will take to get its place back: a sprint is 1.45 */
+  far: 3,       /* and the most one a long way off will take, where nobody is looking */
+  late: 18,     /* seconds before you reach the final gate at which every car goes for its last place */
+  rush: 2.1,    /* and the most it will take to be there in time */
+  room: 12,     /* metres two cars keep between them */
+  mine: 16,     /* and the metres they leave you, so that nobody runs in the middle of your picture */
+};
 function stRace(pts, laps, o = {}) {
-  const N = pts.length, col = o.col || 0xffb21a, G = pts.map((p, i) => stGate(p, stAng(pts[(i + N - 1) % N], pts[(i + 1) % N]), col, o.w || 34));
-  const R = { G, N, total: N * laps, laps, me: 0, cars: [], out: [], on: false, t0: 0, tMe: 0, pace: 1, next: n => pts[n % N] };
+  const N = pts.length, col = o.col || 0xffb21a, G = pts.map((p, i) => stGate(p, stAng(pts[(i + N - 1) % N], pts[(i + 1) % N]), col, o.w || 34)), K = RACE_K, top = () => player.stats.speed * RUN;
+  const R = { G, N, total: N * laps, laps, me: 0, cars: [], out: [], on: false, t0: 0, tMe: 0, pace: 1, vp: 1, lp: null, next: n => pts[n % N] };
   R.add = (ch, cfg, f, slot, o2 = {}) => {
-    const a = stAng(pts[0], pts[N - 1]), [x, z] = stOff(pts[0], a + (slot % 2 ? .35 : -.35), 46 + (slot >> 1) * 16), e = mkMech(x, z, cfg, 2, { ai: 'hold', name: o2.name || ch.first.toUpperCase(), yaw: a + PI, hpK: o2.hpK || 2.2, skill: o2.skill || 1 }), u = e.update, car = { e, ch, f, n: 0, fin: 0 };
+    const a = stAng(pts[0], pts[N - 1]), [x, z] = stOff(pts[0], a + (slot % 2 ? .35 : -.35), 46 + (slot >> 1) * 16), e = mkMech(x, z, cfg, 2, { ai: 'hold', name: o2.name || ch.first.toUpperCase(), yaw: a + PI, hpK: o2.hpK || 2.2, skill: o2.skill || 1 }), u = e.update, i = R.cars.length;
+    const car = { e, ch, f, n: 0, fin: 0, k: f, st: o2.st ?? 0, sw: o2.sw || 0, at: o2.at || [.06, .4], ph: i * 2.4 + 1, w: TAU / (o2.per || 33 + i * 6), lane: [-8, 8, -3, 3, 0, -12, 12][i % 7], gun: o2.gun ?? .3 }, own = e.mech.stats.speed * ERUN * .9, m = e.mech;
+    const free = () => { e.vk = 1; m.gait.sk = 1.25; };
     e.pacify = true; e.car = car; fieldWho(ch, e);
     e.update = (dt, t) => {
-      if (!R.on || car.fin) { e.ai = car.fin ? 'hold' : e.ai; return u(dt, t); }
-      const w = R.next(car.n); if (stDist(e.pos, w) < 20) { car.n++; if (car.n >= R.total) { car.fin = MS.t; R.out.push(car); e.ai = 'hold'; return u(dt, t); } }
-      if (e.team === 2 || e.ai === 'goto') { e.ai = 'goto'; e.dest = R.next(car.n); e.arrived = false; }
-      const want = player.stats.speed * RUN * car.f * R.pace * (car.flat ? 1 : 1 + clamp((R.me - car.n) * .035, -.07, .1)); u(dt * clamp(want / (e.mech.stats.speed * ERUN * .9), .35, 2.4), t);
+      if (!R.on || car.fin) { free(); e.ai = car.fin ? 'hold' : e.ai; return u(dt, t); }
+      const w = R.next(car.n); if (stDist(e.pos, w) < 20) { car.n++; if (car.n >= R.total) { car.fin = MS.t; R.out.push(car); e.ai = 'hold'; free(); return u(dt, t); } }
+      if (e.team === 2 || e.ai === 'goto') { e.ai = 'goto'; e.dest = R.line(car); e.arrived = false; } else { free(); return u(dt, t); }   /* off the course on business of its own: its own machine, at its own pace */
+      car.k = R.speed(car); e.vk = clamp(top() * car.k * R.pace / own, .05, 8); m.gait.sk = 1.25 / Math.sqrt(Math.max(1, e.vk * .9 / 1.6));   /* past a full sprint the stride lengthens as well as quickens */
+      const c0 = e.pacify ? null : { ...e.cd }; u(dt, t); const sp = Math.min(1, 6 * dt);
+      if (c0) for (const k in c0) if (e.cd[k] > c0[k]) e.cd[k] /= car.gun;   /* a car that has gone weapons hot is still running flat out: every shot costs it 1/gun as long to follow as it would standing its ground */
+      for (const q of R.cars) { const p = q === car ? P.pos : q.e.pos, r = q === car ? K.mine : K.room; if (q !== car && q.e.dead) continue; const dx = e.pos.x - p.x, dz = e.pos.z - p.z, d = Math.hypot(dx, dz); if (d < r && d > .01) { e.pos.x += dx / d * (r - d) * sp; e.pos.z += dz / d * (r - d) * sp; } }
     };
-    car.quit = () => { const i = R.cars.indexOf(car); if (i >= 0) R.cars.splice(i, 1); e.update = u; return e; };   /* out of the race, and its own machine again */
+    car.quit = () => { const j = R.cars.indexOf(car); if (j >= 0) R.cars.splice(j, 1); e.update = u; free(); return e; };   /* out of the race, and its own machine again */
     R.cars.push(car); return car;
   };
   /* where you stand: one, plus every car that has cleared more gates, or the same number and is nearer the next */
@@ -3643,11 +3663,36 @@ function stRace(pts, laps, o = {}) {
   R.slot = n => { const a = stAng(pts[0], pts[N - 1]); return gpos(...stOff(pts[0], a + (n % 2 ? .35 : -.35), 46 + (n >> 1) * 16)); };
   /* how far a runner still has to go: to its next gate, and then gate to gate to the flag */
   R.left = (p, n) => { if (n >= R.total) return 0; let d = stDist(p, R.next(n)); for (let i = n; i < R.total - 1; i++) d += stDist(R.next(i), R.next(i + 1)); return d; };
-  R.go = () => { R.on = true; R.t0 = MS.t; sfx.play('alarm'); msg('GO!', 2); };
+  /* how far in front of you a car is, in metres along the course (behind, if negative), and the same in seconds of your top speed */
+  R.gap = car => R.left(P.pos, R.me) - R.left(car.e.pos, car.n);
+  R.secs = car => R.gap(car) / top();
+  /* the run to the flag: the last gate before it is behind you */
+  R.home = () => R.me >= R.total - 1;
+  /* 0 until you are `late` seconds from the final gate, 1 as you reach it */
+  R.late = () => { const lastLeg = stDist(R.next(R.total - 2), R.next(R.total - 1)); return smooth(clamp(1 - (R.left(P.pos, R.me) - lastLeg) / top() / K.late, 0, 1)); };
+  /* the place a car wants just now, in seconds ahead of you */
+  R.stn = car => {
+    const s = car.st; if (typeof s === 'number') return s; const len = R.len || (R.len = R.left(pts[0], 0)), u = 1 - R.left(P.pos, R.me) / len, a = smooth(clamp((u - car.at[0]) / (car.at[1] - car.at[0]), 0, 1)), z = R.late();
+    return lerp(lerp(s[0], s[1], a), s[2], z) + car.sw * Math.sin(car.ph + (MS.t - R.t0) * car.w) * a * (1 - z);
+  };
+  /* the speed a car takes, as a share of your top speed */
+  R.speed = car => {
+    if (car.flat || R.home()) return car.f;   /* the pack lets go when you reach the last gate, not when they do: a car in front is exactly where it meant to be when you get there */
+    const d = stDist(car.e.pos, P.pos), hi = lerp(lerp(K.hi, K.rush, R.late()), K.far, clamp((d - 150) / 250, 0, 1));
+    return clamp(R.vp + (R.stn(car) - R.secs(car)) * K.gain, K.lo, hi);
+  };
+  /* the point in a gate a car steers for: each keeps a lane of its own, so the pack goes through side by side and not as one machine */
+  R.line = car => { const i = car.n % N, p = pts[i], y = G[i].rotation.y; return V3(p.x + Math.cos(y) * car.lane, 0, p.z - Math.sin(y) * car.lane); };
+  /* the cars either side of you on the road: [nearest in front, nearest behind] */
+  R.by = () => { let a = null, b = null; for (const c of R.cars) { if (c.e.dead || c.fin) continue; const g = R.gap(c); if (g > 0 ? !a || g < a.g : !b || g > b.g) { const q = { c, g }; if (g > 0) a = q; else b = q; } } return [a, b]; };
+  R.go = () => { R.on = true; R.t0 = MS.t; R.vp = 1.45; R.lp = null; R.len = R.left(pts[0], 0); sfx.play('alarm'); msg('GO!', 2); };
   stTick(dt => {
-    if (MS.over) return false; const nx = R.me % N; G.forEach((g, i) => { g.userData.lamp.emissiveIntensity = i === nx && R.me < R.total ? 3 + 2.5 * Math.sin(MS.t * 9) : .5; g.userData.beam.material.opacity = i === nx && R.me < R.total ? .34 : .05; });
-    if (R.on && R.me < R.total && stDist(P.pos, R.next(R.me)) < 21) { R.me++; sfx.play('ok'); if (R.me >= R.total) { R.tMe = MS.t; R.fin = R.out.length + 1; msg(`FINISHED — ${R.ord(R.fin)}`, 4); } else if (R.me % N === 0) msg(`LAP ${R.lap()} OF ${laps} — ${R.ord(R.place())}`, 3); }
-    const gn = R.on && R.me < R.total ? R.me : -1; if (gn !== R.gn) { R.gn = gn; if (gn >= 0) nav('gate', R.next(gn), gn === R.total - 1 ? 'FINISH' : `GATE ${gn % N + 1}`, '#ffb21a'); else unnav('gate'); } return true;
+    if (MS.over) return false; const nx = R.me % N; G.forEach((g, i) => { const lit = i === nx && R.me < R.total && R.pace > .5; g.userData.lamp.emissiveIntensity = lit ? 3 + 2.5 * Math.sin(MS.t * 9) : .5; g.userData.beam.material.opacity = lit ? .34 : .05; });
+    /* under a caution flag (pace dropped by the script) the gates count for nobody: the field is held, and so are you */
+    if (R.on && R.pace > .5 && R.me < R.total && stDist(P.pos, R.next(R.me)) < 21) { R.me++; sfx.play('ok'); if (R.me >= R.total) { R.tMe = MS.t; R.fin = R.out.length + 1; msg(`FINISHED — ${R.ord(R.fin)}`, 4); } else if (R.me % N === 0) msg(`LAP ${R.lap()} OF ${laps} — ${R.ord(R.place())}`, 3); }
+    /* your own pace over the ground that counts, as the grid reads it */
+    if (R.on && R.me < R.total && dt > 0) { const lp = R.left(P.pos, R.me); if (R.lp != null) R.vp = damp(R.vp, clamp((R.lp - lp) / dt / top(), 0, 1.6), K.ff, dt); R.lp = lp; }
+    const gn = R.on && R.me < R.total && R.pace > .5 ? R.me : -1; if (gn !== R.gn) { R.gn = gn; if (gn >= 0) nav('gate', R.next(gn), gn === R.total - 1 ? 'FINISH' : `GATE ${gn % N + 1}`, '#ffb21a'); else unnav('gate'); } return true;
   });
   return R;
 }
@@ -6817,7 +6862,14 @@ async function stGridUp(R, n) {
   const at = R.slot(n); nav('grid', at, 'YOUR SLOT', '#ffb21a'); setObj('grid', 'Take your place on the grid'); await until(() => near(at, 15)); unnav('grid'); setObj('grid', null, 1);
   for (const k of ['3', '2', '1']) { msg(k, 1); sfx.play('ui'); await after(1); } R.go();
 }
-const dbBoard = (R, laps) => (MS.v.R = R, setObj)('r', () => R.fin ? `Finished — ${R.ord(R.fin)}` : `${R.ord(R.place())} of ${R.cars.filter(c => !c.e.dead).length + 1} · lap ${R.lap()}/${laps} · gate ${R.me % R.N + 1}`);
+const dbBank = R => { for (const c of R.cars) if (c.e.team === 2 && Array.isArray(c.st)) { const s = R.secs(c); if (s > 0) c.st = c.st.map(v => Math.max(v, s)); } };   /* a pilot who leaves the course for something else gives the field the time: every car in front keeps the lead it gained */
+const dbBy = R => { if (!R.on) return ''; const [a, b] = R.by(), s = [a && `▲ ${a.c.e.name} ${Math.round(a.g)} m`, b && `▼ ${b.c.e.name} ${Math.round(-b.g)} m`].filter(Boolean); return s.length ? '<br>' + s.join(' · ') : ''; };
+const dbBoard = (R, laps) => (MS.v.R = R, setObj)('r', () => R.fin ? `Finished — ${R.ord(R.fin)}` : `${R.ord(R.place())} of ${R.cars.filter(c => !c.e.dead).length + 1} · lap ${R.lap()}/${laps} · ${R.home() ? 'run to the flag' : 'gate ' + (R.me % R.N + 1)}${dbBy(R)}`);
+/* the race, called from the pit wall: that nobody can be dropped, the last lap, the front of the grid going for the line, and the gate where they have nothing left. A line may be a function, or missing */
+const dbCall = (R, who, L) => { const go = () => !R.fin && !MS.over, line = i => { const t = typeof L[i] === 'function' ? L[i]() : L[i]; if (t && go()) chatter(who, t); }; (async () => {
+  await until(() => !go() || R.me >= 2); line(0); await until(() => !go() || R.me >= R.total - R.N); line(1); await until(() => !go() || R.late() > .3); line(2);
+  await until(() => !go() || R.home()); if (go()) { for (let i = commQ.length - 1; i >= 0; i--) if (commQ[i].chat) commQ.splice(i, 1); msg('LAST GATE — SPRINT FOR THE FLAG', 3.5); sfx.play('alarm'); line(3); }   /* nothing that was waiting to be said is worth being late with this */
+})(); };
 const dbBet = (stake, mult, won, what) => { if (!stake) return; if (won) stPay(`Calloway pays out: ${what}`, stake * mult); else stPay(`Calloway keeps your stake: ${what}`, -stake); };
 /* a racer stops racing and starts shooting */
 const dbHot = (c, focus = PE) => { if (!c || c.e.dead) return; Object.assign(c.e, { team: 1, pacify: false, alert: true, inv: false, focus }); };
@@ -6836,7 +6888,7 @@ STORY.derby = {
     brf: [
       { t: 'I want it noted that this is not a contract. It is a motor race. Rook has asked for the floor, and I have decided I would rather know what she is up to than not.', show: [['site', 'lz', 'PADDOCK', '#8dff6a'], ['card', 'THE JOB', ['Enter the Iron Derby qualifier', 'Finish in the top three', 'Try to bring the machine back']]] },
       { by: PILOTS[0].ch, t: "Boss. The Iron Derby. Six gates, two laps, flat out. You go through every gate in order or it doesn't count. That's the whole rulebook, and half of it's optional.", show: [['route', ['g0', 'g1', 'g2', 'g3', 'g4', 'g5', 'g0'], '#ffb21a'], ['site', 'g0', 'START / FINISH', '#ffb21a'], ['site', 'g1', 'GATE 2', '#ffb21a'], ['site', 'g2', 'GATE 3', '#ffb21a'], ['site', 'g3', 'GATE 4', '#ffb21a'], ['site', 'g4', 'GATE 5', '#ffb21a'], ['site', 'g5', 'GATE 6', '#ffb21a']], shot: 'who' },
-      { by: PILOTS[0].ch, t: "Five other cars. They're paced off whatever you bring, so bring what you like — but the fast line's the fast line, and every gate you take wide is a place you lose. The one to watch is Tin Lizzie. Thirty years on the grid. She'll talk the whole way round.", show: [['face', STC.liz, ['"Tin Lizzie" Brandt, car 7', 'Thirty seasons. Never won it', 'Will tell you why, at length']], ['card', 'THE GRID', ['Six cars. Top three qualify', 'No weapons on a qualifier lap', 'Jump jets are legal. So is everything else']]] },
+      { by: PILOTS[0].ch, t: "Five other cars, and you won't lose one of them. A Derby grid runs past the red line to stay in the pack, whatever you bring. It lets go at the last gate: nobody has anything left for the run to the flag, so that's where you take it. The one to watch is Tin Lizzie. Thirty years on the grid. She'll talk the whole way round.", show: [['face', STC.liz, ['"Tin Lizzie" Brandt, car 7', 'Thirty seasons. Never won it', 'Will tell you why, at length']], ['card', 'THE GRID', ['Six cars. Top three qualify', 'Nobody gets away before the last gate', 'It is won on the run to the flag']]] },
       { by: BARC.broker, t: 'Ezra Calloway. I keep the book, and the purse. It rides in that wagon on the infield, where everybody can see it and nobody can reach it. I shall be on the tannoy. Do ask me about odds.', show: [['site', 'pot', 'THE PURSE', '#c9a0ff'], ['face', BARC.broker, ['Ezra Calloway, bookmaker', 'Holds the purse and the odds', 'Has never lost money on a Derby']]], shot: 'who' },
       { t: 'What I cannot tell you is why one of my pilots is barred from that grid, because she will not tell me. The reigning champion is a Baron Drescher. He does not race qualifiers. He sends people.', show: [['face', STC.bar, ['Baron Viktor Drescher', 'Champion, nine years running', 'Does not attend qualifiers in person']], ['unk', 'g3', 'WHAT IS ROOK NOT SAYING?']] },
       { by: PILOTS[0].ch, t: "I'll be in your ear the whole way. I know every stone of that course. Just get me on to the big grid, boss. I'll tell you the rest when you have.", shot: 'who' },
@@ -6844,16 +6896,18 @@ STORY.derby = {
     ],
     async run(ms) {
       const S = ms.S, rook = PILOTS[0].ch, book = BARC.broker, liz = STC.liz, bar = STC.bar, xo = ms.ops, pts = ['g0', 'g1', 'g2', 'g3', 'g4', 'g5'].map(k => S[k]), N = pts.length, R = stRace(pts, 2); R.total = N * 2 + 1;
-      const L = R.add(liz, DB_CAR.liz, .96, 0, { name: 'TIN LIZZIE' }), sab = R.add(DB_WHO.sable, DB_CAR.sable, .985, 1, { name: 'SABLE' }), kid = R.add(DB_WHO.kid, DB_CAR.kid, .93, 2, { name: 'KID OKORO' }), deu = R.add(DB_WHO.deuce, DB_CAR.deuce, .9, 3, { name: 'DEUCE' }), tom = R.add(DB_WHO.tom, DB_CAR.tom, .88, 4, { name: 'OLD TOM' }); for (const c of R.cars) c.e.inv = true;
+      const L = R.add(liz, DB_CAR.liz, .96, 0, { name: 'TIN LIZZIE', st: [1.5, .2, 3.2], sw: 1.3 }), sab = R.add(DB_WHO.sable, DB_CAR.sable, .985, 1, { name: 'SABLE', st: [2.2, 1, 5], sw: 1.3 }), kid = R.add(DB_WHO.kid, DB_CAR.kid, .93, 2, { name: 'KID OKORO', st: [1.5, -.9, -.8], sw: .7, at: [.34, .5] }), deu = R.add(DB_WHO.deuce, DB_CAR.deuce, .9, 3, { name: 'DEUCE', st: [.8, -1.8, -1.6], sw: .6, at: [.1, .3] }), tom = R.add(DB_WHO.tom, DB_CAR.tom, .88, 4, { name: 'OLD TOM', st: [.4, -2.8, -2.5], sw: .5, at: [.04, .2] }); for (const c of R.cars) c.e.inv = true;
       const wagon = mkTruck(S.pot.x, S.pot.z, 0, []); wagon.name = 'THE PURSE'; wagon.hp = wagon.max = 1500; wagon.halt = true; stBeam(S.pot, 0xc9a0ff, 90, 1); const mines = stMines(S.g4, S.g3);
       await after(2); chatter(rook, "Radio check. That's the paddock. Grid's just past the start gate. Smell that? Hot oil and bad decisions. God, I've missed it.");
       await after(5); const b = await ask(book, 'Calloway, on the tannoy. A newcomer! The book adores a newcomer. Would the Commander care for a flutter before the off?', ['¢20,000 on myself to win. Three to one.', '¢10,000 to finish ahead of Sable. Evens.', 'I do not gamble.'], 20, 2);
       say(book, b === 2 ? 'A soldier and a puritan. The book is desolate. Racers — to the grid!' : 'Taken, and written down. Racers — to the grid!'); dbBoard(R, 2);
       chatter(liz, "New blood! Tin Lizzie, car seven. First rule of the Derby: I talk, you listen. Second rule: don't follow me into gate three, I take it sideways.");
       await stGridUp(R, 5); chatter(rook, "Clean start. Gate two's a long drag — get your head down and don't look at Lizzie, she does it to put you off.");
+      dbCall(R, rook, ["That's a Derby grid, boss. Every one of them is over the red line to stay in the pack, and you will not shake them. Don't try. Just be there at the last gate.", "Last lap! The front of the grid goes early, it always does. Let them. Nobody holds that pace past the last gate.",
+        "There they go! That's everything they have, and it's gone by the gate. Stay on them!", "LAST GATE! They're cooked, boss. Flat out, straight at the flag, GO!"]);
       /* gate five has been seen to */
       (async () => {
-        let hit = null; await until(() => (hit = [tom, deu, kid].find(c => c.n % N === 4 && c.n < N && stDist(c.e.pos, S.g4) < 52)) || (R.me === 4 && near(S.g4, 300)));
+        let hit = null; const lead = () => [tom, deu, kid].some(c => !c.e.dead && c.n === 4 && R.gap(c) > 0); await until(() => (hit = [tom, deu, kid].find(c => c.n === 4 && stDist(c.e.pos, S.g4) < 52)) || (R.me === 4 && near(S.g4, 300) && !lead()));
         if (hit) { const m = mines.find(e => !e.dead); if (m) killEnt(m, 1); look(hit.e, hit.e.name); killEnt(hit.e, 1); await tell(rook, `MINES! That was ${hit.ch.first} — gate five is seeded! Shoot them, jump them or go round the end of the line, but do NOT run that gate straight!`); }
         else { look(mines.find(e => !e.dead) || S.g4, 'TRACK MINES'); await tell(rook, "Boss — gate five. The ground's been dug in front of it. That's a mine line. Shoot them, jump them, or go round the end and cut back in!"); }
         chatter(book, 'The stewards wish it known that the stewards did not put those there.'); await until(() => R.me > 4);
@@ -6909,12 +6963,13 @@ STORY.derby = {
     guests: [BARC.broker, STC.liz],
     async run(ms) {
       const S = ms.S, rook = PILOTS[0].ch, book = BARC.broker, liz = STC.liz, bar = STC.bar, xo = ms.ops, pts = ['g0', 'g1', 'g2', 'g3', 'g4', 'g5'].map(k => S[k]), N = pts.length, R = stRace(pts, 2, { col: 0xff7a3a }); R.total = N * 2 + 1;
-      const L = R.add(liz, DB_CAR.liz, .97, 0, { name: 'TIN LIZZIE', hpK: 2.6 }), sab = R.add(DB_WHO.sable, DB_CAR.sable, 1, 1, { name: 'SABLE', hpK: 2 }), bru = R.add(DB_WHO.brute, DB_CAR.brute, .95, 2, { name: 'BRUTE', hpK: 2.6 }), kid = R.add(DB_WHO.kid, DB_CAR.kid, .93, 3, { name: 'KID OKORO' }), deu = R.add(DB_WHO.deuce, DB_CAR.deuce, .9, 4, { name: 'DEUCE' });
+      const L = R.add(liz, DB_CAR.liz, .97, 0, { name: 'TIN LIZZIE', hpK: 2.6, st: [1.2, .5, 2.4], sw: 1 }), sab = R.add(DB_WHO.sable, DB_CAR.sable, 1, 1, { name: 'SABLE', hpK: 2, st: [1.6, .3, -.9], sw: 2, at: [.1, .3], per: 27 }), bru = R.add(DB_WHO.brute, DB_CAR.brute, .95, 2, { name: 'BRUTE', hpK: 2.6, st: [.5, 1.2, -1], sw: 1.6, at: [.05, .25] }), kid = R.add(DB_WHO.kid, DB_CAR.kid, .93, 3, { name: 'KID OKORO', st: [1.4, 1, 4.4], sw: 1 }), deu = R.add(DB_WHO.deuce, DB_CAR.deuce, .9, 4, { name: 'DEUCE', st: [.9, -.6, 2.6], sw: .9 });
       const guns = ['g2', 'g4'].flatMap((k, j) => [-1, 1].map(s => { const [x, z] = stOff(S[k], stAng(S[k], pts[j ? 3 : 1]) + s * 1.3, 52), t = mkTurret(x, z, 1); t.name = 'TRACK GUN'; t.hp = t.max = 130; return t; }));
       await after(2); chatter(rook, "Paddock. You can feel the ground humming through the legs. That's the mountain. It's rated quiet. Everything up here is rated quiet.");
       await after(5); const b = await ask(book, 'Calloway! The Crucible book is open. I can offer the Commander five to two on the win, or evens that both of the Baron\'s seconds fail to finish. One does like to offer a sporting market.', ['¢20,000 on myself to win. Five to two.', '¢15,000 that neither second finishes. Evens.', 'I do not gamble.'], 20, 2);
       look(guns[0], 'TRACK GUNS'); await tell(book, 'And now the lottery! The track guns tonight will follow car number... one moment... oh. Oh dear. It appears to be yours, Commander. What are the odds? I ask rhetorically. I know the odds. I was paid to.'); dbBoard(R, 2);
       await stGridUp(R, 5); chatter(liz, "Stay on my hip through two, love. After that it's every hull for herself.");
+      dbCall(R, rook, [null, "Last lap, and they're all still on you. That's the Derby. Keep something back for the flag.", "The front's going for the line early. Let them burn it.", "LAST GATE! There's nothing left in any of them. Flat out, boss, straight at it!"]);
       await until(() => R.me >= 2 || R.fin); msg('GATE TWO — WEAPONS FREE', 3); sfx.play('alarm'); dbHot(sab); dbHot(bru);
       look(sab.e, "THE BARON'S SECONDS"); await tell(rook, "Weapons free — and Sable and Brute have both gone hot. They're not racing you, boss, they're hunting you. You're allowed to hunt back. I'd start with Sable.");
       chatter(liz, "Oh good. It's THAT sort of Crucible."); setObj('s', () => `The Baron's seconds — ${alive([sab.e, bru.e])} still running`, 0, true);
@@ -6933,7 +6988,7 @@ STORY.derby = {
           await tell(rook, "Boss — she's got less than a minute. You stop, you lose the heat money and you start the final from the back. You don't, and... your call. I know what I'd do. I'm not the one who has to pay for it.");
           (async () => {
             await until(() => !alive(K) || Le.dead || ms.t > tL || R.fin); if (alive(K) && !Le.dead && (R.fin || !near(Le.pos, 230))) killEnt(Le, 1); if (alive(K) && !Le.dead) await until(() => !alive(K) || Le.dead);
-            unnav('liz'); if (Le.dead) { stSet('liz', 0); setObj('l', 'Lizzie is down — her machine is gone', 2); chatter(liz, "Ejected. I'm in a ditch with a broken collarbone watching thirty years of machine burn. Go on, then. Go and win your race."); for (const e of K) if (!e.dead) e.focus = PE; }
+            unnav('liz'); if (near(Le.pos, 260)) dbBank(R); if (Le.dead) { stSet('liz', 0); setObj('l', 'Lizzie is down — her machine is gone', 2); chatter(liz, "Ejected. I'm in a ditch with a broken collarbone watching thirty years of machine burn. Go on, then. Go and win your race."); for (const e of K) if (!e.dead) e.focus = PE; }
             else { stSet('liz', 1); setObj('l', 'Lizzie is down — you stopped for her', 1); Le.inv = true; Le.pacify = true; ms.v.saved = 1; await tell(liz, "You stopped. In the Crucible. Nobody stops in the — you daft, soft-hearted — GO! Recovery's got me. Go and finish, I'll not have you last on my account!"); chatter(book, 'A racer has stopped for a racer. The book has no market for that. The book is, briefly, moved.'); }
           })();
         }
@@ -6969,11 +7024,14 @@ STORY.derby = {
     ],
     async run(ms) {
       const S = ms.S, rook = PILOTS[0].ch, book = BARC.broker, liz = STC.liz, bar = STC.bar, xo = ms.ops, pts = ['g0', 'g1', 'g2', 'g3', 'g4', 'g5'].map(k => S[k]), N = pts.length, R = stRace(pts, 2); R.total = N * 2 + 1; const hasL = !!stFlag('derby.liz'), pole = !!stFlag('derby.pole');
-      const B = R.add(bar, DB_CAR.mag, 1.035, pole ? 1 : 0, { name: 'MAGPIE', hpK: 3.4, skill: 1.5 }), sab = R.add(DB_WHO.sable, DB_CAR.sable, 1, 2, { name: 'SABLE', hpK: 2.2 }), L = hasL ? R.add(liz, DB_CAR.liz, .98, 3, { name: 'TIN LIZZIE', hpK: 3 }) : null, kid = R.add(DB_WHO.kid, DB_CAR.kid, .94, 4, { name: 'KID OKORO' }), deu = R.add(DB_WHO.deuce, DB_CAR.deuce, .9, 5, { name: 'DEUCE' }); for (const c of R.cars) c.e.inv = true;
+      const B = R.add(bar, DB_CAR.mag, 1.035, pole ? 1 : 0, { name: 'MAGPIE', hpK: 3.4, skill: 1.5, st: [2, 1.4, 3.6], sw: 1 }), sab = R.add(DB_WHO.sable, DB_CAR.sable, 1, 2, { name: 'SABLE', hpK: 2.2, st: [1.3, .3, -.9], sw: 1.8, at: [.1, .3], per: 27 }), L = hasL ? R.add(liz, DB_CAR.liz, .98, 3, { name: 'TIN LIZZIE', hpK: 3, st: [1, .4, .4], sw: .8 }) : null, kid = R.add(DB_WHO.kid, DB_CAR.kid, .94, 4, { name: 'KID OKORO', st: [.6, -1.2, -1], sw: .7 }), deu = R.add(DB_WHO.deuce, DB_CAR.deuce, .9, 5, { name: 'DEUCE', st: [.3, -2.2, -2], sw: .6 }); for (const c of R.cars) c.e.inv = true;
       await after(2); chatter(rook, "There she is. Front row, black and gold. He's painted her like a hearse. ...Sorry. I'm fine. Grid's ahead of you.");
       await after(5); look(B.e, 'MAGPIE'); await tell(bar, "Miss Albrecht's mercenary. I trust she has told you whose machine this is. I keep her in the long gallery, between a Vermeer and a stuffed bear. She is the only one of the three I take out.");
       chatter(rook, "Don't. Don't answer him. Just drive."); const b = await ask(book, 'Calloway. The book on the final stands at seven to two against the Commander, which I may say is the shortest price anybody has had against the Baron in nine years. A last flutter?', ['¢30,000 on myself. Seven to two.', 'I do not gamble.'], 20, 1); dbBoard(R, 2);
       if (L) chatter(liz, "Harvester leg and all, love. Sable's mine. I owe that family a wheel."); await stGridUp(R, pole ? 0 : 6); chatter(rook, pole ? "Front row, alongside him. Get to gate one first and make him look at your back for once." : "You're at the back. Good. Nobody mines the back. Pick them off one gate at a time.");
+      dbCall(R, rook, ["He has the legs of you, boss. I made sure of that when I built her. Doesn't matter. Stay in his mirrors.", "Last lap. Whatever he does, be on him at the last gate. She was never built to hold that pace past it.",
+        () => ms.v.stall ? "He's coming back at you, and that's everything she has. Hold him off to the gate!" : "He's gone for the line! That's MAGPIE flat out, and I know to the second how long she'll take it.",
+        () => ms.v.stall ? "LAST GATE! He's got nothing left to come by with. Straight at the flag, boss, don't look back!" : "LAST GATE! She's cooked. Straight at the flag, everything you have, NOW!"]);
       /* gate two: his second earns her money */
       await until(() => R.me >= 2 || R.fin || B.fin);
       if (L) { L.f = sab.f = .8; L.flat = sab.flat = true; look(sab.e, 'SABLE'); await tell(liz, "Sable's come across to put you in the wall and found me there instead. Go on, love — I've got her. I can do this ALL DAY. I have, in fact, done this for thirty years."); chatter(DB_WHO.sable, 'Get this antique OFF me—'); }
@@ -6981,15 +7039,14 @@ STORY.derby = {
       /* lap two: he does what he always does */
       await until(() => (B.n > N + 1 && B.n % N === 2) || R.me >= N + 2 || R.fin || B.fin);
       if (!R.fin && !B.fin) {
-        if (B.n <= N + 2) B.n = N + 3; look(B.e, 'MAGPIE — OFF THE COURSE'); await tell(rook, "He's cut it! He's gone straight across the crater and missed gate three completely! CALLOWAY!");
+        if (B.n <= N + 2) B.n = N + 3; { const s = clamp(R.secs(B), 3, 7); B.st = [s, s, 3.6]; } look(B.e, 'MAGPIE — OFF THE COURSE'); await tell(rook, "He's cut it! He's gone straight across the crater and missed gate three completely! CALLOWAY!");
         await tell(book, 'The stewards saw nothing irregular. The stewards have, I regret to say, been looking the other way at a rate of four thousand credits a minute.');
         const M = stMines(S.g4, S.g3, 6, 60, 8); chatter(rook, "And he's dropping mines out of her cargo bay. MY cargo bay! I put that bay in for spare coolant!");
         await until(() => R.me >= N + 3 || R.fin || B.fin);
         if (!R.fin && !B.fin) {
-          const r = await ask(rook, "Boss. I built that machine. There's a word you can say on her service channel that puts her reactor to sleep for ten seconds. He's never found it. I've never used it. Say so, and I'll say it.", ['Say it, Rook.', 'No. I take him on the track.'], 18, 1); B.flat = true; let stall = 0;
-          if (r === 0) { stSet('clean', 0); stall = ms.t + 10; look(B.e, 'MAGPIE'); await tell(rook, 'Service channel... "Mind the step, Maggie."'); B.e.mech.mats.glow && (B.e.mech.mats.glow.emissiveIntensity = 0); await tell(bar, "What — the board has gone dark — what have you DONE to her? Sable! SABLE!"); chatter(rook, 'Hello, old girl. Miss me?'); }
-          else { stSet('clean', 1); await tell(rook, "...Good. I'd have hated you a bit. Then listen: she always ran hot in the right knee, and he drives her like he's whipping her. He can't hold the last three gates tight. You can. Go INSIDE him."); chatter(liz, hasL ? "That's the way, love! Clean! Make him lose it properly!" : 'Clean, is it? Well. Maybe you are a racer after all.'); }
-          const lo = r === 0 ? .8 : .64; stTick(() => { if (ms.over || R.fin || B.fin) return false; if (stall) { if (ms.t < stall) { B.f = .02; return true; } stall = 0; if (B.e.mech.mats.glow) B.e.mech.mats.glow.emissiveIntensity = 3; } B.f = clamp(R.left(B.e.pos, B.n) / (R.left(P.pos, R.me) * 1.03 + player.stats.speed * RUN * 1.6), lo, 1.035); return true; });   /* he is driven to arrive a second and a half behind a flawless run from where you are now, and can only slow so far to do it */
+          const r = await ask(rook, "Boss. I built that machine. There's a word you can say on her service channel that puts her reactor to sleep for ten seconds. He's never found it. I've never used it. Say so, and I'll say it.", ['Say it, Rook.', 'No. I take him on the track.'], 18, 1);
+          if (r === 0) { stSet('clean', 0); ms.v.stall = 1; B.flat = true; B.f = .02; (async () => { await after(10); B.f = 1.035; B.flat = false; B.st = [-1, -1, -1]; if (B.e.mech.mats.glow) B.e.mech.mats.glow.emissiveIntensity = 3; })(); look(B.e, 'MAGPIE'); await tell(rook, 'Service channel... "Mind the step, Maggie."'); B.flat && B.e.mech.mats.glow && (B.e.mech.mats.glow.emissiveIntensity = 0); await tell(bar, "What — the board has gone dark — what have you DONE to her? Sable! SABLE!"); chatter(rook, 'Hello, old girl. Miss me?'); }
+          else { stSet('clean', 1); B.st = [3.2, 3.2, 3.6]; await tell(rook, "...Good. I'd have hated you a bit. Then listen: she always ran hot in the right knee, and he drives her like he's whipping her. He can't hold the last three gates tight. You can. Go INSIDE him."); chatter(liz, hasL ? "That's the way, love! Clean! Make him lose it properly!" : 'Clean, is it? Well. Maybe you are a racer after all.'); }
         }
       }
       await until(() => R.fin || B.fin);

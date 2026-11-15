@@ -23,11 +23,12 @@ a CDN, so view it through a local web server with an internet connection.
 While `.scratch/` exists, `index.html` is generated rather than hand-edited:
 
 - `.scratch/base.html` is a snapshot of the page from before the current round of work.
-- `.scratch/v9/build.py` applies asserted string patches to the base and inserts the part file
-  beside it: `p1_post.js` (the post chain `POST`: the scene target, the bloom, the pass that
-  writes the canvas, and the hold that leaves a paused sortie's picture standing).
-  - `python3 .scratch/v9/build.py` writes `index.html` (release).
-  - `python3 .scratch/v9/build.py --debug` writes `.scratch/debug.html` with the test hooks from
+- `.scratch/v10/build.py` applies asserted string patches to the base and inserts the part file
+  beside it: `r1_race.js` (`stRace` and `RACE_K`: the Iron Derby's pack, which holds round the
+  player until the last gate). The patches seat each Derby car in the pack and add the calls from
+  the pit wall (`dbCall`), the gaps on the board (`dbBy`) and the time a detour costs (`dbBank`).
+  - `python3 .scratch/v10/build.py` writes `index.html` (release).
+  - `python3 .scratch/v10/build.py --debug` writes `.scratch/debug.html` with the test hooks from
     `harness.js` (`__ev`, `__errs`, `__ff`, `__cam`, `__see`, `__strip`, `__poses`, `__mus`,
     `__render`, `__wav`, `__mk`, `__sim`, `__vox`, `__story`, `__smk`, `__sites`, `__fcam`,
     `__fsee`).
@@ -35,8 +36,10 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   - The build refuses a part file whose top-level name is already taken in the base.
   - Do not put a `//` comment in the middle of a long one-line statement in a part file: it
     swallows the rest of the line without a syntax error. Use `/* */`, or a line of its own.
-- Earlier rounds (`.scratch/v8/` and before) are history; their output is already in the base.
-  Each folder keeps the base it patched (`v8/base_v8.html`) next to its part files. The part
+- Earlier rounds (`.scratch/v9/` and before) are history; their output is already in the base.
+  Each folder keeps the base it patched (`v9/base_v9.html`) next to its part files. `p1_post.js`
+  (the post chain `POST`: the scene target, the bloom, the pass that writes the canvas, and the
+  hold that leaves a paused sortie's picture standing) is in `.scratch/v9/`; the other part
   files named further down are in `.scratch/v8/`: `a1_wake.js` (the sound notice), `v2_cast.js`
   (voices for the story cast), `f2_scale.js` (the field in two sizes), `m2_brief.js` (the
   briefing march), `m3_cut.js` (the comm camera), `s1_story.js` (thread state, the board, the
@@ -125,6 +128,17 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
     chapter and a lapsed offer coming round again, the three-card limit.
   The autopilot kills fast and (without `drive`) teleports, so it proves a chapter can be
   finished and says nothing about how hard it is.
+- The Derby races, in `.scratch/v10/`: `race.sh '{ ch, sprint, log }'` flies a chapter through
+  the real controls (W, A, D and SHIFT held in `keys`, so the machine's own speed, turning and
+  heat count) and prints the place every `log` seconds, each car's gap in metres and the speed it
+  is taking, and how much of the race the pack stayed within 70 m. `sprint` is `heat` (off at 80
+  heat, back on at 50), `never`, `last` (only on the run to the flag) or `notlast`; `cfg` puts a
+  `PRESETS` machine in the bay, `fight` gives the pilot that many dps on one hostile in front of
+  it, `go: ['liz']` sends it to a nav marker and clears it, `tweak` runs JS on the race `R` as it
+  starts, and `picks`, `mortal`, `secs` and `said` work as in `run.sh`. `ffrace.sh` is the same in
+  Firefox, and `see.sh '{ ..., until, keep: true }' out.png` stops at a moment with the throttle
+  still down and takes a picture from the cockpit. A race should be won by sprinting from the
+  last gate to the flag, and lost (or placed) by walking it.
 - `__ff(seconds)` fast-forwards bay tweens, so crane and lift sequences (`fitPart`, `switchBay`)
   can be awaited in a loop instead of in real time. It steps whichever room is showing, the bar
   included, and `__cam` places the camera there too.
@@ -276,10 +290,22 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   `after`, `say`, `ask`, `tell` (awaitable `say`), `setObj`, `nav`, `foes`, `spawn`,
   `dropship`): `stFrom` (alerted hostiles from a bearing), `stHold` and `stBar` (meters),
   `stPay`, `stGift`, `stMend`, `stRoad`, `stBeacon`, `stGate`, `stFire`, `stShow`, `stTick`,
-  `stRace` (gates, laps, a paced grid), and the big machines `stCrawler`, `stWalker`,
+  `stRace` (gates, laps, a pack: see below), and the big machines `stCrawler`, `stWalker`,
   `stLantern`, `stDread`. An ally who must not die is wrapped in `stKeep` (`t5_maw.js`): at a
   quarter armour they are out of the fight and nobody shoots at them. A new named character
   goes in `STC`, `CAST` (the body and the looks) and `VOX_WHO` / `VOX_CAST` (the voice).
+- A Derby race (`stRace`, `r1_race.js`) is rubber-banded the way kart racers are. Every car has a
+  place in the pack, `st`: seconds of the player's top speed in front of them (behind, if
+  negative), given as `[off the grid, settled, at the last gate]` and swinging by `sw` once
+  settled. It takes the player's measured pace plus `RACE_K.gain` for each second it is off that
+  place, between `lo` and `hi` (`far` out of sight, `rush` in the last `late` seconds), so it can
+  neither be dropped nor get away. When the player clears the last gate (`R.home()`) every car
+  drops to `f`, its honest share of the player's walking speed, and the run to the flag goes to a
+  player who sprints it. `flat` takes a car out of the pack; `R.pace` under .5 is a caution flag
+  that shuts the gates for everybody; a car turned hostile (`dbHot`) fires `gun` (.3) as often as
+  it would standing still. `R.gap(car)` and `R.secs(car)` say where a car is against the player,
+  and `dbBank(R)` lets the cars in front keep what they gained while the player was off the
+  course. `e.vk` on any `mkMech` scales its speed and turning without quickening its stride.
 - The briefing room is `BRF` with camera rig `brfCam`, built like the bar; `toBrief(c)` enters
   it from the deck, `brfStep(i)` plays one step, `brfLeave('bay' | 'hq')` leaves. A chapter's
   `brf` is a list of steps `{ t, by, show, shot }`: `by` speaks (the XO if absent; the crew
