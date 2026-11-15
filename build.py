@@ -27,8 +27,8 @@ def build(debug=False):
         assert t.endswith('\n'), f'{f.name} must end with a newline'
     js = ''.join(f.read_text() for f in files)
     if debug:
-        js = patch(js, "  return { amb, radio, field, deck, sting, brief };\n}\n",
-                   "  return { amb, radio, field, deck, sting, brief, KIT };\n}\n")
+        js = patch(js, "  return { amb, radio, field, deck, sting, brief, intro };\n}\n",
+                   "  return { amb, radio, field, deck, sting, brief, intro, KIT };\n}\n")
         js = patch(js, "requestAnimationFrame(frame);\n$('boot')",
                    "window.__ev = s => eval(s);\n" + (SRC / 'debug' / 'harness.js').read_text().rstrip() + "\nrequestAnimationFrame(frame);\n$('boot')")
     for ph in ('@@STYLE@@\n', '@@SCRIPT@@\n'):

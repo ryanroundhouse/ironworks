@@ -76,9 +76,9 @@ const rivSave = () => ({ riv: Object.fromEntries(RIVS.map(k => { const R = CO.ri
 const CO = { riv: {}, hist: {}, cb: 120000, day: 1, hour: 6, rep: { hel: 0, kar: 0, tyr: 0, ord: 0, vom: 0 }, done: 0, fails: 0, kit: 1, active: null, sel: null, board: [], news: [], wing: null, wingDown: false, seed: (Math.random() * 1e6) | 0, driftT: 4, dirty: true };
 Object.defineProperty(CO, 'kit', { get: () => invN('gear.kit'), set: v => invAdd('gear.kit', (v | 0) - invN('gear.kit')) });   /* repair kits live in the stores now */
 ledgerApply(BOOT);
-const saveCO = () => { try { localStorage.setItem('ironworks.co', JSON.stringify(saveBlob())); } catch (e) { } };
+const saveCO = () => lsSet('co', JSON.stringify(saveBlob()));
 const now = () => CO.day * 24 + CO.hour;
-const news = s => { CO.news.unshift(`D${CO.day} · ${s}`); CO.news.length = Math.min(CO.news.length, 9); CO.dirty = true; };
+const news = s => { CO.news.unshift(`D${CO.day} · ${coTxt(s)}`); CO.news.length = Math.min(CO.news.length, 9); CO.dirty = true; };
 
 const SITE = {
   a: ['Kessel', 'Vorn', 'Ashfall', 'Tarsis', 'Mirren', 'Dravik', 'Solace', 'Harrow', 'Calder', 'Brannoch', 'Oster', 'Vey', 'Kaldur', 'Sennet', 'Morrow', 'Ilyx'],

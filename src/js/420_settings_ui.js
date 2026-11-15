@@ -3,7 +3,7 @@ const SET = { open: false, tab: 'audio', found: false, wipe: false, msg: '', bad
 /* paint the company name and emblem wherever they appear */
 function brandSync() {
   document.querySelectorAll('.ttl').forEach(t => { t.querySelector('b').textContent = YARD.name; const g = t.querySelector('canvas').getContext('2d'); g.clearRect(0, 0, 100, 100); drawLogo(g, 50, 50, 47); });
-  document.title = YARD.name + ' — IRONWORKS'; if (HG.brand) HG.brand(); CO.dirty = true;
+  document.title = YARD.name === CO_DEF_NAME ? GAME_NAME : YARD.name + ' — ' + GAME_NAME; if (HG.brand) HG.brand(); CO.dirty = true;
 }
 function gfxApply() {
   const pr = Math.min(devicePixelRatio, 1.5) * CFG.scale; renderer.setPixelRatio(pr); POST.bloom = CFG.bloom;
@@ -18,7 +18,7 @@ function gameApply(s) {
 }
 function saveExport() {
   const blob = new Blob([JSON.stringify(saveBlob(), null, 1)], { type: 'application/json' }), a = document.createElement('a'), u = URL.createObjectURL(blob);
-  a.href = u; a.download = `${YARD.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'company'}-day${CO.day}.ironworks.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000);
+  a.href = u; a.download = `${YARD.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'company'}-day${CO.day}.stompymechs.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000);
   return a.download;
 }
 function saveImport(text) {
@@ -76,7 +76,9 @@ ${SCORES.map(([bk, n, d], i) => `<div class="trk${CFG.track === i + 1 ? ' on' : 
     bindR('sSens', v => { CFG.sens = v / 100; }, sx); bindT('sInv', 'invY'); $('sHold').querySelectorAll('button').forEach(b => b.onclick = () => { CFG.hold = +b.dataset.v; cfgSave(); sfx.play('ui'); settingsDraw(); });
   } else if (tab === 'display') {
     B.innerHTML = `<div class="sh">RENDERING</div><div class="sg">${rng('sScale', 'RENDER SCALE', CFG.scale * 100, 50, 150, 10, pc)}${tog('sBloom', 'BLOOM AND GLOW', CFG.bloom)}${tog('sShadow', 'DYNAMIC SHADOWS', CFG.shadow)}</div>
-<p class="snt">If the field runs slowly, drop the render scale first, then shadows. Changes apply at once.</p>`;
+<p class="snt">If the field runs slowly, drop the render scale first, then shadows. Changes apply at once.</p>
+<div class="sh">THE OPENING</div><div class="gm"><button id="sIntro"${fld || mode === 'brief' ? ' disabled' : ''}><b>▶ WATCH IT AGAIN</b><small>${fld || mode === 'brief' ? 'Not in the middle of a sortie or a briefing' : 'Eleven seconds. Any key ends it'}</small></button></div>`;
+    $('sIntro').onclick = () => { sfx.play('ui'); settingsClose(); introOpen(); };
     const e = $('sScale'); e.oninput = () => { e.nextElementSibling.textContent = pc(+e.value); }; e.onchange = () => { CFG.scale = +e.value / 100; cfgSave(); gfxApply(); sfx.play('ui'); }; bindT('sBloom', 'bloom', gfxApply); bindT('sShadow', 'shadow', gfxApply);
   } else if (tab === 'company') {
     const L = YARD.logo, ink = (k, label) => `<label>${label}</label><div class="ink" data-k="${k}">${LOGO_INKS.map(c => `<button data-c="${c}" class="${L[k] === c ? 'on' : ''}" style="background:${c}"></button>`).join('')}</div>`;
@@ -87,7 +89,7 @@ ${SCORES.map(([bk, n, d], i) => `<div class="trk${CFG.track === i + 1 ? ' on' : 
     big(); for (const [id, key, list] of [['lgShapes', 'shape', LOGO_SHAPES], ['lgSyms', 'sym', LOGO_SYMS]]) list.forEach(([n], i) => { const b = document.createElement('button'); b.title = n; b.className = L[key] === i ? 'on' : ''; b.appendChild(logoCanvas(88, { ...L, [key]: i })); b.onclick = () => { L[key] = i; chg(); }; $(id).appendChild(b); });
     B.querySelectorAll('.ink button').forEach(b => b.onclick = () => { L[b.parentNode.dataset.k] = b.dataset.c; chg(); });
     $('lgRnd').onclick = () => { const a = pick(LOGO_INKS); let c = pick(LOGO_INKS); while (c === a) c = pick(LOGO_INKS); Object.assign(L, { shape: (Math.random() * 8) | 0, sym: (Math.random() * 14) | 0, c1: a, c2: c, c3: Math.random() < .6 ? c : pick(LOGO_INKS) }); chg(); };
-    const nm = $('coName'); nm.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') nm.blur(); }; nm.oninput = () => { YARD.name = cleanName(nm.value, 'IRONWORKS'); brandSync(); }; nm.onchange = () => { nm.value = YARD.name; saveCO(); };
+    const nm = $('coName'); nm.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') nm.blur(); }; nm.oninput = () => { YARD.name = cleanName(nm.value, CO_DEF_NAME); brandSync(); }; nm.onchange = () => { nm.value = YARD.name; saveCO(); };
   } else {
     const b = YARD.bays.filter(x => bayParts(x)).length, act = CO.active;
     B.innerHTML = `<div class="sh">THIS COMPANY</div><div class="sum"><canvas id="lgSm" width="120" height="120"></canvas><div><b>${YARD.name}</b><span>Day ${CO.day} · funds ${fmt(CO.cb)} · ${CO.done} contracts completed, ${CO.fails} failed</span><span>${b} of 3 bays occupied · ${invCount()} items in stores${act ? ` · signed for ${act.site}` : ''}</span><span class="dim">The game saves itself to this browser after every change.</span></div></div>
@@ -102,7 +104,7 @@ ${fld ? '<p class="snt">Importing and starting over are locked while a sortie is
   }
 }
 {
-  $('setClose').onclick = () => { sfx.play('ok'); if (SET.found) { SET.found = false; YARD.founded = true; YARD.name = cleanName($('coName') && $('coName').value, 'IRONWORKS'); brandSync(); CO.news = CO.news.filter(n => !n.includes('is open for contracts') && !n.includes('Nobody is hiring yet')); news(tutLock() ? TUT_WIRE() : TUT_OPEN()); saveCO(); setStatus('STAND READY — ' + mechName); } settingsClose(); };
+  $('setClose').onclick = () => { sfx.play('ok'); if (SET.found) { SET.found = false; YARD.founded = true; YARD.name = cleanName($('coName') && $('coName').value, CO_DEF_NAME); brandSync(); CO.news = CO.news.filter(n => !n.includes('is open for contracts') && !n.includes('Nobody is hiring yet')); news(tutLock() ? TUT_WIRE() : TUT_OPEN()); saveCO(); setStatus('STAND READY — ' + mechName); } settingsClose(); };
   $('setUI').addEventListener('pointerdown', e => { if (e.target === $('setUI')) settingsClose(); });
   $('saveFile').onchange = e => { const f = e.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { const why = saveImport(String(rd.result)); SET.bad = !!why; SET.msg = why || `Loaded ${YARD.name} — day ${CO.day}, ${fmt(CO.cb)}.`; sfx.play(why ? 'deny' : 'ok'); settingsDraw(); }; rd.readAsText(f); };
   addEventListener('keydown', e => { if (e.code !== 'Escape' || !uiModal()) return; if (ST.open && ST.mode !== 'salv') storesClose(); else if (SET.open) settingsClose(); });

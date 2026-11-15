@@ -89,7 +89,7 @@ STORY.night = {
       const C = rivLance('cob', S.line.x, S.line.z, 0, { ai: 'guard', n: 2, yaw: stAng(S.line, S.mouth) }), F = C[0]; stKeep(F, fer, 'Cobalt Actual is hit and grounded. The line holds without me. That is what a line is for.'); const Br = stFlag('night.brick') ? lnBrick(gpos(P.pos.x - 18, P.pos.z + 10)) : null;
       setObj('m', 'Join Cobalt Lance on the line'); nav('l', S.line, 'COBALT LINE', '#5fd8ff'); if (Br) { await after(3); chatter(STC.brick, "Brick, on your wing, in a borrowed machine that smells of somebody else's sandwiches. Cobalt, eh? I'll mind my language."); }
       await until(() => near(S.line, 130)); unnav('l'); look(F, 'COBALT ACTUAL');
-      await tell(fer, warm ? 'Ironworks. I did not ask for you. I find I am not sorry to see you. Take the left of the line; my people have the right. Cobalt has never lost a position, and I would be obliged if you did not make tonight the first.' : 'Ironworks. The League sent you, I suppose, having first neglected to ask me. Take the left of the line and stay out of my arcs. Cobalt does not need help. Cobalt will tolerate company.');
+      await tell(fer, warm ? '{CO}. I did not ask for you. I find I am not sorry to see you. Take the left of the line; my people have the right. Cobalt has never lost a position, and I would be obliged if you did not make tonight the first.' : '{CO}. The League sent you, I suppose, having first neglected to ask me. Take the left of the line and stay out of my arcs. Cobalt does not need help. Cobalt will tolerate company.');
       const wave = (n, k) => { const W = stFrom(k, S.mouth, stAng(S.mouth, S.line), 60, {}); look(W[0], `RED MAW — WAVE ${n}`); msg(`WAVE ${n} — UP THE PASS`, 3); sfx.play('alarm'); return W; };
       let W = wave(1, 1); setObj('m', () => `Hold the pass with Cobalt — ${alive(W)} in the pass`); await until(() => alive(W) <= 1); chatter(fer, 'Adequate. Reload. They are only finding out where we are.');
       W = W.concat(wave(2, 1.15)); const [fx, fz] = stOff(S.line, stAng(S.line, S.mouth) + 1.5, 190); dropship(fx, fz, () => { W.push(...hot1(foes(.7, fx, fz, 4, 30))); }); await after(8); await until(() => alive(W) <= 1);
@@ -97,7 +97,7 @@ STORY.night = {
       /* she arrives */
       const D = stDread(gpos(S.mouth.x + 90, S.mouth.z - 70), stRoad([S.mouth, S.line], 90), { speed: 1.8, dmg: 46 }); fieldWho(krait, D); look(D, 'LAST SERMON'); sfx.play('alarm'); setObj('m', null, 1);
       await lnKrait('Colonel Ferreira. I have read about you. A woman who will not step back. I do admire that; it is so restful. One always knows exactly where to aim.');
-      await tell(fer, 'Cobalt Lance: she outranges us by six hundred metres and we are going to hold anyway, because that is the contract. Ironworks, you are released. This is not your charter.');
+      await tell(fer, 'Cobalt Lance: she outranges us by six hundred metres and we are going to hold anyway, because that is the contract. {CO}, you are released. This is not your charter.');
       await tell(xo, 'Commander — the geography. Three anchors on the north shelf. Take them out and the pass shuts with her on the wrong side of it. I would do it quickly; Cobalt cannot stand in that fire for long.');
       const An = ['a1', 'a2', 'a3'].map(k => { const e = mkStruct('gen', S[k].x, S[k].z, 1, { name: 'SHELF ANCHOR', hpK: 1.3 }); stBeam(S[k], 0x9fe8ff, 110, 1); return e; }); An.forEach((e, i) => nav('a' + i, e, 'ANCHOR', '#9fe8ff'));
       setObj('a', () => `Shoot out the shelf anchors — ${alive(An)} left`); setObj('s', () => `...before she reaches the Cobalt line — ${Math.round(stDist(D.pos, S.line) / 10) * 10} m`);
@@ -110,9 +110,9 @@ STORY.night = {
       await until(() => alive(An) <= 1); const La = An.find(e => !e.dead) || An[2]; La.inv = true;
       const r = await ask(xo, 'One anchor left. Commander, Cobalt is still on the line and the line is directly under the shelf. If you fire now they go under with the Maw. If you wait for them to clear, you are waiting in her arcs. It is your shot.', ['Colonel: fall back. That is the mountain coming down.', 'Fire now. She chose to stand there.'], 22, 0);
       if (r === 0) {
-        stSet('cob', 2); await tell(fer, warm ? '...Withdraw. Cobalt does not — damn you. Damn you for being right. Cobalt Lance: by sections, off the line, MOVE. Ironworks, if that ice does not come down I will shoot you myself.' : 'You are asking Cobalt to step back. In forty years nobody has — by sections. Off the line. MOVE. I shall take this up with you afterwards, at length.');
+        stSet('cob', 2); await tell(fer, warm ? '...Withdraw. Cobalt does not — damn you. Damn you for being right. Cobalt Lance: by sections, off the line, MOVE. {CO}, if that ice does not come down I will shoot you myself.' : 'You are asking Cobalt to step back. In forty years nobody has — by sections. Off the line. MOVE. I shall take this up with you afterwards, at length.');
         const safe = gpos(-360, 300); for (const e of C) if (!e.dead && !e.out) { e.ai = 'goto'; e.dest = safe; e.arrived = false; } const tC = ms.t + 24; setObj('w', () => `Cobalt is clearing the line — hold your fire · ${secs(tC)}`); await until(() => ms.t >= tC || C.every(e => e.dead || stDist(e.pos, S.line) > 150)); setObj('w', null, 1); chatter(fer, 'Cobalt is clear. Do it.');
-      } else { stSet('cob', 1); await tell(fer, 'I heard that, Ironworks. ...No. No, you are correct. It is what I would have ordered. Cobalt: brace.'); }
+      } else { stSet('cob', 1); await tell(fer, 'I heard that, {CO}. ...No. No, you are correct. It is what I would have ordered. Cobalt: brace.'); }
       La.inv = false; await until(() => !alive(An)); An.forEach((e, i) => unnav('a' + i)); setObj('a', null, 1); setObj('s', null, 1);
       /* forty million tonnes */
       const st = EV.B.storm; weatherShift(st[1], st[2], st[3], 5); P.shake += 2; sfx.play('boom', 2); msg('THE SHELF IS GOING', 5); D.halt = true; for (const b of D.guns) b.fireT = 1e9; const lane = stRoad([S.line, S.mouth], 46);
@@ -120,12 +120,12 @@ STORY.night = {
       await after(2.4 + lane.length * .28 + .6); for (const e of FD.ents.slice()) if (e.team === 1 && e.kind !== 'struct' && !e.dread && e.kind !== 'turret' && !e.dead) killEnt(e, 4);
       if (r) { for (const e of C.slice(1)) if (!e.dead) killEnt(e, 4); if (!F.dead) { F.hp = Math.min(F.hp, F.max * .2); Object.assign(F, { inv: true, pacify: true, ai: 'hold' }); } }
       await after(2); look(D, 'LAST SERMON — BURIED'); await tell(mira, 'The pass is shut. There is a wall of ice sixty metres deep across the road and she is buried in it to the axles. It will take her days to dig out. Days.');
-      await tell(fer, r ? 'Cobalt Actual. I am alive. My lance is under the ice. ...The position held. Write that down, Ironworks. Whatever else you write. The position held.' : 'Cobalt Actual. All sections accounted for. I have withdrawn from a position for the first time in my life, and the position held. I do not know what to do with that. I will think about it.');
+      await tell(fer, r ? 'Cobalt Actual. I am alive. My lance is under the ice. ...The position held. Write that down, {CO}. Whatever else you write. The position held.' : 'Cobalt Actual. All sections accounted for. I have withdrawn from a position for the first time in my life, and the position held. I do not know what to do with that. I will think about it.');
       await lnKrait('You dropped a mountain on me, child. Do you know how long it has been since anybody surprised me? I had forgotten the feeling. Thank you. I shall dig myself out and come and tell you about it in person.');
       win(r ? 'The Skarn Pass is shut under forty million tonnes of ice. Two of Cobalt Lance are under it with the Maw.' : 'The Skarn Pass is shut under forty million tonnes of ice, with the LAST SERMON on the wrong side and Cobalt Lance, for the first time in its history, standing somewhere else.');
     },
     epi: (ok, f, D) => ok ? [
-      f['night.cob'] === 2 ? [RIV.cob.ch, 'Ferreira. I have amended the charter. It now reads: "Cobalt does not withdraw, except on the advice of Ironworks." My adjutant thinks I am joking. When that machine digs itself out, send word. We will be there.'] : [RIV.cob.ch, 'Ferreira. I have written to two families tonight. I told them the position held, which is true, and that I gave the order, which is not. I will be there when it digs out. I would like to be asked to my face next time.'],
+      f['night.cob'] === 2 ? [RIV.cob.ch, 'Ferreira. I have amended the charter. It now reads: "Cobalt does not withdraw, except on the advice of {CO}." My adjutant thinks I am joking. When that machine digs itself out, send word. We will be there.'] : [RIV.cob.ch, 'Ferreira. I have written to two families tonight. I told them the position held, which is true, and that I gave the order, which is not. I will be there when it digs out. I would like to be asked to my face next time.'],
       [CREW.intel, 'She is burning shells to melt her way out, which tells me two things. She has a great many shells. And somebody is making them for her. I am following the invoices.'],
       [STC.deacon, 'This is the Deacon. You are in the book now, on a page of your own. I have underlined it. I very seldom underline.'],
     ] : [[RIV.cob.ch, 'Ferreira. We were pushed off the first line and I have dug a second. I did not ask for you last time. I am asking now.']],
@@ -251,7 +251,7 @@ STORY.night = {
     /* ---------------- V ---------------- */
     title: 'Dawn', kind: 'garrison', biome: 'forest', mood: 0, seed: 95067, diff: 5, pay: 320000, salv: 50, site: 'Harrow Vale', op: 'FIRST LIGHT',
     tease: 'The LAST SERMON will reach Harrow Vale an hour before sunrise. The town is where it started: the people you brought out went home, and they have declined to leave twice. The League has sent what it has. The XO has sent to everybody else. Nobody knows who is coming. There is one road into the Vale and you will be standing on it.',
-    wire: 'All channels, from Cmdr. Varga: "Ironworks will be at Harrow Vale at first light. Anybody who has ever owed us a drink: now would be a good time."',
+    wire: 'All channels, from Cmdr. Varga: "{CO} will be at Harrow Vale at first light. Anybody who has ever owed us a drink: now would be a good time."',
     sites: { lz: [-380, 330, 44, 'THE LINE'], town: [-560, 140, 76, 'HARROW VALE'], ford: [-110, 50, 46, 'THE FORD'], bend: [330, -140, 44, 'THE BEND'], far: [740, -330, 0, ''], north: [-190, -470, 40, 'NORTH WOOD'], south: [120, 520, 40, 'MILL RISE'] },
     roads: [['bend', 'ford', 'town']], face: 'ford',
     brf: [

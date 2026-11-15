@@ -1,4 +1,7 @@
-# IRONWORKS
+# STOMPYMECHS
+
+(Called IRONWORKS until the rebrand. The repo folder, the deploy script and the site address in
+`.github/workflows/deploy.yml` still carry the old name: they are the server's, not the page's.)
 
 A single-file three.js game: mech hangar with three build bays and a parts inventory, command deck
 with contracts and a rotating market, a bar (rumours, pilots for hire, two contests), field
@@ -8,7 +11,9 @@ component at a time), three rival mech companies that compete with you, hire you
 beside you, and five story threads: connected chapters that come up on the board one at a time,
 are briefed in a briefing room and are flown on a theatre 2.4 times the usual size. A new company
 is shown round each room by its crew, and flies a first sortie that teaches the controls before
-anybody will hire it. Everybody who speaks does so aloud, in a made-up language.
+anybody will hire it. Everybody who speaks does so aloud, in a made-up language. The first time
+the page is opened it plays an eleven-second opening: four cuts of battle, then the STOMPY MECHS
+title, cut to its own music.
 `index.html` is the whole deliverable. It loads three.js (and one add-on, `RoomEnvironment`) from
 a CDN, so view it through a local web server with an internet connection. It is built from the
 sources in `src/` by `build.py`; edit `src/`, never `index.html`.
@@ -35,7 +40,8 @@ playable page. Never hand-edit it.
   `import`/`export` between them, and file-name order is execution order. Each file starts at
   one of the `/* ============ TITLE ============ */` section banners. A new file goes in at a
   number between its neighbours (`255_thing.js`); keep the gaps. Every file ends with a newline.
-  Where things are: `115_first_day.js` what a new company has been shown (`TUT`); `020_post.js`
+  Where things are: `040_settings.js` the game's name (`GAME_ID`, `GAME_NAME`, `CO_DEF_NAME`) and
+  `lsGet`/`lsSet`; `115_first_day.js` what a new company has been shown (`TUT`); `020_post.js`
   the post chain `POST`; `050_audio.js` `sfx` and the sound
   notice; `060_voices.js` and `070_music.js`; `080`/`090` mech parts (`ARM_FAM`, the extra
   chassis); `110_yard.js` the yard, stores, bays, `SPRINT_K`, `capFor`; `150_field_env.js`
@@ -47,16 +53,19 @@ playable page. Never hand-edit it.
   board and the save; `280`-`310` people and crews; `330_bar.js`, `340_bar_games.js`;
   `350_brief.js` the briefing room; `355_thread0_shakedown.js` the first sortie; `360`-`400` the
   five threads (`stKeep` is in `400`, the Derby's `dbCall` in `390`); `445_guide.js` the room
-  tours, the next-step chip and the HUD key prompts; `450_main.js` the main loop. `grep -l name src/js/*.js` finds
+  tours, the next-step chip and the HUD key prompts; `447_intro.js` the opening (`INTROV`,
+  `INTRO_SHOTS`); `450_main.js` the main loop. `grep -l name src/js/*.js` finds
   anything else.
 - `python3 build.py` writes `index.html` (release).
 - `python3 build.py --debug` writes `.scratch/debug.html` with the test hooks from
   `src/debug/harness.js` (`__ev`, `__errs`, `__ff`, `__cam`, `__see`, `__strip`, `__poses`,
   `__mus`, `__render`, `__wav`, `__mk`, `__sim`, `__vox`, `__story`, `__smk`, `__sites`,
-  `__fcam`, `__fsee`, `__sheet`, `__mechs`, `__parts`, `__aim`, `__arena`, `__dummy`, `__tut`).
+  `__fcam`, `__fsee`, `__sheet`, `__mechs`, `__parts`, `__aim`, `__arena`, `__dummy`, `__tut`,
+  `__intro`, `__introSheet`).
   It also makes `music.KIT` reachable. A debug page skips the first day altogether (an open
   board, no tours, through a new game and an imported save as well), because every driver below
-  expects that; load `debug.html?tut` to get what a new player gets. Its two anchors are asserted; if one moves, fix `build.py`.
+  expects that; load `debug.html?tut` to get what a new player gets. It never plays the opening
+  unasked either (`INTROV.off`): `debug.html?intro` does. Its two anchors are asserted; if one moves, fix `build.py`.
 - Every build writes `.scratch/check.mjs` (the module script alone). Follow every build with
   `node --check .scratch/check.mjs`: in a module a second top-level declaration of a name is a
   syntax error, so this is what catches collisions between files. Check a new top-level name
@@ -88,7 +97,9 @@ playable page. Never hand-edit it.
   no animation frames, so tweens and fades never finish. `nav` also turns the HTTP cache off;
   Chrome otherwise serves a stale `debug.html` after a rebuild. Module-level names are not on
   `window`, so reach them through `__ev('...')`. Clear that profile's localStorage after test runs; the game
-  saves the company under `ironworks.co` and settings under `ironworks.cfg`.
+  saves the company under `stompymechs.co`, settings under `stompymechs.cfg` and whether the
+  opening has been seen under `stompymechs.intro` (and still reads `ironworks.co` and
+  `ironworks.cfg` when those are all a browser has).
 - Check in Firefox as well as Chrome: it is the browser the game is actually played in, and its
   Web Audio differs. Start a second, muted instance with
   `/Applications/Firefox.app/Contents/MacOS/firefox --headless --no-remote --profile
@@ -119,9 +130,32 @@ playable page. Never hand-edit it.
     scenarios), and `crreal.mjs <url> [key]` does the same in Chrome (port 9225, profile
     `.scratch/chrome-real`, no `--autoplay-policy` flag). If `ffreal.mjs` reports "Maximum
     number of active sessions", restart that Firefox.
+- On a profile that has not seen it (no `stompymechs.intro`) the release page plays the opening
+  before anything else, and waits for a click or a key first where the browser blocks autoplay.
+  Set that key before loading, or begin it with one key press and end it with another at least
+  .7 s later. Nothing of the game runs or hears a key until it is over.
 - With no save, the page opens on the "found your company" screen. Close it with `#setClose`
   before driving anything else. On the release page (and `debug.html?tut`) the bay tour then
   starts and the board holds one card, the shakedown.
+- The opening, in `.scratch/intro/`:
+  - `__intro(seconds)` (debug build) holds it at a moment, silent; `__intro('play')` runs it,
+    `__intro('end')` ends it. `sheet.sh "0.6, 1.5, 2.9" out.png [cols]` tiles held moments into
+    one picture through `__introSheet` (`at.sh seconds out.png` is one of them, bars and all).
+    Look at a sheet after changing any cut.
+  - `live.mjs [url] "t1,t2,..."` plays `debug.html?intro` in real time and reports every cut
+    (when it came, how long its first frame took), slow frames and errors, with a picture at
+    each time given. `lvl.mjs` does the same with a meter on each bus and prints peak and RMS
+    per half second: the score should lead (about .13 to .25 RMS), the effects sit under it,
+    and the sum stay under 1. `t_cue.js` (`ev.sh`) renders the cue offline, beat by beat.
+  - `t_intro.js` (`ev.sh`, `ffev.sh`; a freshly loaded debug page) plays it from SETTINGS,
+    skips it with a key, plays it from the deck and the bar, and checks that everything it
+    borrowed is back exactly (`snap()`), that the field refuses it, and that a sortie flies
+    afterwards. `t_brand.js` covers the rename: titles, the save, an old IRONWORKS company
+    coming over, `{CO}` in the conversation box and the comms.
+  - `gate.mjs` (Chrome with its own autoplay policy, port 9225) and `r_intro.js` (for
+    `ffreal.mjs`) are the release page as a new player gets it: the wait behind CLICK OR PRESS
+    ANY KEY, the click, eleven seconds with sound, a second load that must not play it, and a
+    skip.
 - The first day, in `.scratch/v13/` (`c.sh` and `f.sh` are `cdp.mjs` and `ff.mjs` from anywhere):
   - `shake.sh '{ arm, slow, stand, nofire, skip, until, log }'` flies the shakedown through the
     real controls (W, A, D, S, SHIFT and SPACE held in `keys`, the torso aimed with `__aim`, both
@@ -134,7 +168,8 @@ playable page. Never hand-edit it.
     sortie time; nobody should need a second try at the Table.
   - `t_relwalk.js` (an async function body: `c.sh eval "(async () => { $(cat ...) })()"`, or
     `f.sh run`) walks the release page from a clean save through the real buttons: charter, bay
-    tour, deck tour, the card, ACCEPT, the briefing, LAUNCH, and with `window.__more = 1`
+    tour, deck tour, the card, ACCEPT, the briefing, LAUNCH (and the opening first, with two
+    presses of SPACE, when the profile has not seen it), and with `window.__more = 1`
     ENGAGE (twice: headless refuses pointer lock) and SPACE through the first comms.
   - `t_after.js` (on `debug.html?tut`, clean save) flies it with the story autopilot and comes
     home through the real debrief: books, the salvage picker and its tour, the epilogue, the
@@ -242,11 +277,13 @@ playable page. Never hand-edit it.
 - Audio cannot be heard headlessly. `__mus(which, seconds, seed, track, heat)` renders a score
   offline and reports peak, RMS, band energy and beat alignment. `which` is `'night'` (the deck
   theme), `'amb'`, `'deck'` (the theme running on into the ambience), `'win'` (the jingle),
-  `'brief'` (the briefing room march), `'radio'`, `'juke'` (the radio's band through the bar's
-  jukebox) or `'field'`. For the field, `track` is 0-6 and `heat` is 0 for the patrol
+  `'brief'` (the briefing room march), `'intro'` (the opening's cue), `'radio'`, `'juke'` (the
+  radio's band through the bar's jukebox) or `'field'`. For the field, `track` is 0-6 and `heat` is 0 for the patrol
   arrangement, 1 for combat, or `[[seconds, heat], ...]` to render the hand-over between them.
   Keep the tracks near 0.07-0.12 RMS with peaks under 1, and combat about 3 dB above patrol.
-  The briefing march is the exception: about 0.045, because somebody talks over all of it.
+  The briefing march is the exception: about 0.045, because somebody talks over all of it. So
+  is the opening's cue, the other way: about 0.2 with peaks to 1.4, because nothing else plays
+  with it and the compressor after it is meant to be leaned on.
 - Voices: `node .scratch/v7/t_vox.mjs` renders eight lines from every named voice, a dozen
   strangers and some hostile input offline, counts non-finite samples and writes WAVs to
   `.scratch/v7/wav/` for listening or `an.py`. In the page, `__vox(ch, text, fx)` reports length,
@@ -301,11 +338,50 @@ playable page. Never hand-edit it.
   validates on the way in because imported files are untrusted.
 - Overlays that take over input carry the `ovl` class; `uiModal()` is how key handlers know to
   stand down.
-- Rooms are `mode` values: `hangar`, `hq`, `bar`, `brief`, `field`. The bar (`BAR`, camera rig
+- Rooms are `mode` values: `hangar`, `hq`, `bar`, `brief`, `field`. (`intro` is the opening,
+  which is not a room: see below.) The bar (`BAR`, camera rig
   `barCam`,
   `updateBar`) is built like the deck. The conversation box `#dlg` and `dlg()` serve both rooms;
   `focusOn` hands over to `barFocusOn` in the bar. People there are `Human`s in `BAR.crowd`; the
   regulars are in `BARC`, and seated ones keep their seat through `barStay`.
+- The name. `GAME_NAME` ('StompyMechs') is the game wherever it is written out, `GAME_ID` what a
+  save file is marked with (`GAME_WAS`, the old mark, is still accepted), `CO_DEF_NAME` the
+  company nobody has named yet. Nobody in the game says the game's name: a line that addresses
+  the player's company is written with `{CO}`, and `coTxt()` (in `dlg`, `comm` and `news`)
+  puts `YARD.name` there in ordinary case. Text that reaches the screen some other way has to
+  call `coTxt` itself. Storage goes through `lsGet(k)` / `lsSet(k, v)` (`stompymechs.k`, read
+  from `ironworks.k` when that is all there is), never `localStorage` directly.
+- The opening (`src/js/447_intro.js`) is the real field with nobody in it. `introBoot()` starts
+  it as the page finishes loading unless `stompymechs.intro` is set; SETTINGS · DISPLAY has
+  WATCH IT AGAIN (`introOpen()`, which refuses in the field and the briefing room). While it
+  runs `mode` is `'intro'`: `frame()` calls only `introFrame(dt)`, `body.intro` hides the rest
+  of the page, and its own capture-phase key and pointer listeners begin it and (after .7 s)
+  end it, so the game hears nothing.
+  - A cut is an entry in `INTRO_SHOTS`: `{ at, init(S), tick(S, u, dt) }`. `init` builds a
+    theatre (`buildEnv`), stands machines in it (`introMech`, `introTank`, `introDrone`,
+    `introMark` for something off-screen to shoot at) and runs it forward out of sight
+    (`introRoll`); `tick` places the camera (`introCam`) and fires the scripted events
+    (`introEv`, `introBlast`, `introBarrage`). `introStride(e, hit)` walks until a foot has
+    just come down and says where and when the next ones will, which is how a camera is stood
+    under a footfall. `introSim` is `fieldUnits` and `fieldFx` (`180_field_player.js`: the
+    parts of `updateField` that do not need a player).
+  - The clock is the audio's: the cue (`makeScore`'s `intro`, 120 beats a minute) is scheduled
+    once, `INTROV.t` runs on the frame clock steered onto `music.clock()` less the time the cue
+    began (read raw it judders: Firefox moves it a callback at a time), and the field is caught
+    up to it in steps of a thirtieth. If the audio clock stops for .3 s the frame clock takes
+    over, and a skip is timed by `performance.now()`, so neither can leave it standing. Move a cut and the music has to move with it: the walk
+    is beats 0 to 4, the title lands on beats 15 and 16 (`INTRO_LOGO`, 7.5 s).
+  - Each cut and the title are built once and compiled (`renderer.compile`) before the clock
+    starts, so no cut waits for a shader. Where the browser has the audio suspended the
+    opening waits behind `#inGate` for a gesture instead of playing silent.
+  - `sfx.hush(true)` drops every sound asked for while a cut is run in (two seconds of gunfire
+    in one instant clips), and `sfx.trim(.55)` holds the effects under the score.
+  - `introEnd()` gives back what was borrowed: the field (`clearField`, `clearEnv`,
+    `fieldScale`), `FD.camera`'s lens, `P.pos`, `P.kills`, `YARD.loot`, the particle scale,
+    `mode`. `t_intro.js` compares a snapshot before and after; add to both when the opening
+    borrows something new.
+  - The title's letters are outlines in `INTRO_GLYPH` (a 5 by 7 grid, extruded): a new letter
+    is a new entry there. No font is loaded.
 - The picture reaches the canvas through `POST` (`src/js/020_post.js`) and nothing else. The main loop
   sets `POST.scene`, `POST.camera` and `POST.strength` (the bloom) for the room and calls
   `POST.frame(dt, still)`; `POST.draw(scene, camera)` draws any scene through the whole chain,

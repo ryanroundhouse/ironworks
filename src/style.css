@@ -355,3 +355,19 @@ body.cut #comm.hold{top:auto;bottom:3vh;transform:translate(-50%,0)}
 #tutKeys b{font-weight:700;color:#06121a;background:var(--cy);padding:3px 7px;letter-spacing:.06em}
 .tlk{border:1px dashed var(--ln);padding:8px 9px;margin-top:8px;color:#8b8474;font-size:10px;line-height:1.5}
 .tlk b{display:block;color:var(--am);font-weight:400;letter-spacing:.18em;margin-bottom:4px}
+/* the opening (src/js/447_intro.js): everything but the canvas is hidden while it runs; #intro holds the bars, the black for fades, the prompt that waits for sound and the skip note */
+body.intro>*:not(#gl):not(#intro):not(#boot){opacity:0!important;pointer-events:none!important}
+#intro{position:fixed;inset:0;background:none;z-index:57;display:block;--bar:max(0px,min(14vh,calc((100vh - 100vw/2.39)/2)))}
+#intro.run{cursor:none}
+#intro.out{opacity:0;transition:opacity .9s;pointer-events:none}
+#inTop,#inBot{position:absolute;left:0;right:0;height:var(--bar);background:#000}
+#inTop{top:0}
+#inBot{bottom:0}
+#inBlk{position:absolute;inset:0;background:#000;opacity:1}
+#inGate{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;white-space:nowrap;color:var(--am);font-size:clamp(15px,1.7vw,26px);letter-spacing:.32em;opacity:0;transition:opacity .5s}
+#inGate.on{opacity:1;animation:inPulse 1.7s ease-in-out infinite}
+#inGate small{display:block;margin-top:14px;color:#8b8474;font-size:clamp(10px,.85vw,14px);letter-spacing:.24em}
+#inSkip{position:absolute;right:22px;bottom:calc(var(--bar) + 14px);font-size:clamp(10px,.8vw,13px);letter-spacing:.22em;color:rgba(216,210,196,.55);opacity:0}
+#intro.run #inSkip{animation:inSkip 5s ease-out forwards}
+@keyframes inPulse{50%{opacity:.4}}
+@keyframes inSkip{0%{opacity:0}14%{opacity:1}72%{opacity:1}100%{opacity:0}}

@@ -55,9 +55,12 @@ const SORTS = [['name', 'NAME'], ['price', 'VALUE'], ['tons', 'MASS'], ['armor',
 const allItemKeys = () => [...Object.keys(YARD_VAL).flatMap(c => Object.keys(YARD_VAL[c]).map(id => c + '.' + id)), ...Object.keys(GEAR).map(id => 'gear.' + id)];
 
 const LOGO_DEF = { shape: 0, sym: 0, c1: '#1b1e22', c2: '#ffb21a', c3: '#ffb21a' };
-const YARD = { name: 'IRONWORKS', logo: { ...LOGO_DEF }, founded: false, inv: {}, bays: [], act: 0, shop: { rot: -1, stock: [] }, loot: [], logoV: 0 };
+const YARD = { name: CO_DEF_NAME, logo: { ...LOGO_DEF }, founded: false, inv: {}, bays: [], act: 0, shop: { rot: -1, stock: [] }, loot: [], logoV: 0 };
 const starterMech = () => ({ name: 'KESTREL', paint: 0, legs: 'rap', torso: 'pod', head: 'can', armL: 'las', armR: 'acn', back: 'jet', sinks: 2 });
 const cleanName = (s, def, n = 18) => (String(s == null ? '' : s).replace(/[^\w '\-&.·]/g, '').trim().slice(0, n).toUpperCase()) || def;
+/* the company as people say it: STOMPY MECHS is "Stompy Mechs". Lines are written with {CO} where the name goes, and comm(), dlg() and news() fill it in */
+const coSpoken = () => YARD.name.toLowerCase().replace(/(^|[\s\-.&·])([a-z])/g, (m, a, b) => a + b.toUpperCase());
+const coTxt = s => typeof s === 'string' && s.includes('{CO}') ? s.replace(/\{CO\}/g, coSpoken()) : s;
 const cleanHex = (s, def) => /^#[0-9a-f]{6}$/i.test(s) ? s : def;
 const cleanLogo = l => ({ shape: clamp((l && l.shape) | 0, 0, 7), sym: clamp((l && l.sym) | 0, 0, 13), c1: cleanHex(l && l.c1, LOGO_DEF.c1), c2: cleanHex(l && l.c2, LOGO_DEF.c2), c3: cleanHex(l && l.c3, LOGO_DEF.c3) });
 function cleanBay(b, i) {
@@ -72,12 +75,12 @@ const invAdd = (k, n = 1) => { const v = invN(k) + n; if (v > 0) YARD.inv[k] = M
 const invCount = () => Object.values(YARD.inv).reduce((a, b) => a + b, 0);
 /* load the company's hardware from a save blob (or found a new one): a single light mech, two empty bays */
 function yardApply(s) {
-  const v2 = s && s.v === 2, c = (v2 && s.company) || {}; YARD.name = cleanName(c.name, 'IRONWORKS'); YARD.logo = cleanLogo(c.logo); YARD.logoV++; YARD.founded = v2 ? c.founded !== false : !!s;
+  const v2 = s && s.v === 2, c = (v2 && s.company) || {}; YARD.name = cleanName(c.name, CO_DEF_NAME); if (s && s.game === GAME_WAS && YARD.name === GAME_WAS) YARD.name = CO_DEF_NAME;   /* a company still under the old default name takes the new one */ YARD.logo = cleanLogo(c.logo); YARD.logoV++; YARD.founded = v2 ? c.founded !== false : !!s;
   YARD.inv = {}; if (v2 && s.inventory) { for (const k in s.inventory) if (itemOk(k) && s.inventory[k] > 0) YARD.inv[k] = Math.min(999, s.inventory[k] | 0); } else YARD.inv = { 'gear.kit': Math.max(0, s && s.kit != null ? s.kit | 0 : 1), 'gear.cool': 1 };
   YARD.bays = [0, 1, 2].map(i => cleanBay(v2 && Array.isArray(s.bays) ? s.bays[i] : i ? null : starterMech(), i)); YARD.act = v2 ? clamp(s.activeBay | 0, 0, 2) : 0;
   const m = v2 && s.market; YARD.shop = m && Array.isArray(m.stock) ? { rot: m.rot | 0, stock: m.stock.filter(e => e && itemOk(e.key) && e.qty > 0 && e.price > 0).map(e => ({ key: e.key, qty: e.qty | 0, price: e.price | 0, tag: e.tag || '' })) } : { rot: -1, stock: [] };
 }
-const BOOT = (() => { try { const s = JSON.parse(localStorage.getItem('ironworks.co') || 'null'); return s && typeof s === 'object' ? s : null; } catch (e) { return null; } })();
+const BOOT = (() => { try { const s = JSON.parse(lsGet('co') || 'null'); return s && typeof s === 'object' ? s : null; } catch (e) { return null; } })();
 yardApply(BOOT);
 
 function mechStats(c) {
@@ -164,7 +167,7 @@ const BARSV = { bz: 0, bzT: 0, rested: false, told: {}, pst: {}, wins: { drink: 
 function barSave() { const pst = {}, n = CO.day * 24 + CO.hour; for (const k in BARSV.pst) if (BARSV.pst[k].until > n) pst[k] = { until: +BARSV.pst[k].until.toFixed(2) }; return { bz: +BARSV.bz.toFixed(3), bzT: +BARSV.bzT.toFixed(2), rested: BARSV.rested, wins: { ...BARSV.wins }, told: Object.fromEntries(Object.entries(BARSV.told).map(([k, v]) => [k, +v.toFixed(2)])), pst }; }
 function saveBlob() {
   return {
-    game: 'IRONWORKS', v: 2, saved: new Date().toISOString(), company: { name: YARD.name, logo: { ...YARD.logo }, founded: YARD.founded },
+    game: GAME_ID, v: 2, saved: new Date().toISOString(), company: { name: YARD.name, logo: { ...YARD.logo }, founded: YARD.founded },
     ledger: { cb: Math.round(CO.cb), day: CO.day, hour: +CO.hour.toFixed(2), rep: { ...CO.rep }, done: CO.done, fails: CO.fails, seed: CO.seed, ...rivSave() },
     inventory: { ...YARD.inv }, bays: YARD.bays.map(b => ({ ...b })), activeBay: YARD.act, market: { rot: YARD.shop.rot, stock: YARD.shop.stock.map(e => ({ ...e })) },
     board: CO.board.filter(c => !c.story).map(c => ({ ...c })), active: CO.active && !CO.active.story ? CO.active.id : null, news: CO.news.slice(0, 9),
@@ -173,7 +176,7 @@ function saveBlob() {
 }
 /* returns a reason string if the document is not one of ours */
 function saveCheck(s) {
-  if (!s || typeof s !== 'object') return 'Not a save file.'; if (s.game !== 'IRONWORKS' || s.v !== 2) return 'Not an IRONWORKS save (or from an incompatible version).';
+  if (!s || typeof s !== 'object') return 'Not a save file.'; if ((s.game !== GAME_ID && s.game !== GAME_WAS) || s.v !== 2) return `Not a ${GAME_NAME} save (or from an incompatible version).`;
   if (!s.ledger || typeof s.ledger.cb !== 'number' || !Array.isArray(s.bays)) return 'The save is missing its ledger or mech bays.'; return '';
 }
 function ledgerApply(s) {

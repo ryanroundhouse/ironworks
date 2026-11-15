@@ -490,7 +490,56 @@ function makeScore(ac, dest, seed) {
       tick(until) { for (let g = 0; g < 4000; g++) { const t = t0 + step * SD; if (t > until) break; play((step / 16) | 0, step & 15, t); step++; if (step >= (INTRO + LOOP) * 16) { step = INTRO * 16; t0 += LOOP * 16 * SD; } } },
     };
   })();
-  return { amb, radio, field, deck, sting, brief };
+  /* ---------- the opening: THE GROUND SHAKES — one cue, eleven seconds, cut to the picture in src/js/447_intro.js at 120 beats a minute. Four beats of a machine walking, a drum under
+     every footfall; eleven of battle in D minor over sixteenths in the low strings, horns climbing B flat, C and on; then nothing for a breath, and the name comes down on beats 15 and 16
+     with everything in the room. It lands on D, as the win jingle does ---------- */
+  const intro = (() => {
+    const { kick, drum, snr, brass, pad, pluck, boom, crash, clank, swell, bell, note } = KIT;
+    const out = gain(0, dest), rev = verb(3.4, 1.15, 1.5), dry = gain(1.05, out); rev.connect(gain(.6, out));
+    const bus = (wet, lv = 1) => { const g = gain(lv, dry); g.connect(gain(wet, rev)); return g; }, DR = bus(.2, .8), LO = bus(.08, .5), BR = bus(.5, 1.5), ST = bus(.28, 1.4), FX = bus(.6), B = .5, SD = B / 4;
+    /* the chord on each beat from 4 to 14: [bass, the notes over it] */
+    const Dm = [38, [50, 57, 62, 65]], Bb = [34, [46, 53, 58, 62]], C = [36, [48, 55, 60, 64]], CH = [Dm, Dm, Dm, Dm, Bb, Bb, C, C, Bb, C, C];
+    /* the horn line: [beat, pitch, beats] */
+    const TUNE = [[4, 62, 1.5], [5.5, 65, .5], [6, 69, 2], [8, 70, 1.5], [9.5, 69, .5], [10, 67, 1], [11, 72, 1], [12, 74, 1], [13, 76, 1], [14, 77, .5], [14.5, 79, .42]];
+    /* the big drums, in sixteenths of a two-beat figure: [step, level, Hz] */
+    const TAIKO = [[0, 1, 78], [3, .5, 104], [4, .7, 92], [6, .6, 104], [7, .45, 118]];
+    return {
+      out,
+      play(t) {
+        const at = b => t + b * B; out.gain.cancelScheduledValues(0); out.gain.setValueAtTime(1, Math.max(0, t - .06));
+        /* 0-4: the walk. A low D that is felt more than heard, a pad opening, a drum where each foot comes down, air rushing up into the first cut */
+        note(LO, at(0), 26, 7.3, .13, 'sine', 200, .6, .12); note(LO, at(0), 38, 7.3, .05, 'sawtooth', 230, 1.2, .12); pad(ST, at(0), [50, 57, 62], 1.6, .028, 'sawtooth', 620, 1.5);
+        boom(DR, at(0), .16, 1.8); for (const b of [1, 2, 3]) { boom(DR, at(b), .24 + b * .03, 1.2); kick(DR, at(b), .46 + b * .04, 118, 36, .42); clank(FX, at(b), .025 + b * .008, 300); }
+        swell(FX, at(2), 2 * B, .06, 520, .8); brass(BR, at(2.4), 38, 1.5 * B, .05, 1000, .5); brass(BR, at(2.4), 45, 1.5 * B, .04, 1000, .5);
+        /* 4-15: the battle */
+        for (let b = 4; b < 15; b++) {
+          const [root, ch] = CH[b - 4], last = b >= 12, on = b === 4 || b === 8 || b === 12;
+          if (on) { boom(DR, at(b), .26, 1.7); crash(DR, at(b), .1, 1.5); clank(FX, at(b), .07, 392); }
+          note(LO, at(b), root, B * .92, .14, 'sawtooth', 300, .012, .06); note(LO, at(b), root - 12, B * .92, .12, 'sine', 200, .012, .06);
+          if (b === 4 || CH[b - 4] !== CH[b - 5]) { const n = CH.slice(b - 4).findIndex(c => c !== CH[b - 4]), d = (n < 0 ? 15 - b : n) * B; for (const m of ch) brass(BR, at(b), m, d * .96, .038, 1500, .04); pad(ST, at(b), ch, d, .022, 'sawtooth', 1100, .12); }
+          for (let s = 0; s < 4; s++) { const m = [root + 12, root + 12, root + 19, root + 12][s]; pluck(ST, at(b) + s * SD, m, s ? .05 : .075, 'sawtooth', 2100, .085); pluck(ST, at(b) + s * SD, m + 12, s ? .022 : .035, 'sawtooth', 2600, .07); }
+          if (!(b & 1)) for (const [s, v, f] of TAIKO) { const tt = at(b) + s * SD; drum(DR, tt, f, v * .34, .3); if (!s || s === 4) kick(DR, tt, v * .34, 128, 40, .32); }
+          else { snr(DR, at(b), .11, 1700, .16); if (last) for (let s = 0; s < 4; s++) drum(DR, at(b) + s * SD, 92 + s * 9, .16 + s * .04, .22); }
+          /* the roll into the name: a snare on every sixteenth, getting nearer */
+          if (last) for (let s = 0; s < 4; s++) { const k = ((b - 12) * 4 + s) / 12; if (b < 14 || s < 3) snr(DR, at(b) + s * SD, .03 + k * .15, 2200, .06); }
+        }
+        boom(DR, at(10.8), .3, 1.5);   /* the ship */
+        for (const [b, m, d] of TUNE) { brass(BR, at(b), m, d * B * .93, .12, 2300, .03); brass(BR, at(b), m - 12, d * B * .93, .075, 1500, .04); if (b >= 12) brass(BR, at(b), m + 12, d * B * .93, .03, 2800, .03); }
+        swell(FX, at(12), 3 * B - .06, .1, 480, .7);
+        /* 15 and 16: STOMPY. MECHS. Then let it ring */
+        for (const [b, v, f] of [[15, 1, 392], [16, 1.2, 311]]) {
+          boom(DR, at(b), .36 * v, 2.6); kick(DR, at(b) + .004, .4 * v, 150, 33, .75); crash(DR, at(b), .13 * v, 2.6 + (b - 15)); clank(FX, at(b), .13 * v, f); snr(DR, at(b), .16, 1500, .3);
+        }
+        for (const m of [38, 45, 50, 57, 62]) brass(BR, at(15), m, B * .9, .075, 2000, .012); brass(BR, at(15), 69, B * .9, .09, 2500, .012);
+        for (const m of [26, 38, 45, 50, 57, 62, 65]) brass(BR, at(16), m, 2.1, m < 30 ? .05 : .07, 2200, .012); brass(BR, at(16), 74, 2.1, .1, 2700, .012); brass(BR, at(16), 86, 1.6, .02, 3000, .02);
+        note(LO, at(16), 26, 3.4, .16, 'sine', 200, .01, .5); pad(ST, at(16), [50, 57, 62, 65, 69], 2.6, .03, 'sawtooth', 1200, .5);
+        bell(FX, at(16), 86, .05, 1.6); bell(FX, at(17), 93, .028, 1.5); bell(FX, at(18), 81, .022, 1.5); boom(DR, at(18), .1, 2);
+        return 22 * B;
+      },
+      stop(t, d = .04) { out.gain.cancelScheduledValues(0); out.gain.setTargetAtTime(0, t, d / 3 + .008); },
+    };
+  })();
+  return { amb, radio, field, deck, sting, brief, intro };
 }
 const music = (() => {
   let ac = null, sc = null, mg = null, trk = -1, want = 0, pvK = null, pvT = 0, pvI = 0, pvHot = 0, pvNew = false, pvWas = null, stQ = null, stT = 0, slips = 0, voiceK = -1;
@@ -501,6 +550,11 @@ const music = (() => {
     get dbg() { return sc && { state: ac.state, t: +ac.currentTime.toFixed(2), lv, trk, slips, fight: sc.field.state, deck: [sc.deck.part, sc.deck.bar], sting: +stT.toFixed(1), radioNext: +sc.radio.next().toFixed(2), deckNext: +sc.deck.next().toFixed(2), song: sc.radio.song && { bpm: sc.radio.song.bpm | 0, key: sc.radio.song.key, step: sc.radio.song.step } }; },
     get previewing() { return pvT > 0 ? pvK : null; },
     boot(ctx) { if (sc) return; ac = ctx; const cmp = ac.createDynamicsCompressor(); cmp.threshold.value = -15; cmp.ratio.value = 5; cmp.attack.value = .01; cmp.release.value = .3; cmp.connect(ac.destination); mg = ac.createGain(); mg.gain.value = vol(); mg.connect(cmp); sc = makeScore(ac, mg, (Date.now() & 0xfffff) + 3); sc.deck.start(ac.currentTime + .2); sc.radio.start(ac.currentTime + .2); },
+    /* the opening's cue. clock(): where the audio clock stands, -1 while the browser is holding it for a click, -2 if there is no audio at all. intro() starts the cue and says when on
+       that clock its first beat falls (-1: it could not), introStop(d) fades it over d seconds */
+    clock() { return !sc ? -2 : ac.state === 'running' ? ac.currentTime : -1; },
+    intro() { if (!sc || ac.state !== 'running') return -1; const t = ac.currentTime + .1; sc.intro.play(t); return t; },
+    introStop(d = .04) { if (sc) sc.intro.stop(ac.currentTime, d); },
     /* re-read the volume sliders */
     vol() { if (mg) mg.gain.setTargetAtTime(vol(), ac.currentTime, .06); },
     beat() { return sc && lv.radio > 0 && vol() > 0 ? sc.radio.beat(ac.currentTime) : -1; },

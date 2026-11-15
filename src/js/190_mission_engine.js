@@ -40,7 +40,7 @@ function drawFace(cv, ch) {
    read and answered. A line with options takes keys 1-3, or the mouse / arrow keys to pick one and a click / ENTER to confirm it; a plain line waits for SPACE. With holding off, a question times out to its default
    as it always did. chatter() is talk that never stops the fight (a wingman forming up) */
 const commQ = []; let commCur = null, commHold = false, commSel = -1, commMv = 0;
-function comm(who, text, opts, tmo = 18, def = 0, chat = false) { const k = MS.k; return new Promise(res => commQ.push({ who, text, opts, tmo, def, res, k, chat, qt: MS.t })); }
+function comm(who, text, opts, tmo = 18, def = 0, chat = false) { const k = MS.k; text = coTxt(text); return new Promise(res => commQ.push({ who, text, opts, tmo, def, res, k, chat, qt: MS.t })); }
 function commFree() { commHold = false; cutEnd(); $('commDim').classList.add('hid'); $('comm').classList.remove('hold'); }
 function commReset() { commQ.length = 0; commCur = null; commFree(); $('comm').classList.add('hid'); vox.stop(); }
 function commDone(i) { const c = commCur; if (!c) return; commCur = null; vox.stop(); $('comm').classList.add('hid'); if (c.opts) MS.log.push(`${c.who.last || c.who.name}: "${c.opts[i]}"`); if (c.k === MS.k && !MS.over) c.res(i); }

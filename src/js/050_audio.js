@@ -1,6 +1,6 @@
 /* ============ AUDIO (tiny procedural synth) ============ */
 const sfx = (() => {
-  let ac, master, on = true, nb;
+  let ac, master, on = true, nb, trimK = 1, hushed = false;
   function init() { if (ac) { if (ac.state === 'suspended') { const p = ac.resume(); if (p && p.catch) p.catch(() => { }); } return; } try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; } master = ac.createGain(); master.gain.value = .45 * CFG.vol * CFG.sfx; master.connect(ac.destination); nb = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; music.boot(ac); vox.boot(ac); sndWait(ac); }
   function tone(type, f0, f1, dur, vol, delay = 0) { const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t + dur); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur); o.connect(g).connect(master); o.start(t); o.stop(t + dur + .03); }
   function noise(dur, vol, f0, f1, q = 1, delay = 0) { const t = ac.currentTime + delay, s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = nb; s.loop = true; f.type = 'bandpass'; f.Q.value = q; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur); s.connect(f).connect(g).connect(master); s.start(t, rand(.5)); s.stop(t + dur + .03); }
@@ -37,7 +37,9 @@ const sfx = (() => {
     glass: (v = 1) => { tone('sine', 2300 + rand(700), 2250, .22, .03 * v); tone('sine', 3700 + rand(500), 3600, .15, .016 * v, .012); noise(.03, .07 * v, 5200, 3000, 2); }, gulp: (v = 1) => { tone('sine', 190, 85, .11, .16 * v); tone('sine', 170, 80, .11, .16 * v, .2); }, thud: (v = 1) => { noise(.14, .45 * v, 220, 60, .7); tone('sine', 110, 45, .22, .35 * v); },
   };
   const gap = { mg: .055, beam: .1, flame: .13, saw: .1, hit: .04, shield: .12, cannon: .05, laser: .05, zap: .08 }, last = {};
-  return { init, play(n, v = 1) { if (!on || !ac) return; if (ac.state === 'suspended') ac.resume(); const g = gap[n]; if (g) { if (ac.currentTime - (last[n] || -1) < g) return; last[n] = ac.currentTime; } lib[n] && lib[n](v); }, vol() { if (master) master.gain.setTargetAtTime(.45 * CFG.vol * CFG.sfx, ac.currentTime, .05); } };
+  return { init, play(n, v = 1) { if (!on || !ac || hushed) return; if (ac.state === 'suspended') ac.resume(); const g = gap[n]; if (g) { if (ac.currentTime - (last[n] || -1) < g) return; last[n] = ac.currentTime; } lib[n] && lib[n](v); }, vol() { if (master) master.gain.setTargetAtTime(.45 * CFG.vol * CFG.sfx * trimK, ac.currentTime, .05); },
+    /* for the opening: trim(k) turns the whole bus down under the score (1 puts it back), hush(true) drops every sound asked for while a cut is run forward out of sight */
+    trim(k) { trimK = k; this.vol(); }, hush(b) { hushed = !!b; } };
 })();
 /* ---- sound from the moment the page opens. The audio is built as the page loads instead of on the first click: where the browser lets a page play unasked (the site has been allowed to, or
    is trusted), the radio is on before anything has been touched. Where it does not, the engine waits suspended, the first click, tap or key anywhere wakes it, and until then a small notice

@@ -2,7 +2,7 @@
 /* a company that subcontracts to you is the one you bargain with, so each commander is also a negotiating persona (never drawn at random: PERSONA_STD is the ordinary five) */
 Object.assign(PERSONA, {
   cob: { n: 'exact to the letter', pat: 70, pay: .2, salv: .5, honest: 1, hi: 'I hold this paper and cannot staff it. The terms are fair and I have not padded them. Ask what you need to ask.', no: 'No. The figure was fair when I named it.', yes: 'That is reasonable. Amended.', bye: 'Then I will find another company. Cobalt out.' },
-  car: { n: 'all showmanship', pat: 60, pay: .5, salv: .35, honest: .55, hi: 'Ironworks! I am double-booked, and you are my understudy. Do not tell me the fee is small. Tell me you will be magnificent.', no: 'Tsk. Understudies do not renegotiate.', yes: 'Oh, why not. It is only money.', bye: 'I shall find someone with more flair. Ta!' },
+  car: { n: 'all showmanship', pat: 60, pay: .5, salv: .35, honest: .55, hi: '{CO}! I am double-booked, and you are my understudy. Do not tell me the fee is small. Tell me you will be magnificent.', no: 'Tsk. Understudies do not renegotiate.', yes: 'Oh, why not. It is only money.', bye: 'I shall find someone with more flair. Ta!' },
   ver: { n: 'counting every crate', pat: 66, pay: .3, salv: .2, honest: .35, hi: 'Jackdaw. I have a job I cannot be bothered with, and you have a mech. Let us not waste each other’s evening.', no: 'Ha. No. I did not get this yard by giving money away.', yes: 'Fine, fine. You are bleeding me, love.', bye: 'Too rich for me. Somebody cheaper will turn up.' },
 });
 HINT.rival = 'Another mech company has been asking about this one.';
@@ -48,59 +48,59 @@ function quitCost(c) { if (c.story) return; const why = `walked away from the ${
 const RIVL = {
   cob: {
     seen: 'Dropship on the scope in Cobalt Lance colours. That is Ferreira herself — and she is not on our contract.',
-    race: E => `Ironworks, Cobalt Lance actual. ${E} has issued the same paper twice: I hold a copy, and so do you. I will not pretend otherwise. How do you wish to proceed?`,
+    race: E => `{CO}, Cobalt Lance actual. ${E} has issued the same paper twice: I hold a copy, and so do you. I will not pretend otherwise. How do you wish to proceed?`,
     raceO: () => ['May the better company win', 'Share the work — sixty-forty, on my lead', 'This contract is mine. Withdraw'],
-    raceGo: 'Then we race, and cleanly. Lance: the objective only. Ironworks is not to be touched.', splitOk: 'Accepted, and I will hold to it to the letter. Cobalt forms on your lead.',
+    raceGo: 'Then we race, and cleanly. Lance: the objective only. {CO} is not to be touched.', splitOk: 'Accepted, and I will hold to it to the letter. Cobalt forms on your lead.',
     offOk: '...You have earned that much from us. Cobalt is withdrawing. Do not make a habit of asking.', offNo: 'I have a signed contract and no reason to tear it up. We stay. May the better company win.',
-    won: 'The field is ours today, Ironworks. You flew well. Cobalt out.', lost: 'Cleanly done. The fee is yours — I will say so to anyone who asks. Cobalt out.',
-    opp: (E, F) => `Ironworks, Cobalt Lance actual. ${F} holds my contract, and it says you do not finish yours. I take no pleasure in it. I offer this courtesy once: withdraw.`,
+    won: 'The field is ours today, {CO}. You flew well. Cobalt out.', lost: 'Cleanly done. The fee is yours — I will say so to anyone who asks. Cobalt out.',
+    opp: (E, F) => `{CO}, Cobalt Lance actual. ${F} holds my contract, and it says you do not finish yours. I take no pleasure in it. I offer this courtesy once: withdraw.`,
     oppO: () => ['Then we fight', 'Name your price to walk away', 'We have stood together. Stand down'],
     fight: 'So be it. Lance — weapons free. Fight them clean.', buyNo: 'You mistake me for somebody else. Lance — weapons free.',
     pastOk: '...Yes. We have. I will not fire on a company I have bled beside. Cobalt is returning the fee. We are leaving.', pastNo: 'We have not stood together often enough for that. Weapons free.',
-    yield: () => 'Enough. Cobalt strikes its colours — you have the field, Ironworks. I ask the customary terms: we walk.', yieldO: () => ['Granted. Go', 'No quarter'],
+    yield: () => 'Enough. Cobalt strikes its colours — you have the field, {CO}. I ask the customary terms: we walk.', yieldO: () => ['Granted. Go', 'No quarter'],
     spared: 'You have my thanks, and my word that it will be remembered.', doomed: 'Then you are no soldier. Lance — to the last!',
-    help: 'Ironworks, Cobalt actual. We are between contracts and inside your grid. If you want a second lance, say so. Ten percent, and you lead.', helpYes: 'Cobalt is yours for the duration.', helpNo: 'Understood. Good hunting.',
-    salv: 'Ironworks, Cobalt Lance actual. We have a salvage claim filed on this wreck, and I see that you have one too. The registry has made fools of us both. I would rather not fight over a clerk’s mistake.',
+    help: '{CO}, Cobalt actual. We are between contracts and inside your grid. If you want a second lance, say so. Ten percent, and you lead.', helpYes: 'Cobalt is yours for the duration.', helpNo: 'Understood. Good hunting.',
+    salv: '{CO}, Cobalt Lance actual. We have a salvage claim filed on this wreck, and I see that you have one too. The registry has made fools of us both. I would rather not fight over a clerk’s mistake.',
     salvO: () => ['Fight them for it', 'Split it fifty-fifty', 'We have stood together. Let me have this one'], salvNo: 'A claim is a claim. But I will share it before I fight you for it: halves, and Cobalt walks you out.',
-    subHi: 'Ironworks, Cobalt actual. My name is on this paper. Fly it as I would: to the letter, and no further.', jHi: 'Cobalt Lance, on station. You have the lead, Ironworks. We will hold your flank.',
+    subHi: '{CO}, Cobalt actual. My name is on this paper. Fly it as I would: to the letter, and no further.', jHi: 'Cobalt Lance, on station. You have the lead, {CO}. We will hold your flank.',
     jDown: 'Ferreira is down — pilot is out and moving for our dropship. Cobalt’s lance is still with you.',
   },
   car: {
     seen: 'Dropship inbound, and it is painted like a fairground. That is the Carnival. Quintero does not turn up where there is no audience.',
-    race: E => `Ironworks! What luck — an audience. ${E} has booked two acts for one stage, and I do not open for anybody. Shall we make it interesting?`,
+    race: E => `{CO}! What luck — an audience. ${E} has booked two acts for one stage, and I do not open for anybody. Shall we make it interesting?`,
     raceO: (E, F, W) => ['A race, then. Best crew wins', `A wager on it — ${fmt(W)} says I finish first`, 'Get off my stage, clown'],
     raceGo: 'Splendid! Places, everyone. And do try to keep up.', bet: W => `HA! Now it is a show. ${fmt(W)}, witnessed by everybody listening. Carnival — make it beautiful!`,
-    offNo: '"Clown." Oh, I was hoping you would say something like that. Carnival! Change of programme — the first act is Ironworks.',
-    won: 'And THAT is how it is done. Do not sulk, Ironworks. You were a wonderful supporting act.', lost: 'Upstaged! On my own tour! ...Well flown, damn you. The Carnival moves on.',
-    opp: (E, F) => `Ironworks! Tonight the part of the villain is played by me. ${F} is paying, and the script says you lose. But a script is only a suggestion. Entertain me.`,
+    offNo: '"Clown." Oh, I was hoping you would say something like that. Carnival! Change of programme — the first act is {CO}.',
+    won: 'And THAT is how it is done. Do not sulk, {CO}. You were a wonderful supporting act.', lost: 'Upstaged! On my own tour! ...Well flown, damn you. The Carnival moves on.',
+    opp: (E, F) => `{CO}! Tonight the part of the villain is played by me. ${F} is paying, and the script says you lose. But a script is only a suggestion. Entertain me.`,
     oppO: (E, F, W) => ['Then come and take your bow', `Single combat — you and me, ${fmt(W)} on it`, 'We have shared a stage. Sit this one out'],
     fight: 'Curtain up!', duel: W => `A DUEL! Oh, you do know me. Carnival, stand down and watch. ${fmt(W)}, and this one is mine.`,
     pastOk: '...So we have. And it was a good show. Very well: the Carnival is dark tonight. You owe me an encore.', pastNo: 'Darling, I have shared a stage with everyone. Curtain up!',
     yield: () => 'Enough, enough! House lights! A magnificent performance — yours, I admit it. Let me take my bow and go.', yieldO: () => ['Take your bow. Go', 'No encore. Finish it'],
     spared: 'Gracious in victory! They will hear about this in every bar on the rock. I will see to it personally.', doomed: 'You would boo the cast? Philistine! Carnival — finale!', paid: W => `And your winnings, as promised: ${fmt(W)}. I always pay.`,
-    help: 'Ironworks! We were passing, and it looked dull down there without us. Ten percent, and top billing stays yours.', helpYes: 'Then let us give them a show!', helpNo: 'Your loss. Literally. Ta!',
-    salv: 'Ironworks! Two companies, one wreck, and nobody watching. What a waste. I do not share a stage, as you may have heard. So: how shall we settle it?',
+    help: '{CO}! We were passing, and it looked dull down there without us. Ten percent, and top billing stays yours.', helpYes: 'Then let us give them a show!', helpNo: 'Your loss. Literally. Ta!',
+    salv: '{CO}! Two companies, one wreck, and nobody watching. What a waste. I do not share a stage, as you may have heard. So: how shall we settle it?',
     salvO: (E, F, W) => ['Fight them for it', 'Split it fifty-fifty', `Single combat for it — ${fmt(W)} on top`], salvNo: 'Halves? A duet? No, no, no. Carnival — places!',
-    subHi: 'Ironworks! You are wearing my name out there. Do try to be memorable.', jHi: 'The Carnival has arrived! Try to look impressed. After you, Ironworks — it is your name on the poster.',
+    subHi: '{CO}! You are wearing my name out there. Do try to be memorable.', jHi: 'The Carnival has arrived! Try to look impressed. After you, {CO} — it is your name on the poster.',
     jDown: 'Quintero is down — he is out of the cockpit and, I think, bowing. His lance is still with you.',
   },
   ver: {
     seen: 'New contact — a dropship in Verdigris green, coming in quiet. Halloran only shows up where there is something to carry away.',
-    race: E => `Ironworks. Jackdaw, Verdigris. Seems ${E} sold the same job twice — bad form, that. No sense both of us bleeding for one fee, love. What do you say?`,
+    race: E => `{CO}. Jackdaw, Verdigris. Seems ${E} sold the same job twice — bad form, that. No sense both of us bleeding for one fee, love. What do you say?`,
     raceO: () => ['First to finish takes the fee', 'Go halves — sixty-forty, on my lead', 'Clear off. This one is mine'],
     raceGo: 'Suit yourself. Verdigris — strip it quick.', splitOk: 'There. That was easy. We will be right behind you. Mind the paintwork.',
     offOk: '...That is a lot of machine, and not a scratch on it. Fine. Verdigris, we are leaving. There will be other wrecks.', offNo: 'Bit dented to be giving orders, love. We will stay and see how you get on.',
     won: 'That is the fee, and I thank you for softening them up. No hard feelings, pet.', lost: 'Quick, are you not. Fine — yours. I will bill them for my fuel.',
-    opp: (E, F) => `Ironworks. Jackdaw. ${F} is paying me to see you go home empty. Nothing personal. But I am a practical woman, and everything has a price.`,
+    opp: (E, F) => `{CO}. Jackdaw. ${F} is paying me to see you go home empty. Nothing personal. But I am a practical woman, and everything has a price.`,
     oppO: (E, F, W) => ['Then earn your fee', `Pay her to leave — ${fmt(W)}`, 'We have worked together. Walk away'],
     fight: 'Pity. Verdigris — take them apart. Carefully. I want the pieces.', buyOk: F => `Pleasure. ${F} will get a very sad report. Verdigris — home.`, buyNo: 'With what, love? Your account is emptier than my conscience. Verdigris — take them apart.',
     pastOk: '...We have, and you paid on time. Fine. I was never here.', pastNo: 'Not well enough, pet.',
     yield: W => `All right — ALL RIGHT. You have made your point. Call it off and I will make it worth your while: ${fmt(W)} to let us limp home.`, yieldO: (E, F, W) => ['Go. Keep your money', `Take the ${fmt(W)} and let them go`, 'No deal. Finish it'],
-    spared: '...For nothing? You are a strange one, Ironworks. I will not forget it.', paid: () => 'Wired. Robbery — but fair robbery.', doomed: 'Then I hope you choke on the salvage!',
-    help: 'Ironworks. Jackdaw. We are picking over the next valley and it is thin. Want another lance? Ten percent, and first look at the wrecks.', helpYes: 'Lovely. Try not to burn the good bits.', helpNo: 'Suit yourself.',
-    salv: 'Ironworks. Jackdaw. This wreck has my name on it, and yours too by the look of things. Half of something for no work is my favourite number, love. Halves?',
+    spared: '...For nothing? You are a strange one, {CO}. I will not forget it.', paid: () => 'Wired. Robbery — but fair robbery.', doomed: 'Then I hope you choke on the salvage!',
+    help: '{CO}. Jackdaw. We are picking over the next valley and it is thin. Want another lance? Ten percent, and first look at the wrecks.', helpYes: 'Lovely. Try not to burn the good bits.', helpNo: 'Suit yourself.',
+    salv: '{CO}. Jackdaw. This wreck has my name on it, and yours too by the look of things. Half of something for no work is my favourite number, love. Halves?',
     salvO: () => ['Fight them for it', 'Split it fifty-fifty', 'Bluff: this claim is registered. Leave'], salvNo: '',
-    subHi: 'Ironworks. Jackdaw. That is my paper you are flying. Bring it back tidy and we will do this again.', jHi: 'Verdigris, on the ground. Lead on, love — and leave the big pieces in one lump if you can.',
+    subHi: '{CO}. Jackdaw. That is my paper you are flying. Bring it back tidy and we will do this again.', jHi: 'Verdigris, on the ground. Lead on, love — and leave the big pieces in one lump if you can.',
     jDown: 'Halloran is down — she is out, and already arguing about the salvage. Her lance is still with you.',
   },
 };
@@ -202,14 +202,14 @@ async function rivJoint(ms) {
   boss.onKill = () => { say(ms.ops, T.jDown); note(`${ch.name} was shot down flying beside you.`); };
   await after(5); say(ch, T.jHi); await after(rand(60, 100)); await until(() => !FD.t0.some(e => e.team === 1 && e.kind !== 'struct' && e.pos.distanceTo(P.pos) < 150) || ms.t > 200); if (boss.dead) return;
   if (k === 'cob') {
-    const r = await ask(ch, `Ironworks. Two of their crews have ejected in front of my guns and are walking out with their hands up. ${E} wants no survivors. I intend to let them go — and I would like your word that we saw nothing.`, ['You have my word', `No. ${E} hears about this`], 20, 0);
+    const r = await ask(ch, `{CO}. Two of their crews have ejected in front of my guns and are walking out with their hands up. ${E} wants no survivors. I intend to let them go — and I would like your word that we saw nothing.`, ['You have my word', `No. ${E} hears about this`], 20, 0);
     if (r === 0) { say(ch, 'Thank you. That is the kind of thing I remember.'); rvRel(k, 6, `kept quiet about the prisoners ${at}`); rep(c.foe, 2); note(`${ch.last} let enemy crews go. You said nothing.`); }
     else { say(ch, 'Then we understand each other. I am sorry for it.'); rvRel(k, -10, `reported her to ${E}`); rep(c.emp, 3); bonus(`${E} informant’s fee`, 8000); note(`You reported ${ch.last} to ${E} for sparing prisoners.`); }
   } else if (k === 'car') {
-    const amt = 12000, r = await ask(ch, `Ironworks! A little side bet, to keep the band awake. ${fmt(amt)} to whichever of us drops more of them between now and the dropship. Are you in?`, ['You are on', 'I do not gamble on a contract'], 20, 1);
+    const amt = 12000, r = await ask(ch, `{CO}! A little side bet, to keep the band awake. ${fmt(amt)} to whichever of us drops more of them between now and the dropship. Are you in?`, ['You are on', 'I do not gamble on a contract'], 20, 1);
     if (r === 0) { ms.v.bet = { k, p0: P.kills, r0: ms.v.rvk || 0, amt }; say(ch, 'Marvellous! Counting from... now.'); note(`You took ${ch.last}'s bet on the kill count.`); } else { say(ch, 'How very dull of you.'); rvRel(k, -2, 'turned down a wager'); }
   } else {
-    const amt = 14000, r = await ask(ch, `Ironworks. Quiet word. One of these wrecks was a paymaster’s carrier. The strongbox is whole, and it is on nobody’s manifest. Halves — and ${E} never hears of it?`, ['Halves. I saw nothing', `It belongs to ${E}. Report it`, 'All of it, or I report you'], 20, 0);
+    const amt = 14000, r = await ask(ch, `{CO}. Quiet word. One of these wrecks was a paymaster’s carrier. The strongbox is whole, and it is on nobody’s manifest. Halves — and ${E} never hears of it?`, ['Halves. I saw nothing', `It belongs to ${E}. Report it`, 'All of it, or I report you'], 20, 0);
     if (r === 0) { bonus('Off the manifest', amt); ms.v.graft = amt; say(ch, 'Knew I liked you.'); rvRel(k, 5, `went halves on a strongbox ${at}`); note(`You and ${ch.last} split a strongbox that was on nobody's manifest.`); }
     else if (r === 1) { bonus(`${E} finder’s fee`, 5000); rep(c.emp, 4); say(ch, 'Honest. How disappointing.'); rvRel(k, -9, `reported her strongbox to ${E}`); note(`You reported the strongbox to ${E}.`); }
     else if (Math.random() < .5) { bonus('Off the manifest — all of it', amt * 2); ms.v.graft = amt * 2; say(ch, '...You are a worse thief than I am. Take it.'); rvRel(k, -12, `robbed her of a strongbox ${at}`); note(`You took the whole strongbox from ${ch.last}.`); }

@@ -16,6 +16,7 @@ window.__render = async (which, secs = 20, seed = 7, track = 0, heat = 0, solo =
   if (which === 'kit') { const m = +track; s.KIT.twang(oc.destination, .1, m, .5, { d: secs - .3 }); }
   else if (which === 'field') { s.field.out.gain.value = .85; s.field.use(track, .05); if (Array.isArray(heat)) for (let t = 0; t < secs; t += .1) { let h = 0; for (const [a, v] of heat) if (t >= a) h = v; s.field.heat(h); s.field.tick(t + .1); } else { s.field.force(heat > .5); s.field.tick(secs); } }
   else if (which === 'win') s.sting.play('win', .1);
+  else if (which === 'intro') s.intro.play(.1);
   else if (which === 'brief') { s.brief.out.gain.value = .62; s.brief.start(.05); s.brief.tick(secs); }
   else if (which === 'radio' || which === 'juke') { s.radio.out.gain.value = .9; s.radio.voice(which === 'juke' ? 1 : 0, 0, .001); s.radio.start(.05); s.radio.tick(secs); }
   else { s.deck.out.gain.value = .95; s.deck.start(.05, which === 'amb' ? 1 : 0); s.deck.tick(secs); }
@@ -27,7 +28,7 @@ window.__mus = async (which, secs = 20, seed = 7, track = 0, heat = 0) => {
   let pk = 0, sq = 0, bad = 0; const rms = []; for (let i = 0; i < L.length; i++) { const v = (L[i] + Rr[i]) / 2; if (!isFinite(v)) bad++; pk = Math.max(pk, Math.abs(L[i]), Math.abs(Rr[i])); sq += v * v; if (i % SRT === SRT - 1) { rms.push(+Math.sqrt(sq / SRT).toFixed(3)); sq = 0; } }
   const bands = [60, 120, 250, 500, 1000, 2000, 3000, 4000, 6000, 9000].map(f => { let e = 0; for (let w = 0; w < 12; w++) { const o = Math.floor((w + 1) * (L.length - 4096) / 14); let re = 0, im = 0; for (let i = 0; i < 4096; i++) { const v = L[o + i] * (.5 - .5 * Math.cos(TAU * i / 4096)), p = TAU * f * i / SRT; re += v * Math.cos(p); im += v * Math.sin(p); } e += re * re + im * im; } return f + ':' + (10 * Math.log10(e / 12 + 1e-12)).toFixed(0); }).join(' ');
   const hop = 441, env = []; for (let i = 0; i + hop < L.length; i += hop) { let e = 0; for (let j = 0; j < hop; j++) e += L[i + j] * L[i + j]; env.push(Math.sqrt(e / hop)); } const fl = env.map((v, i) => Math.max(0, v - (env[i - 1] || 0)));
-  const ac2 = lag => { let c = 0; for (let i = lag; i < fl.length; i++) c += fl[i] * fl[i - lag]; return c; }, song = which === 'field' ? s.field.song : which === 'radio' || which === 'juke' ? s.radio.song : which === 'night' || which === 'deck' ? { bpm: 84 } : which === 'brief' ? { bpm: 72 } : which === 'win' ? { bpm: 126 } : null, beat = song ? Math.round(60 / song.bpm * 100) : 0;
+  const ac2 = lag => { let c = 0; for (let i = lag; i < fl.length; i++) c += fl[i] * fl[i - lag]; return c; }, song = which === 'field' ? s.field.song : which === 'radio' || which === 'juke' ? s.radio.song : which === 'night' || which === 'deck' ? { bpm: 84 } : which === 'brief' ? { bpm: 72 } : which === 'win' ? { bpm: 126 } : which === 'intro' ? { bpm: 120 } : null, beat = song ? Math.round(60 / song.bpm * 100) : 0;
   let best = 0, bl = 0; for (let lag = 20; lag < 130; lag++) { const c = ac2(lag); if (c > best) { best = c; bl = lag; } }
   return { peak: +pk.toFixed(3), bad, rms: rms.join(' '), bands, envPeakLagSec: bl / 100, rmsAll: +Math.sqrt(rms.reduce((a, v) => a + v * v, 0) / (rms.length || 1)).toFixed(3), fight: which === 'field' ? s.field.state : undefined, song: song && { bpm: +song.bpm.toFixed(1), key: song.key, swing: song.sw, riff: !!song.riff, beatSec: beat / 100, acAtBeat: +(ac2(beat) / best).toFixed(2), acAtHalf: +(ac2(Math.round(beat / 2)) / best).toFixed(2) } };
 };
@@ -118,3 +119,19 @@ if (!/[?&]tut\b/.test(location.search)) {
   const ap = tutApply, off = () => { TUT.lock = TUT.hints = false; for (const k of TUT_KEYS) TUT.seen[k] = 1; }; tutApply = s => { ap(s); off(); };
   off(); tutStory(); for (const c of CO.board.filter(c => c.story && STORY[c.story].first)) CO.board.splice(CO.board.indexOf(c), 1); CO.news = CO.news.filter(n => !n.includes('Nobody is hiring yet')); fillBoard();
 }
+/* the opening. A debug page never plays it unasked (the drivers expect the bay), unless the address ends in ?intro. __intro(t) builds it and holds it at t seconds, silent, for a screenshot;
+   __intro('play') runs it from the top with its sound, __intro('end') stops it, __intro() says where it stands */
+if (!/[?&]intro\b/.test(location.search)) INTROV.off = true;
+window.__intro = t => {
+  if (t === 'end') introEnd(); else if (t === 'play') { introEnd(); introOpen(); }
+  else if (t !== undefined) { introEnd(); introOpen(); Object.assign(INTROV, { st: 2, hold: true, warm: 5, a0: -1 }); $('intro').classList.add('run'); for (let x = 0; x < t; x += 1 / 30) introStep(x, 1 / 30); introStep(t, 0); $('inBlk').style.opacity = INTROV.blk; }
+  return { st: INTROV.st, t: +INTROV.t.toFixed(2), shot: INTROV.shot, ents: FD.ents.length, mode };
+};
+/* the opening as a contact sheet: __introSheet([seconds, ...], cols) holds it at each moment in turn and tiles the pictures, time in the corner. The bars and fades are the page's, not the canvas's, so they are not in it */
+window.__introSheet = (ts, cols = 3) => {
+  let cv = document.getElementById('__st'); if (!cv) { cv = document.createElement('canvas'); cv.id = '__st'; cv.style.cssText = 'position:fixed;left:0;top:0;z-index:9999;background:#000'; document.body.appendChild(cv); }
+  const W = innerWidth, H = innerHeight, n = ts.length, rows = Math.ceil(n / cols), tw = W / cols, th = H / rows, gl = renderer.domElement, sw = Math.min(gl.width, gl.height * tw / th), shh = sw * th / tw; cv.width = W; cv.height = H; cv.style.display = ''; const g = cv.getContext('2d'); g.font = '13px Menlo'; g.fillStyle = '#ffb21a';
+  ts.forEach((t, i) => { __intro(t); POST.draw(POST.scene, POST.camera, POST.strength); g.drawImage(gl, (gl.width - sw) / 2, (gl.height - shh) / 2, sw, shh, (i % cols) * tw, Math.floor(i / cols) * th, tw, th); g.fillText(t + ' s' + (INTROV.blk > .02 ? '  (black ' + INTROV.blk.toFixed(2) + ')' : ''), (i % cols) * tw + 8, Math.floor(i / cols) * th + 18); });
+  introEnd(); return __errs;
+};
+

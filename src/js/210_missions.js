@@ -288,7 +288,7 @@ const TWISTS = {
   async reinf(ms) { await after(rand(55, 130)); say(ms.ops, 'New contact — dropship on the scope, coming in low. They are reinforcing.'); dropNear(150, .6); },
   async ace(ms) {
     await after(rand(50, 120)); const h = mkChar(ms.c.seed + 91, 'BOUNTY HUNTER', '#ff9adf'), cs = NAMES.call[(ms.c.seed + 5) % NAMES.call.length], [x, z] = groundSpot(P.pos.x, P.pos.z, 130, 170);
-    say(h, `Nothing personal, Ironworks. There is a price on that machine and I intend to collect. They call me ${cs}.`);
+    say(h, `Nothing personal, {CO}. There is a price on that machine and I intend to collect. They call me ${cs}.`);
     dropship(x, z, () => { const e = mkMech(x, z, { ...pick(PRESETS), paint: 1 }, 1, { name: cs.toUpperCase(), skill: 1.6, hpK: 1.5 }); e.alert = true; fieldWho(h, e); nav('bh', e, 'HUNTER', '#ff9adf'); e.onKill = () => { unnav('bh'); bonus(`Bounty on "${cs}"`, 40000); note(`You killed the bounty hunter "${cs}".`); }; });
   },
   async pirates(ms) {

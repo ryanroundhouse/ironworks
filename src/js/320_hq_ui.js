@@ -2,7 +2,7 @@
 let dlgCur = null;
 /* dlg(who, text, [[label, fn, disabled]], person) — person: a crew figure to frame, or null to leave the camera alone */
 function dlg(who, text, opts, person) {
-  dlgCur = { who, text, opts, t: 0 }; drawFace($('dlgFace'), who); $('dlgWho').textContent = `${who.name} · ${who.role}`; $('dlgWho').style.color = who.col; $('dlg').classList.remove('hid'); $('dlgOpts').innerHTML = '';
+  text = coTxt(text); dlgCur = { who, text, opts, t: 0 }; drawFace($('dlgFace'), who); $('dlgWho').textContent = `${who.name} · ${who.role}`; $('dlgWho').style.color = who.col; $('dlg').classList.remove('hid'); $('dlgOpts').innerHTML = '';
   opts.forEach(([label, fn, dis], i) => { const b = document.createElement('button'); b.innerHTML = `<b>${i + 1}</b>${label}`; b.disabled = !!dis; b.onclick = () => { sfx.play('ui'); fn(); }; $('dlgOpts').appendChild(b); });
   sfx.play('comm'); vox.say(who, text, mode === 'hq' && HQ.contact && HQ.contact.ch.seed === who.seed ? 'holo' : undefined); if (person) { focusOn(person); if (person.cam) hq.focus.pos.set(...person.cam); }
 }
@@ -147,21 +147,21 @@ function renderStandDetail() {
 /* a channel to another company's commander: where we stand, work they cannot cover, a joint operation on the selected offer, and making amends */
 const RIV_TALK = {
   cob: {
-    hi: ['Ironworks. It is good to hear from a company that keeps its word. What do you need?', 'Ironworks. Cobalt Lance actual. State your business.', 'Ironworks. I am listening, which is more than you have earned. Be brief.'],
-    stand: { allied: 'Cobalt counts you a friend. I do not use the word lightly.', friendly: 'You have dealt fairly with us. I intend to return it.', wary: 'We are competitors. I bear you no ill will, and I extend you no credit.', 'bad blood': 'You have given me reasons to doubt you. Give me better ones.', feud: 'You are on a short list, Ironworks. I do not forget what was done.' },
+    hi: ['{CO}. It is good to hear from a company that keeps its word. What do you need?', '{CO}. Cobalt Lance actual. State your business.', '{CO}. I am listening, which is more than you have earned. Be brief.'],
+    stand: { allied: 'Cobalt counts you a friend. I do not use the word lightly.', friendly: 'You have dealt fairly with us. I intend to return it.', wary: 'We are competitors. I bear you no ill will, and I extend you no credit.', 'bad blood': 'You have given me reasons to doubt you. Give me better ones.', feud: 'You are on a short list, {CO}. I do not forget what was done.' },
     subYes: (t, E, s) => `I hold a ${t} contract for ${E} at ${s} and cannot staff it. It is on your board now: eighty-five percent of my fee, and my name stays on the paper. Do not embarrass it.`, subNo: 'Nothing I would hand to another company this week.', subCold: 'I do not pass work to companies I cannot vouch for.',
     jYes: 'Agreed. Thirty percent, and Cobalt flies on your lead. I will hold you to the brief as written.', jRival: 'As it happens, I was offered the other side of that contract. I had not signed. Now I will not. Thirty percent, on your lead.', jNo: 'We have not earned that from each other yet. Ask me again when we have.', jType: 'That is not work for two lances.', jCold: 'Cobalt does not fly beside a company it cannot trust. Mend that first.',
-    gift: 'Reparations, paid to her wounded', giftYes: 'It is not the money. It is that you thought to. Noted, Ironworks.', bye: 'Cobalt out.',
+    gift: 'Reparations, paid to her wounded', giftYes: 'It is not the money. It is that you thought to. Noted, {CO}.', bye: 'Cobalt out.',
   },
   car: {
-    hi: ['Ironworks! My favourite co-stars. To what do I owe the pleasure?', 'Ironworks! Calling the Carnival? You must want something. How delicious.', 'Oh. It is you. I am in the middle of hating you — make it quick.'],
+    hi: ['{CO}! My favourite co-stars. To what do I owe the pleasure?', '{CO}! Calling the Carnival? You must want something. How delicious.', 'Oh. It is you. I am in the middle of hating you — make it quick.'],
     stand: { allied: 'Darling, we are a double act. The sector simply has not noticed yet.', friendly: 'I like you! You have timing.', wary: 'You are in the chorus. Do something memorable and we shall see.', 'bad blood': 'You have been a terrible audience.', feud: 'You are the villain of my next three shows. I have written songs about it.' },
     subYes: (t, E, s) => `I am double-booked, would you believe. There is a ${t} for ${E} at ${s} that I simply cannot fit in. It is yours — eighty-five percent, and do try to make it look good.`, subNo: 'Hand you one of my shows? Not this week. I am using all of them.', subCold: 'Work? For you? I would sooner cancel the tour.',
     jYes: 'A double bill! Thirty percent and second billing — for you, I will bear it. We open at your signal.', jRival: 'Oh, you sly thing. I was going to turn up there anyway — on the other side. This is better. Thirty percent!', jNo: 'For that? Darling, it is a matinee. Bring me something with a little danger in it.', jType: 'There is no audience for that sort of work.', jCold: 'Share a bill with you? After everything? Absolutely not.',
     gift: 'A crate of the good stuff, and a public apology', giftYes: 'An apology! In public! Oh, do it again. ...Very well. A little forgiven.', bye: 'Ta!',
   },
   ver: {
-    hi: ['Ironworks. Always a pleasure doing business, love. What have you got for me?', 'Jackdaw. If this is about money, keep talking.', 'You have a nerve, calling here. This had better be worth something.'],
+    hi: ['{CO}. Always a pleasure doing business, love. What have you got for me?', 'Jackdaw. If this is about money, keep talking.', 'You have a nerve, calling here. This had better be worth something.'],
     stand: { allied: 'You pay, you share, and you do not shoot at me. That makes you my favourite, love.', friendly: 'We have done good business. Long may it last.', wary: 'You are a name on a board. Nothing wrong with that.', 'bad blood': 'You have cost me money. I keep a list.', feud: 'Top of the list, you are. In red.' },
     subYes: (t, E, s) => `Funny you should ask. I have a ${t} for ${E} at ${s} that is more shooting than salvage. Not my sort of thing. It is on your board — eighty-five percent, and I keep the finder’s fee.`, subNo: 'Nothing going spare. I am not a charity, love.', subCold: 'I do not hand paper to people who cost me money.',
     jYes: 'Thirty percent for following you about and picking up after? Done. Do not expect me to go first.', jRival: 'Ha. I had an offer to be there on the other side. Yours pays better. Thirty percent, done.', jNo: '', jType: 'No salvage in that worth two crews. Pass.', jCold: 'Fly beside you? I would spend the whole job watching my back. No.',

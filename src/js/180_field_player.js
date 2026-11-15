@@ -25,6 +25,22 @@ function drawRadar() {
   }
   g.strokeStyle = '#ffb21a'; g.lineWidth = 2; g.beginPath(); g.moveTo(R, R); g.lineTo(R + Math.sin(P.twist) * 16, R - Math.cos(P.twist) * 16); g.stroke(); g.fillStyle = '#8dff6a'; g.beginPath(); g.moveTo(R, R - 6); g.lineTo(R + 4, R + 4); g.lineTo(R - 4, R + 4); g.fill();
 }
+/* the field apart from the player, in two halves either side of the mission script: every unit's turn with the tickers and field tweens, then the weather, the shots in the air and
+   whatever is left smoking. updateField runs them round the player; the opening (447_intro.js) runs them with nobody at the controls */
+function fieldUnits(dt, t) {
+  for (const e of [...FD.ents]) if (!e.dead) entTick(e, dt, t);
+  for (let i = FD.tick.length - 1; i >= 0; i--) if (FD.tick[i](dt) === false) FD.tick.splice(i, 1);
+  for (let i = ftw.length - 1; i >= 0; i--) { const w = ftw[i]; w.t += dt; const k = Math.min(1, w.t / w.dur); w.fn(w.e(k)); if (k >= 1) { ftw.splice(ftw.indexOf(w), 1); w.res(); } }
+}
+function fieldFx(dt, t) {
+  updateEnvFx(dt, t);
+  updateShots(dt);
+  for (let i = FD.emit.length - 1; i >= 0; i--) {
+    const e = FD.emit[i]; if (e.life !== undefined && (e.life -= dt) <= 0) { FD.emit.splice(i, 1); continue; } if (Math.random() > dt * 14) continue;
+    if (e.kind === 'flare') FD.fx.spark.emit(e.p.x + rand(-.5, .5), e.p.y, e.p.z + rand(-.5, .5), rand(-1, 1), rand(5, 10), rand(-1, 1), rand(.4, .9), rand(4, 7), 5, 2.2, .5, .8, -3, .5, -.5);
+    else FD.fx.smoke.emit(e.p.x, e.p.y, e.p.z, rand(1, 3), rand(2, 5), rand(-1, 1), rand(3, 6), rand(3, 5), .12, .11, .1, .5, -.2, .2, 3);
+  }
+}
 function updateField(dt, t) {
   const st = player.stats, K = keys, ctl = !P.dead && P.shut <= 0;
   let trn = ctl ? (K.KeyA ? 1 : 0) - (K.KeyD ? 1 : 0) : 0; if (trn) P.center = false;
@@ -74,16 +90,8 @@ function updateField(dt, t) {
     P.cd[k] = Math.max(0, P.cd[k] - dt); const w = wepOf(k); if (!w || !on || !ctl || !locked || P.cd[k] > 0 || P.lost[k]) continue;
     fire(player, k, w, P.aim, 0, (hit.ent && hit.ent.team === 1 ? hit.ent : null) || nearestToAim()); P.cd[k] = w.cd; P.heat += w.heat; P.shake += w.cd < .2 ? (w.type === 'bullet' ? .03 : .012) : w.type === 'melee' ? .05 : .12;
   }
-  retarget(); for (const e of [...FD.ents]) if (!e.dead) entTick(e, dt, t);
-  for (let i = FD.tick.length - 1; i >= 0; i--) if (FD.tick[i](dt) === false) FD.tick.splice(i, 1);
-  for (let i = ftw.length - 1; i >= 0; i--) { const w = ftw[i]; w.t += dt; const k = Math.min(1, w.t / w.dur); w.fn(w.e(k)); if (k >= 1) { ftw.splice(ftw.indexOf(w), 1); w.res(); } }
-  updateMission(dt); updateEnvFx(dt, t);
-  updateShots(dt);
-  for (let i = FD.emit.length - 1; i >= 0; i--) {
-    const e = FD.emit[i]; if (e.life !== undefined && (e.life -= dt) <= 0) { FD.emit.splice(i, 1); continue; } if (Math.random() > dt * 14) continue;
-    if (e.kind === 'flare') FD.fx.spark.emit(e.p.x + rand(-.5, .5), e.p.y, e.p.z + rand(-.5, .5), rand(-1, 1), rand(5, 10), rand(-1, 1), rand(.4, .9), rand(4, 7), 5, 2.2, .5, .8, -3, .5, -.5);
-    else FD.fx.smoke.emit(e.p.x, e.p.y, e.p.z, rand(1, 3), rand(2, 5), rand(-1, 1), rand(3, 6), rand(3, 5), .12, .11, .1, .5, -.2, .2, 3);
-  }
+  retarget(); fieldUnits(dt, t);
+  updateMission(dt); fieldFx(dt, t);
   if (!MS.on && !P.dead && !FD.ents.some(e => e.team === 1)) { P.waveT += dt; if (P.waveT > 4) { P.waveT = 0; if (P.wave) { P.armor = Math.min(P.max, P.armor + P.max * .3); } spawnWave(P.wave + 1); } }
   if (FD.beacon) M.redGlow.emissiveIntensity = Math.sin(t * 4) > .6 ? 6 : 1.5;
   FD.fx.spark.update(dt); FD.fx.smoke.update(dt);
