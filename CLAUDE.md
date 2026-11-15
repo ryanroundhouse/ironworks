@@ -1,7 +1,7 @@
 # STOMPYMECHS
 
-(Called IRONWORKS until the rebrand. The repo folder, the deploy script and the site address in
-`.github/workflows/deploy.yml` still carry the old name: they are the server's, not the page's.)
+(Called IRONWORKS until the rebrand. The site is https://stompymechs.graham.pub/; the deploy
+script on the server, `~/update-ironworks.sh`, still carries the old name.)
 
 A single-file three.js game: mech hangar with three build bays and a parts inventory, command deck
 with contracts and a rotating market, a bar (rumours, pilots for hire, two contests), field
