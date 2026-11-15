@@ -111,3 +111,10 @@ window.__aim = (e, k) => { const c = e.pos.clone(); c.y += e.cy; if (k && e.mech
 window.__arena = cfg => { if (cfg) { player.cfg = { name: 'T', paint: 0, sinks: 3, ...cfg }; player.build(); } CO.active = null; dlgClose(); for (const id of ['hqUI', 'barUI']) $(id).classList.add('hid'); mode = 'hangar'; startField(); soft = true; locked = true; $('pause').classList.add('hid'); clearField(); P.pos.set(160, heightAt(160, 160), 160); P.waveT = -1e9; };
 /* a target dummy d metres ahead: a pacified machine with a great deal of armour */
 window.__dummy = (d = 60, cfg = PRESETS[1], o = {}) => { const x = P.pos.x + Math.sin(P.yaw) * d, z = P.pos.z + Math.cos(P.yaw) * d, e = mkMech(x, z, { ...cfg, paint: 3 }, 1, { ai: 'hold', hpK: 60, name: 'DUMMY', yaw: 0, ...o }); e.pacify = o.pacify ?? true; return e; };
+/* the first day. A debug page skips all of it (the drivers in .scratch expect a full board and nobody showing anybody round), and goes on skipping it through a new game or an imported save,
+   unless the address ends in ?tut. __tut() says where it stands; __tut('skip') skips it as the button does, __tut('reset') makes this a brand-new company, __tut('tour', k) gives one tour again */
+window.__tut = (op, k) => { if (op === 'skip') { if (TUT.lock) tutSkip(); TUT.hints = false; tutEnd(); } else if (op === 'reset') { gameApply(null); YARD.founded = true; } else if (op === 'tour') { tutEnd(); delete TUT.seen[k]; TUT.hints = true; } return { lock: TUT.lock, hints: TUT.hints, seen: Object.keys(TUT.seen), tour: TG.k, step: TG.i, text: TG.k ? $('tutText').textContent : '', chip: TG.chip, keys: TG.keys }; };
+if (!/[?&]tut\b/.test(location.search)) {
+  const ap = tutApply, off = () => { TUT.lock = TUT.hints = false; for (const k of TUT_KEYS) TUT.seen[k] = 1; }; tutApply = s => { ap(s); off(); };
+  off(); tutStory(); for (const c of CO.board.filter(c => c.story && STORY[c.story].first)) CO.board.splice(CO.board.indexOf(c), 1); CO.news = CO.news.filter(n => !n.includes('Nobody is hiring yet')); fillBoard();
+}

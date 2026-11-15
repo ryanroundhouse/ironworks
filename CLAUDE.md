@@ -6,8 +6,9 @@ missions with salvage (eighteen catalogue mechs, fifty-three weapons in families
 vehicle, a centipede, factories and two capital ships, all of which can be shot apart a
 component at a time), three rival mech companies that compete with you, hire you and fly
 beside you, and five story threads: connected chapters that come up on the board one at a time,
-are briefed in a briefing room and are flown on a theatre 2.4 times the usual size. Everybody who
-speaks does so aloud, in a made-up language.
+are briefed in a briefing room and are flown on a theatre 2.4 times the usual size. A new company
+is shown round each room by its crew, and flies a first sortie that teaches the controls before
+anybody will hire it. Everybody who speaks does so aloud, in a made-up language.
 `index.html` is the whole deliverable. It loads three.js (and one add-on, `RoomEnvironment`) from
 a CDN, so view it through a local web server with an internet connection. It is built from the
 sources in `src/` by `build.py`; edit `src/`, never `index.html`.
@@ -34,7 +35,8 @@ playable page. Never hand-edit it.
   `import`/`export` between them, and file-name order is execution order. Each file starts at
   one of the `/* ============ TITLE ============ */` section banners. A new file goes in at a
   number between its neighbours (`255_thing.js`); keep the gaps. Every file ends with a newline.
-  Where things are: `020_post.js` the post chain `POST`; `050_audio.js` `sfx` and the sound
+  Where things are: `115_first_day.js` what a new company has been shown (`TUT`); `020_post.js`
+  the post chain `POST`; `050_audio.js` `sfx` and the sound
   notice; `060_voices.js` and `070_music.js`; `080`/`090` mech parts (`ARM_FAM`, the extra
   chassis); `110_yard.js` the yard, stores, bays, `SPRINT_K`, `capFor`; `150_field_env.js`
   terrain and `fieldScale`; `160_field_weapons.js` the weapons engine (`emitShot`, `fire`) and
@@ -43,15 +45,18 @@ playable page. Never hand-edit it.
   the story helpers, `stLook` and `stRace`/`RACE_K`; `210_missions.js` and `240_ops.js` the
   contract types and twists; `230`/`250` the rival companies; `260_story.js` thread state, the
   board and the save; `280`-`310` people and crews; `330_bar.js`, `340_bar_games.js`;
-  `350_brief.js` the briefing room; `360`-`400` the five threads (`stKeep` is in `400`, the
-  Derby's `dbCall` in `390`); `450_main.js` the main loop. `grep -l name src/js/*.js` finds
+  `350_brief.js` the briefing room; `355_thread0_shakedown.js` the first sortie; `360`-`400` the
+  five threads (`stKeep` is in `400`, the Derby's `dbCall` in `390`); `445_guide.js` the room
+  tours, the next-step chip and the HUD key prompts; `450_main.js` the main loop. `grep -l name src/js/*.js` finds
   anything else.
 - `python3 build.py` writes `index.html` (release).
 - `python3 build.py --debug` writes `.scratch/debug.html` with the test hooks from
   `src/debug/harness.js` (`__ev`, `__errs`, `__ff`, `__cam`, `__see`, `__strip`, `__poses`,
   `__mus`, `__render`, `__wav`, `__mk`, `__sim`, `__vox`, `__story`, `__smk`, `__sites`,
-  `__fcam`, `__fsee`, `__sheet`, `__mechs`, `__parts`, `__aim`, `__arena`, `__dummy`). It also
-  makes `music.KIT` reachable. Its two anchors are asserted; if one moves, fix `build.py`.
+  `__fcam`, `__fsee`, `__sheet`, `__mechs`, `__parts`, `__aim`, `__arena`, `__dummy`, `__tut`).
+  It also makes `music.KIT` reachable. A debug page skips the first day altogether (an open
+  board, no tours, through a new game and an imported save as well), because every driver below
+  expects that; load `debug.html?tut` to get what a new player gets. Its two anchors are asserted; if one moves, fix `build.py`.
 - Every build writes `.scratch/check.mjs` (the module script alone). Follow every build with
   `node --check .scratch/check.mjs`: in a module a second top-level declaration of a name is a
   syntax error, so this is what catches collisions between files. Check a new top-level name
@@ -115,7 +120,29 @@ playable page. Never hand-edit it.
     `.scratch/chrome-real`, no `--autoplay-policy` flag). If `ffreal.mjs` reports "Maximum
     number of active sessions", restart that Firefox.
 - With no save, the page opens on the "found your company" screen. Close it with `#setClose`
-  before driving anything else.
+  before driving anything else. On the release page (and `debug.html?tut`) the bay tour then
+  starts and the board holds one card, the shakedown.
+- The first day, in `.scratch/v13/` (`c.sh` and `f.sh` are `cdp.mjs` and `ff.mjs` from anywhere):
+  - `shake.sh '{ arm, slow, stand, nofire, skip, until, log }'` flies the shakedown through the
+    real controls (W, A, D, S, SHIFT and SPACE held in `keys`, the torso aimed with `__aim`, both
+    triggers) and prints when each lesson was passed, the least armour, the most heat and the
+    books. `slow` is seconds of dithering before each new target, `stand` never backs away from
+    the saw, `nofire` never shoots in the fight (that pilot should last a minute and a half and
+    then lose), `arm` goes for the extra credit, `skip` answers "straight to the examination".
+    `f.sh run http://127.0.0.1:8766/debug.html .scratch/v13/t_shake.js 'window.__sk = {}'` is
+    the same in Firefox. A pilot who never misses takes about a minute and three quarters of
+    sortie time; nobody should need a second try at the Table.
+  - `t_relwalk.js` (an async function body: `c.sh eval "(async () => { $(cat ...) })()"`, or
+    `f.sh run`) walks the release page from a clean save through the real buttons: charter, bay
+    tour, deck tour, the card, ACCEPT, the briefing, LAUNCH, and with `window.__more = 1`
+    ENGAGE (twice: headless refuses pointer lock) and SPACE through the first comms.
+  - `t_after.js` (on `debug.html?tut`, clean save) flies it with the story autopilot and comes
+    home through the real debrief: books, the salvage picker and its tour, the epilogue, the
+    board opening, the `home` tour. `step.js` (`ACTS` replaced by a list of `'next'`, `'#id'`
+    and milliseconds) clicks through a tour and reports each step's text and ring.
+  - `t_tsave.js` (on `debug.html?tut`, clean save) takes `tut` through the save: a fresh
+    company, an old save with no `tut`, hostile values, a save made half-way, a lost shakedown
+    coming straight back, the skip button, the tours again, a new game.
 - Headless Chrome refuses pointer lock. To run the field, call `startField()` through `__ev`, then
   set `soft = true; locked = true` and hide `#pause`. Re-locking after the map (`M`) therefore
   only shows its fallback headlessly; check it in a real browser.
@@ -292,6 +319,24 @@ playable page. Never hand-edit it.
   click, a control, a resize or `POST.kick()`, and twice a second regardless. Anything new that
   changes the field's look while it is on hold, without one of those, should call `POST.kick()`.
   The other rooms always draw.
+- The first day is `TUT = { lock, hints, seen }` (`src/js/115_first_day.js`), saved under `tut`
+  (`tutSave()`, `tutApply()`). A save with no `tut` is an old company: open board, no tours.
+  - `tutLock()` means the board holds one card: `fillBoard()` deals nothing, and `storySync()`
+    offers only the thread marked `first` (`STORY.zero`, the shakedown), whose offer never
+    lapses. `tutStory()` keeps the two in step whatever a save says: that thread finished, or
+    the lock off, means an open board and a closed thread. An open board is never offered it.
+  - A `first` thread is flown on the company's own account: `settle()` charges no repairs,
+    moves no faction standing and counts no failure, and a lost attempt is on the board again
+    at once. A chapter marked `solo` is flown without the hired wingman (who is not used up);
+    a `home` chapter marked `lay` has its sites levelled and cleared like any other theatre.
+    `forS`, `payL`, `note`, `close` and `again` on a thread replace the stock wording.
+  - A room's tour is an entry in `TOURS` (`src/js/445_guide.js`): `{ by, room, modal, steps:
+    [{ t, at, when, done, act, pos }] }`, started by `tutTick` (called from `frame`) the first
+    time `room()` is true, for a key listed in `TUT_KEYS`. A tour never blocks input: the ring
+    passes clicks through and leaving the room ends it. A new overlay or room wants a tour
+    here; a new control wants a line in the shakedown. `tutHint()` is the NEXT chip, shown
+    until the lock comes off; `tutKeys([[key, what]])` puts key prompts on the HUD for a
+    chapter script (only the shakedown uses it) and `tutKeys(null)` takes them away.
 - What the bar remembers lives in `BARSV` and is saved under `bar` (`barSave()`, `barApply()`).
   A freelance pilot is rebuilt from a seed by `barPilot(seed)`, so the save holds only seeds;
   `CO.wing` may carry `cfg`, `skill`, `hpK` and `paid` for one of them, while deck pilots still
@@ -340,7 +385,8 @@ playable page. Never hand-edit it.
   on the board (never more than three), `storyLapse()` takes an unanswered one away for a
   while, `storySettle()` moves the thread on or, after a failure, queues the same chapter
   again. Story cards are never saved with the board; `storySave()` / `storyApply()` keep the
-  thread state and rebuild them.
+  thread state and rebuild them. `STORY.zero` is the thread marked `first`: see the first day,
+  above.
 - What a thread remembers of the player's choices is a small integer under `'thread.flag'`.
   In a chapter use `stSet(flag, v)` and `stGet(flag)`: they are staged in `MS.sf` and kept only
   if the chapter is won. Anywhere else read `stFlag('mar.ram')` or `stDone('mar')`. A flag

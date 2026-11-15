@@ -13,6 +13,8 @@ function stBotFace(g, col) {
   g.fillStyle = col; g.globalAlpha = .7; for (let i = 0; i < 5; i++) g.fillRect(22 + i * 6, 42, 4, 1.5); g.globalAlpha = 1;
 }
 const STC = {
+  mav: { name: 'MAVIS', first: 'Mavis', last: 'MAVIS', role: 'ONBOARD INSTRUCTOR · PALLISTER ACADEMY', seed: 9201, col: '#ff9ad0' },
+  snips: { name: '"Snips" Halvard', first: 'Snips', last: 'Halvard', role: 'RED MAW · SALVAGE FOREMAN', seed: 9203, col: '#ff5a3a' },
   ma: { name: 'Mayor Hester "Ma" Oyelaran', first: 'Hester', last: 'Oyelaran', role: 'MARIGOLD · MAYOR AND DRIVER', seed: 9101, col: '#ffc94a' },
   pip: { name: 'Pip Oyelaran', first: 'Pip', last: 'Pip', role: 'MARIGOLD · RADIO, AGE ELEVEN', seed: 9103, col: '#ffe9a0' },
   hale: { name: 'Assessor Corwin Hale', first: 'Corwin', last: 'Hale', role: 'VANCE-OKORO · ASSET RECOVERY', seed: 9107, col: '#ffb21a' },

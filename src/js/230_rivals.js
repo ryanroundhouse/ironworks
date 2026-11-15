@@ -131,6 +131,7 @@ function genContract(o = {}) {
   c.brief = (o.pre || '') + BRIEF[type](FAC[emp], FAC[foe], c); return c;
 }
 function fillBoard() {
+  if (tutLock()) { storySync(); CO.dirty = true; return; }   /* a company that has not flown its shakedown gets no offers: the board holds that one card */
   while (CO.board.filter(c => !c.story).length < 6) { const have = CO.board.map(c => c.type), miss = Object.keys(TYPES).filter(t => !have.includes(t)), used = CO.board.map(c => c.biome), free = BIOME_KEYS.filter(b => !used.includes(b)); CO.board.push(genContract({ type: miss.length ? pick(miss) : undefined, biome: free.length && Math.random() < .8 ? pick(free) : undefined })); }
   rivOffers(); storySync(); CO.dirty = true;
 }
@@ -149,7 +150,7 @@ function drift() {
 function tickClock(dt) {
   CO.hour += dt / 10; if (CO.hour >= 24) { CO.hour -= 24; CO.day++; saveCO(); }
   for (const c of [...CO.board]) if (c !== CO.active && now() > c.exp) { if (c.story) { storyLapse(c); continue; } dropContract(c); news(pick([`${rivOutfit()} took the ${FAC[c.emp].short} job at ${c.site}.`, `${FAC[c.emp].short} withdrew its offer for ${c.site}.`, `The ${c.site} contract lapsed unfilled.`])); }
-  if (CO.board.filter(c => !c.story).length < 6) fillBoard(); else if ((CO.stT = (CO.stT || 0) - dt) < 0) { CO.stT = 6; storySync(); }
+  if (!tutLock() && CO.board.filter(c => !c.story).length < 6) fillBoard(); else if ((CO.stT = (CO.stT || 0) - dt) < 0) { CO.stT = 6; storySync(); }
   if ((CO.driftT -= dt / 10) <= 0) { CO.driftT = rand(3, 6); drift(); if (Math.random() < .2) news(rivNews()); }
   if (shopRoll()) { news('The quartermaster has posted new stock on the market.'); saveCO(); if (ST.open) storesDraw(); }
 }

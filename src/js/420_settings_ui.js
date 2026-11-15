@@ -12,7 +12,7 @@ function gfxApply() {
 }
 /* swap the whole company for another: a fresh start (null) or an imported save */
 function gameApply(s) {
-  if (dlgCur) dlgClose(); yardApply(s); ledgerApply(s); pilotsApply(s); boardApply(s); storyApply(s); barApply(s);
+  if (dlgCur) dlgClose(); tutEnd(); yardApply(s); tutApply(s); ledgerApply(s); pilotsApply(s); boardApply(s); storyApply(s); barApply(s);
   player.cfg = YARD.bays[YARD.act]; applyPaint(player.mats, player.cfg.paint); player.build(); mechName = bayTitle(); HG.armT = 0; HG.syncBerths(); if (HQ.setMini) HQ.setMini();
   brandSync(); saveCO(); setStatus(bayParts(player.cfg) ? 'STAND READY — ' + mechName : 'STAND EMPTY'); if (mode === 'hangar') { refreshUI(); renderHangarContract(); } else if (mode === 'hq') renderDetail();
 }
@@ -70,7 +70,9 @@ ${SCORES.map(([bk, n, d], i) => `<div class="trk${CFG.track === i + 1 ? ' on' : 
 <div class="sh">IN THE FIELD</div>${K([['W / S', 'Throttle forward / reverse'], ['A / D', 'Turn the legs'], ['MOUSE', 'Twist the torso and aim'], ['LEFT / RIGHT BUTTON', 'Fire left / right arm'], ['F', 'Fire the back unit'], ['SPACE', 'Jump jets'], ['SHIFT', 'Sprint — it builds heat'], ['X', 'Centre legs under the torso'], ['C', 'Cockpit / chase camera'], ['M', 'Tactical map — pauses the sortie'], ['R', 'Field repair kit'], ['V', 'Coolant flush'], ['1 – 3', 'Answer the comms'], ['SPACE / ENTER', 'Carry on after a message'], ['H', 'Withdraw to base'], ['ESC', 'Pause']])}
 <div class="sh">COMMS IN THE FIELD</div><div class="sg"><label>HOLD THE SORTIE FOR COMMS</label><span class="seg" id="sHold">${[[2, 'EVERY MESSAGE'], [1, 'QUESTIONS ONLY'], [0, 'NEVER']].map(([v, l]) => `<button data-v="${v}" class="${CFG.hold === v ? 'on' : ''}">${l}</button>`).join('')}</span><em></em></div>
 <p class="snt">${['The fight carries on while people talk, and a question you do not answer in time answers itself.', 'Chatter plays over the fight. When somebody needs a decision, everything stops until you have made it.', 'Whenever anybody comes on the radio, everything stops until you have read it. Nothing moves and no clock runs while you choose a reply.'][CFG.hold]}</p>
-<div class="sh">BAY AND COMMAND DECK</div>${K([['DRAG', 'Orbit the camera'], ['WHEEL', 'Zoom'], ['RIGHT-DRAG', 'Raise / lower the view'], ['1 – 6', 'Pick a reply in conversation'], ['ESC', 'Close a window']])}`;
+<div class="sh">BAY AND COMMAND DECK</div>${K([['DRAG', 'Orbit the camera'], ['WHEEL', 'Zoom'], ['RIGHT-DRAG', 'Raise / lower the view'], ['1 – 6', 'Pick a reply in conversation'], ['ESC', 'Close a window']])}
+<div class="sh">GUIDANCE</div><div class="sg">${tog('sTut', 'THE CREW SHOW YOU ROUND EACH ROOM', TUT.hints)}</div><div class="gm"><button id="sTutAgain" ${fld ? 'disabled' : ''}><b>SHOW ME ROUND AGAIN</b><small>Every room's tour, the next time you walk into it</small></button></div>`;
+    $('sTut').onclick = () => { TUT.hints = !TUT.hints; if (!TUT.hints) tutEnd(); saveCO(); sfx.play('ui'); settingsDraw(); }; $('sTutAgain').onclick = () => { tutAgain(); sfx.play('ok'); settingsDraw(); };
     bindR('sSens', v => { CFG.sens = v / 100; }, sx); bindT('sInv', 'invY'); $('sHold').querySelectorAll('button').forEach(b => b.onclick = () => { CFG.hold = +b.dataset.v; cfgSave(); sfx.play('ui'); settingsDraw(); });
   } else if (tab === 'display') {
     B.innerHTML = `<div class="sh">RENDERING</div><div class="sg">${rng('sScale', 'RENDER SCALE', CFG.scale * 100, 50, 150, 10, pc)}${tog('sBloom', 'BLOOM AND GLOW', CFG.bloom)}${tog('sShadow', 'DYNAMIC SHADOWS', CFG.shadow)}</div>
@@ -100,7 +102,7 @@ ${fld ? '<p class="snt">Importing and starting over are locked while a sortie is
   }
 }
 {
-  $('setClose').onclick = () => { sfx.play('ok'); if (SET.found) { SET.found = false; YARD.founded = true; YARD.name = cleanName($('coName') && $('coName').value, 'IRONWORKS'); brandSync(); CO.news = CO.news.filter(n => !n.includes('is open for contracts')); news(`${YARD.name} mercenary company is open for contracts.`); saveCO(); setStatus('STAND READY — ' + mechName); } settingsClose(); };
+  $('setClose').onclick = () => { sfx.play('ok'); if (SET.found) { SET.found = false; YARD.founded = true; YARD.name = cleanName($('coName') && $('coName').value, 'IRONWORKS'); brandSync(); CO.news = CO.news.filter(n => !n.includes('is open for contracts') && !n.includes('Nobody is hiring yet')); news(tutLock() ? TUT_WIRE() : TUT_OPEN()); saveCO(); setStatus('STAND READY — ' + mechName); } settingsClose(); };
   $('setUI').addEventListener('pointerdown', e => { if (e.target === $('setUI')) settingsClose(); });
   $('saveFile').onchange = e => { const f = e.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { const why = saveImport(String(rd.result)); SET.bad = !!why; SET.msg = why || `Loaded ${YARD.name} — day ${CO.day}, ${fmt(CO.cb)}.`; sfx.play(why ? 'deny' : 'ok'); settingsDraw(); }; rd.readAsText(f); };
   addEventListener('keydown', e => { if (e.code !== 'Escape' || !uiModal()) return; if (ST.open && ST.mode !== 'salv') storesClose(); else if (SET.open) settingsClose(); });

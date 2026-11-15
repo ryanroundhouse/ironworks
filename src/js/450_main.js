@@ -13,7 +13,7 @@ function frame(now) {
       POST.scene = HQ.scene; POST.camera = HQ.camera; POST.strength = .55;
     } else { POST.scene = HG.scene; POST.camera = HG.camera; POST.strength = .5; }
   }
-  POST.frame(dt, mode === 'field' && !locked && !P.dead && !MS.over && !CUT.live && !tweens.length);
+  tutTick(dt); POST.frame(dt, mode === 'field' && !locked && !P.dead && !MS.over && !CUT.live && !tweens.length);
 }
 sfx.init();   /* everything it needs exists by now */
 requestAnimationFrame(frame);

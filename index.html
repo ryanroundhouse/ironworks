@@ -339,6 +339,29 @@ body.cut #comm.hold{top:auto;bottom:3vh;transform:translate(-50%,0)}
 /* the browser is holding the sound back until the player does something */
 #sndHint{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:58;font:700 11px/1 Menlo,Consolas,monospace;letter-spacing:.16em;color:#ffb21a;background:rgba(7,9,11,.84);border:1px solid rgba(255,178,26,.5);padding:8px 13px;opacity:0;transition:opacity .4s;pointer-events:none;white-space:nowrap}
 #sndHint.on{opacity:1}
+/* the guide: a tour panel, the ring round whatever it is talking about, the next-step chip, and the key prompts on the HUD */
+#tut{left:50%;top:52px;transform:translateX(-50%);width:540px;max-width:calc(100vw - 40px);display:grid;grid-template-columns:72px 1fr;gap:12px;z-index:47;background:rgba(7,9,11,.96);border-color:var(--cy);box-shadow:0 10px 34px rgba(0,0,0,.6)}
+#tut.low{top:auto;bottom:70px}
+#tut.lft{left:18px;top:50%;bottom:auto;transform:translateY(-50%);width:400px}
+#tut canvas{width:72px;height:72px}
+#tutWho{font-weight:400;letter-spacing:.14em;font-size:11px}
+#tutText{margin:5px 0 9px;line-height:1.55;color:#e4ddcc;font-size:12px}
+#tutRow{display:flex;gap:6px;align-items:center;justify-content:flex-end}
+#tutN{margin-right:auto;color:#7d776a;font-size:10px;letter-spacing:.14em}
+#tutRow button{padding:6px 10px;font-size:10px}
+#tutNext{background:var(--cy);color:#06121a;border-color:var(--cy)}#tutNext:hover{background:#fff;color:#06121a}
+#tutSkip,#tutOff{color:#8b8474;border-color:rgba(255,255,255,.14);background:none}
+#tutRing{position:fixed;z-index:46;pointer-events:none;border:2px solid var(--cy);box-shadow:0 0 0 9999px rgba(3,5,7,.4),0 0 18px rgba(95,216,255,.7);animation:tutR 1.3s ease-in-out infinite}
+@keyframes tutR{50%{border-color:#fff;box-shadow:0 0 0 9999px rgba(3,5,7,.4),0 0 30px rgba(95,216,255,1)}}
+#tutChip{position:fixed;left:50%;top:52px;transform:translateX(-50%);z-index:44;padding:8px 14px;border:1px solid var(--cy);background:rgba(7,9,11,.9);color:var(--cy);font-size:11px;letter-spacing:.14em;white-space:nowrap;pointer-events:none}
+#tutChip.side{left:18px;top:96px;transform:none}
+.tutP{animation:tutP 1.1s ease-in-out infinite;border-color:var(--cy)!important}
+@keyframes tutP{50%{box-shadow:0 0 0 3px rgba(95,216,255,.55),0 0 22px rgba(95,216,255,.8)}}
+#tutKeys{position:fixed;left:50%;bottom:176px;transform:translateX(-50%);display:flex;gap:8px;white-space:nowrap;pointer-events:none}
+#tutKeys div{display:flex;align-items:center;gap:7px;padding:5px 9px;background:rgba(7,9,11,.78);border:1px solid var(--ln);font-size:10px;letter-spacing:.1em;color:#d8d1c0}
+#tutKeys b{font-weight:700;color:#06121a;background:var(--cy);padding:3px 7px;letter-spacing:.06em}
+.tlk{border:1px dashed var(--ln);padding:8px 9px;margin-top:8px;color:#8b8474;font-size:10px;line-height:1.5}
+.tlk b{display:block;color:var(--am);font-weight:400;letter-spacing:.18em;margin-bottom:4px}
 </style>
 </head>
 <body>
@@ -388,6 +411,7 @@ body.cut #comm.hold{top:auto;bottom:3vh;transform:translate(-50%,0)}
  <div id="navs"></div>
  <div id="tgt" class="hid"><span id="tgtN"></span><i><b id="tgtB"></b></i><span id="tgtZ"></span><i id="tgtZi"><b id="tgtZb"></b></i></div>
  <div id="commDim" class="hid"></div>
+ <div id="tutKeys" class="hid"></div>
  <div id="comm" class="pn hid"><canvas id="commFace" width="144" height="144"></canvas><div><b id="commWho"></b><p id="commTxt"></p><div id="commOpts"></div><i id="commBar"></i><em id="commHint"></em></div></div>
 </div>
 
@@ -453,6 +477,9 @@ body.cut #comm.hold{top:auto;bottom:3vh;transform:translate(-50%,0)}
  <div id="mapTip" class="hid"></div>
  <div id="mapHint">DRAG pan · WHEEL zoom · CLICK set a waypoint · RIGHT-CLICK clear it · M resume · ESC pause menu</div>
 </div>
+<div id="tutRing" class="hid"></div>
+<div id="tut" class="pn hid"><canvas id="tutFace" width="144" height="144"></canvas><div><b id="tutWho"></b><p id="tutText"></p><div id="tutRow"><span id="tutN"></span><button id="tutOff" class="hid"></button><button id="tutSkip">SKIP THIS TOUR</button><button id="tutNext">NEXT ▶</button></div></div></div>
+<div id="tutChip" class="hid"></div>
 <div id="fade"></div>
 <div id="boot"><div>INITIALIZING BAY SYSTEMS<small>loading three.js from CDN — an internet connection is required</small></div></div>
 
@@ -888,7 +915,11 @@ Object.assign(VOX_CAST, {
   brick: { f0: 111, tr: .9, rate: 5, range: 7.5, brass: .6, rough: .36, crisp: .95, tilt: 2500, lilt: 1.3, dip: .3, ph: ['bbggddwwhm.', 'aaooAU', '.....mk'], emo: ['ha', 'oh', 'grunt', 'ha'], emoP: .3 },                             /* Sgt. "Brick" Adeyemi: big, loud, and delighted to be here */
   deacon: { f0: 127, tr: .95, rate: 4.4, range: 2.3, brass: .2, breath: .66, rough: .5, crisp: 1.1, stac: .3, tilt: 3000, lilt: .4, ph: ['ssSShhkkxt.', 'iiIIeE', '....Skx'], emo: ['hm', 'tsk'], emoP: .08 },                          /* the Deacon: says his prayers through his teeth */
 });
-Object.assign(VOX_WHO, { 9101: 'ma', 9103: 'pip', 9107: 'hale', 9121: 'und', 9123: 'dex', 9141: 'lan', 9143: 'abb', 9145: 'cas', 9161: 'liz', 9163: 'bar', 9181: 'krait', 9183: 'brick', 9185: 'deacon' });
+Object.assign(VOX_CAST, {
+  mav: { f0: 262, tr: 1.2, rate: 5.1, range: 11, brass: .1, vib: .03, crisp: 1.3, stac: .1, tilt: 3700, lilt: 1.9, dip: .4, ph: ['mmllnnwwdbp.', 'aaeeiioy', '.....nl'], emo: ['oh', 'ah', 'ha'], emoP: .3 },            /* MAVIS: an elocution mistress on a loop, delighted with everybody */
+  snips: { f0: 143, tr: .97, rate: 5.9, range: 7, brass: .34, nas: .5, rough: .42, crisp: 1.15, stac: .3, tilt: 3000, lilt: 1.2, dip: .3, ph: ['ssSSkkttccnh.', 'iiIIeeay', '....Skn'], emo: ['ha', 'tsk', 'eh', 'ha'], emoP: .3 },   /* "Snips" Halvard: a market trader with a cutting torch */
+});
+Object.assign(VOX_WHO, { 9201: 'mav', 9203: 'snips', 9101: 'ma', 9103: 'pip', 9107: 'hale', 9121: 'und', 9123: 'dex', 9141: 'lan', 9143: 'abb', 9145: 'cas', 9161: 'liz', 9163: 'bar', 9181: 'krait', 9183: 'brick', 9185: 'deacon' });
 /* everyone else is cut from one of eight cloths (four low, four high), then nudged so that no two are quite alike */
 const VOX_KIND = [
   { f0: 104, tr: .9, rate: 4.6, range: 4, brass: .5, rough: .3, tilt: 2400 }, { f0: 122, tr: .95, rate: 5.2, range: 5, brass: .3, tilt: 2800 }, { f0: 142, tr: .99, rate: 5.6, range: 6.5, brass: .2, nas: .35, tilt: 3200 }, { f0: 96, tr: .87, rate: 4.1, range: 3, brass: .6, rough: .5, tilt: 2100 },
@@ -2615,7 +2646,7 @@ function saveBlob() {
     ledger: { cb: Math.round(CO.cb), day: CO.day, hour: +CO.hour.toFixed(2), rep: { ...CO.rep }, done: CO.done, fails: CO.fails, seed: CO.seed, ...rivSave() },
     inventory: { ...YARD.inv }, bays: YARD.bays.map(b => ({ ...b })), activeBay: YARD.act, market: { rot: YARD.shop.rot, stock: YARD.shop.stock.map(e => ({ ...e })) },
     board: CO.board.filter(c => !c.story).map(c => ({ ...c })), active: CO.active && !CO.active.story ? CO.active.id : null, news: CO.news.slice(0, 9),
-    pilots: PILOTS.map(p => ({ fee: p.fee, until: p.until, hag: !!p.hag })), wing: CO.wing ? { i: PILOTS.indexOf(CO.wing.p), share: CO.wing.share, s: CO.wing.p.seed || 0, paid: CO.wing.paid || 0 } : null, bar: barSave(), story: storySave(),
+    pilots: PILOTS.map(p => ({ fee: p.fee, until: p.until, hag: !!p.hag })), wing: CO.wing ? { i: PILOTS.indexOf(CO.wing.p), share: CO.wing.share, s: CO.wing.p.seed || 0, paid: CO.wing.paid || 0 } : null, bar: barSave(), story: storySave(), tut: tutSave(),
   };
 }
 /* returns a reason string if the document is not one of ours */
@@ -2634,7 +2665,7 @@ function boardApply(s) {
   if (s && Array.isArray(s.board)) for (const c of s.board) if (ok(c)) { c.twists = (c.twists || []).filter(t => TWISTS[t]); rivClean(c); c.intel = Array.isArray(c.intel) ? c.intel : []; c.diff = clamp(c.diff | 0, 1, 5); c.cap = [45, 65, 85].includes(c.cap) ? c.cap : 0; CO.board.push(c); cid = Math.max(cid, c.id | 0); }
   if (s && Array.isArray(s.news)) CO.news = s.news.filter(n => typeof n === 'string').slice(0, 9);
   if (s && s.active != null) CO.active = CO.board.find(c => c.id === s.active) || null;
-  if (!CO.board.length) { fillBoard(); news(`${YARD.name} mercenary company is open for contracts.`); } else fillBoard();
+  if (!CO.board.length) { fillBoard(); news(tutLock() ? TUT_WIRE() : `${YARD.name} mercenary company is open for contracts.`); } else fillBoard();
   if (YARD.shop.rot < 0) shopRoll(true); CO.dirty = true;
 }
 function pilotsApply(s) {
@@ -2650,6 +2681,24 @@ function mechCradle(c) {
   return g;
 }
 
+/* ============ FIRST DAY: WHAT A NEW COMPANY HAS BEEN SHOWN, AND WHETHER ITS BOARD IS STILL LOCKED TO THE FIRST SORTIE ============ */
+/* lock: the contract board holds one card, the shakedown (the story thread marked `first`), until that has been flown and won or the tutorial has been skipped.
+   hints: the crew show a new commander round each room the first time they walk into it. seen: the tours already given (TUT_KEYS, which are the keys of TOURS).
+   All of it is saved with the company (saveBlob, under `tut`). A save from before any of this has no such entry, and is taken to be a company that knows its way about.
+   The guide itself, and everything that draws, is in 445_guide.js: this much has to exist before the board is first dealt */
+const TUT_KEYS = ['salv', 'stores', 'field', 'launch', 'bay', 'deck', 'home', 'bar'];   /* in the order they are looked for: an overlay's tour before the room's under it */
+const TUT = { lock: false, hints: false, seen: {} };
+const tutLock = () => TUT.lock;
+function tutApply(s) {
+  const t = s && s.tut && typeof s.tut === 'object' ? s.tut : null, sn = t && t.seen && typeof t.seen === 'object' ? t.seen : {}; TUT.seen = {};
+  if (!s) { TUT.lock = TUT.hints = true; return; }
+  TUT.lock = !!t && t.lock === true; TUT.hints = !!t && t.hints === true;
+  for (const k of TUT_KEYS) if (!t || (Object.prototype.hasOwnProperty.call(sn, k) && sn[k])) TUT.seen[k] = 1;
+}
+const tutSave = () => ({ lock: TUT.lock, hints: TUT.hints, seen: { ...TUT.seen } });
+/* the news line a locked board opens with, and the one it is replaced by when the lock comes off */
+const TUT_WIRE = () => `${YARD.name} has a hangar, a charter and one third-hand mech. Nobody is hiring yet.`, TUT_OPEN = () => `${YARD.name} mercenary company is open for contracts.`;
+tutApply(BOOT);
 /* ============ ICONOGRAPHY: ONE GLYPH PER COMPONENT, COLOURED BY CATEGORY; THE COMPANY EMBLEM ============ */
 /* 48-unit line art. class f = solid, h = tinted fill, d = dimmed, t = thin */
 const GLYPH = {
@@ -3387,7 +3436,7 @@ function clearEnv() {
 }
 function buildEnv(key, seed, o = {}) {
   clearEnv(); const B = BIOMES[key], R = mulberry(seed * 7919 + 13);
-  Object.assign(EV, { key, B, seed, home: !!o.home, ox: o.home ? 0 : R() * 900, oz: o.home ? 0 : R() * 900, pads: o.home ? HOME_PADS : (o.pads || []), wl: B.wl ?? null, cr: [] });
+  Object.assign(EV, { key, B, seed, home: !!o.home, ox: o.home ? 0 : R() * 900, oz: o.home ? 0 : R() * 900, pads: o.home ? (o.pads ? HOME_PADS.concat(o.pads) : HOME_PADS) : (o.pads || []), wl: B.wl ?? null, cr: [] });
   if (B.init) B.init(R);
   EV.padH = EV.pads.map(p => o.home && !p[0] ? 0 : Math.max(genRaw(p[0], p[1]), (EV.wl ?? -99) + 2.5));
   const g = FD.ter.geometry, pa = g.attributes.position, ca = g.attributes.color, c = new THREE.Color(), p = B.pal;
@@ -4565,7 +4614,7 @@ function beginMission(c) {
   P.pos.copy(MS.LZ).add(_v.set(-Math.sin(a) * 50, 0, -Math.cos(a) * 50)); P.pos.y = heightAt(P.pos.x, P.pos.z); P.yaw = Math.atan2(A[0] - P.pos.x, A[1] - P.pos.z); shipProp(MS.LZ, a);
   $('msTitle').textContent = (ST ? `${STORY[c.story].name} · ${c.title}` : `${TYPES[c.type].name} — ${c.site}`).toUpperCase();
   const go = f => Promise.resolve().then(() => f(MS)).catch(e => console.error('mission script', e));
-  if (CO.wing) { const w = CO.wing, e = mkMech(P.pos.x + 14, P.pos.z + 6, w.cfg ? { ...w.cfg } : w.p === PILOTS[0] && stFlag('derby.mag') ? { ...ST_MAGPIE, paint: player.cfg.paint } : { ...PRESETS[w.mech], paint: player.cfg.paint }, 0, { ai: 'follow', name: w.ch.name, skill: w.skill || 1.25, hpK: w.hpK || 1.5, yaw: P.yaw }); MS.wing = e; e.onKill = () => { say(MS.ops, `${w.ch.first}'s mech is down. Pilot ejected — we'll recover them.`); note(`${w.ch.name} was shot down.`); CO.wingDown = true; }; go(async () => { await after(4); chatter(w.ch, pick(['On your wing. Try not to get us both killed.', 'Formed up. Point me at something.', 'Green across the board. After you, boss.'])); }); } else MS.wing = null;
+  if (CO.wing && !(ST && MS.H.solo)) { const w = CO.wing, e = mkMech(P.pos.x + 14, P.pos.z + 6, w.cfg ? { ...w.cfg } : w.p === PILOTS[0] && stFlag('derby.mag') ? { ...ST_MAGPIE, paint: player.cfg.paint } : { ...PRESETS[w.mech], paint: player.cfg.paint }, 0, { ai: 'follow', name: w.ch.name, skill: w.skill || 1.25, hpK: w.hpK || 1.5, yaw: P.yaw }); MS.wing = e; e.onKill = () => { say(MS.ops, `${w.ch.first}'s mech is down. Pilot ejected — we'll recover them.`); note(`${w.ch.name} was shot down.`); CO.wingDown = true; }; go(async () => { await after(4); chatter(w.ch, pick(['On your wing. Try not to get us both killed.', 'Formed up. Point me at something.', 'Green across the board. After you, boss.'])); }); } else MS.wing = null;
   go(ST ? ST.run : MISSIONS[c.type]); for (const t of c.twists) if (TWISTS[t]) go(TWISTS[t]);
   if (c.cok === 'joint' && RIV[c.co]) go(rivJoint); if (c.cok === 'sub' && RIV[c.co]) go(async () => { await after(7); say(RIV[c.co].ch, RIVL[c.co].subHi); });
 }
@@ -4585,6 +4634,8 @@ function stBotFace(g, col) {
   g.fillStyle = col; g.globalAlpha = .7; for (let i = 0; i < 5; i++) g.fillRect(22 + i * 6, 42, 4, 1.5); g.globalAlpha = 1;
 }
 const STC = {
+  mav: { name: 'MAVIS', first: 'Mavis', last: 'MAVIS', role: 'ONBOARD INSTRUCTOR · PALLISTER ACADEMY', seed: 9201, col: '#ff9ad0' },
+  snips: { name: '"Snips" Halvard', first: 'Snips', last: 'Halvard', role: 'RED MAW · SALVAGE FOREMAN', seed: 9203, col: '#ff5a3a' },
   ma: { name: 'Mayor Hester "Ma" Oyelaran', first: 'Hester', last: 'Oyelaran', role: 'MARIGOLD · MAYOR AND DRIVER', seed: 9101, col: '#ffc94a' },
   pip: { name: 'Pip Oyelaran', first: 'Pip', last: 'Pip', role: 'MARIGOLD · RADIO, AGE ELEVEN', seed: 9103, col: '#ffe9a0' },
   hale: { name: 'Assessor Corwin Hale', first: 'Corwin', last: 'Hale', role: 'VANCE-OKORO · ASSET RECOVERY', seed: 9107, col: '#ffb21a' },
@@ -5264,6 +5315,7 @@ function genContract(o = {}) {
   c.brief = (o.pre || '') + BRIEF[type](FAC[emp], FAC[foe], c); return c;
 }
 function fillBoard() {
+  if (tutLock()) { storySync(); CO.dirty = true; return; }   /* a company that has not flown its shakedown gets no offers: the board holds that one card */
   while (CO.board.filter(c => !c.story).length < 6) { const have = CO.board.map(c => c.type), miss = Object.keys(TYPES).filter(t => !have.includes(t)), used = CO.board.map(c => c.biome), free = BIOME_KEYS.filter(b => !used.includes(b)); CO.board.push(genContract({ type: miss.length ? pick(miss) : undefined, biome: free.length && Math.random() < .8 ? pick(free) : undefined })); }
   rivOffers(); storySync(); CO.dirty = true;
 }
@@ -5282,7 +5334,7 @@ function drift() {
 function tickClock(dt) {
   CO.hour += dt / 10; if (CO.hour >= 24) { CO.hour -= 24; CO.day++; saveCO(); }
   for (const c of [...CO.board]) if (c !== CO.active && now() > c.exp) { if (c.story) { storyLapse(c); continue; } dropContract(c); news(pick([`${rivOutfit()} took the ${FAC[c.emp].short} job at ${c.site}.`, `${FAC[c.emp].short} withdrew its offer for ${c.site}.`, `The ${c.site} contract lapsed unfilled.`])); }
-  if (CO.board.filter(c => !c.story).length < 6) fillBoard(); else if ((CO.stT = (CO.stT || 0) - dt) < 0) { CO.stT = 6; storySync(); }
+  if (!tutLock() && CO.board.filter(c => !c.story).length < 6) fillBoard(); else if ((CO.stT = (CO.stT || 0) - dt) < 0) { CO.stT = 6; storySync(); }
   if ((CO.driftT -= dt / 10) <= 0) { CO.driftT = rand(3, 6); drift(); if (Math.random() < .2) news(rivNews()); }
   if (shopRoll()) { news('The quartermaster has posted new stock on the market.'); saveCO(); if (ST.open) storesDraw(); }
 }
@@ -5408,26 +5460,26 @@ TWISTS.works = async function (ms) {
 };
 /* settle the books after a sortie: returns the debrief the XO reads out */
 function settle() {
-  const c = MS.c, ok = MS.ok, L = [], add = (l, v) => { if (Math.round(v)) L.push([l, Math.round(v)]); }, payer = MS.payer, base = ok ? c.pay * MS.payK : c.pay * (MS.partial || 0), D = { c, ok, text: MS.endText, log: [...MS.log], lines: L, renege: false, base };
-  add(ok ? (payer ? (c.cok === 'sub' && payer === c.emp ? `Subcontract fee — ${RIV[c.co].short}` : `Contract fee — ${c.story && STORY[c.story].payer || FAC[payer].short}`) : 'Collection — off the books') : 'Partial payment', base); for (const [l, v] of MS.bonus) add(l, v);
+  const c = MS.c, ok = MS.ok, L = [], add = (l, v) => { if (Math.round(v)) L.push([l, Math.round(v)]); }, payer = MS.payer, own = !!(c.story && STORY[c.story].first), solo = !!(c.story && STORY[c.story].ch[c.chap].solo), base = ok ? c.pay * MS.payK : c.pay * (MS.partial || 0), D = { c, ok, text: MS.endText, log: [...MS.log], lines: L, renege: false, base };
+  add(ok ? (own && STORY[c.story].payL ? STORY[c.story].payL : payer ? (c.cok === 'sub' && payer === c.emp ? `Subcontract fee — ${RIV[c.co].short}` : `Contract fee — ${c.story && STORY[c.story].payer || FAC[payer].short}`) : 'Collection — off the books') : 'Partial payment', base);   /* the first sortie is flown on the company's own account: no client to please, no bill from the bay, and a bad day there is not on the record */ for (const [l, v] of MS.bonus) add(l, v);
   if (ok && P.kills) add(`Battlefield scrap ${c.salv}% · ${P.kills} kills`, P.kills * 1500 * c.salv / 25);
   D.salv = ok ? salvageRoll(c, YARD.loot, MS.bonus.length > 0) : null; YARD.loot = [];
-  add('Repairs and rearm', -((1 - clamp(P.armor / P.max, 0, 1)) * 38000 + (P.dead ? 55000 : 0)));
-  { const lost = Object.keys(P.lost || {}).filter(k => player.cfg[k]); if (lost.length) add(`Rebuilding ${lost.map(k => ZONE_N[k].toLowerCase()).join(', ')}`, -lost.reduce((s, k) => s + itemInfo(CAT[k] + '.' + player.cfg[k]).price * .15, 0)); }
-  if (CO.wing && CO.wing.share) add(`${CO.wing.ch.first}'s ${Math.round(CO.wing.share * 100)}% share`, -Math.max(0, base) * CO.wing.share);
+  if (!own) add('Repairs and rearm', -((1 - clamp(P.armor / P.max, 0, 1)) * 38000 + (P.dead ? 55000 : 0)));
+  if (!own) { const lost = Object.keys(P.lost || {}).filter(k => player.cfg[k]); if (lost.length) add(`Rebuilding ${lost.map(k => ZONE_N[k].toLowerCase()).join(', ')}`, -lost.reduce((s, k) => s + itemInfo(CAT[k] + '.' + player.cfg[k]).price * .15, 0)); }
+  if (CO.wing && CO.wing.share && !solo) add(`${CO.wing.ch.first}'s ${Math.round(CO.wing.share * 100)}% share`, -Math.max(0, base) * CO.wing.share);
   if (MS.v.faked && Math.random() < .45) { add('Clawback — the "dead" pilot was seen alive', -base * .5); rep(c.emp, -14); D.log.push(`${FAC[c.emp].short} found out the kill was faked.`); }
-  if (payer === c.emp) rep(c.emp, Math.round((ok ? 4 + c.diff : MS.abort ? -8 : -5) * (c.cok === 'sub' ? .5 : 1))); if (ok && FAC[c.foe] && c.foe !== 'maw') rep(c.foe, -3); rivSettle(c, ok, D, add, base);
+  if (payer === c.emp && !own) rep(c.emp, Math.round((ok ? 4 + c.diff : MS.abort ? -8 : -5) * (c.cok === 'sub' ? .5 : 1))); if (ok && FAC[c.foe] && c.foe !== 'maw') rep(c.foe, -3); rivSettle(c, ok, D, add, base);
   D.rep = Object.entries(MS.repD).filter(([f, v]) => CO.rep[f] !== undefined && Math.round(v)); for (const [f, v] of D.rep) repAdd(f, v, f === c.emp ? `${ok ? 'completed' : MS.abort ? 'abandoned' : 'failed'} their ${TYPES[c.type].name.toLowerCase()} contract at ${c.site}` : f === c.foe ? `flew against them at ${c.site}` : `the ${TYPES[c.type].name.toLowerCase()} contract at ${c.site}`);
   D.rel = []; for (const [k, L] of Object.entries(MS.relD || {})) if (RIV[k]) for (const [d, why] of L) if (Math.round(d)) { D.rel.push([k, Math.round(d), why]); rivRel(k, Math.round(d), why || `the ${c.site} contract`); }
   if (c.story) storySettle(c, ok, D, add);
-  D.renege = ok && payer === c.emp && c.twists.includes('renege') && base > 0; D.total = L.reduce((s, l) => s + l[1], 0); CO.cb += D.total; ok ? CO.done++ : CO.fails++;
+  D.renege = ok && payer === c.emp && c.twists.includes('renege') && base > 0; D.total = L.reduce((s, l) => s + l[1], 0); CO.cb += D.total; if (ok) CO.done++; else if (!own) CO.fails++;
   /* the world moves on */
   CO.hour += rand(8, 20); while (CO.hour >= 24) { CO.hour -= 24; CO.day++; } dropContract(c);
   if (c.story) news(D.story.news); else news(ok ? `${YARD.name} completed a ${TYPES[c.type].name.toLowerCase()} contract at ${c.site}${payer && payer !== c.emp ? ' — though not for the original client' : ''}.` : `${YARD.name} failed a ${FAC[c.emp].short} contract at ${c.site}.`);
   for (const o of CO.board.filter(o => !o.story && Math.random() < .4)) { dropContract(o); news(`${rivOutfit()} took the ${FAC[o.emp].short} job at ${o.site}.`); }
   if (c.story) { } else if (ok && payer === c.emp && Math.random() < .7) { const [t, pre] = NEXT[c.type]; CO.board.push(genContract({ type: t, emp: c.emp, foe: c.foe, biome: Math.random() < .6 ? c.biome : undefined, pre: `FOLLOW-UP to ${c.site}. ${pre}`, upd: 'FOLLOW-UP' })); }
   else if (!ok && Math.random() < .6) CO.board.push(genContract({ type: pick(['strike', 'recovery']), emp: c.foe === 'maw' ? pick(EMPS) : c.foe, foe: c.emp, pre: `${FAC[c.emp].short} is reeling after ${c.site}. Their rivals smell blood. `, upd: 'OPPORTUNITY' }));
-  fillBoard(); drift(); drift(); if (CO.wing) { if (CO.wingDown) { CO.wing.p.until = now() + 48; if (CO.wing.p.bar) BARSV.pst[CO.wing.p.seed] = { until: CO.wing.p.until }; } CO.wing = null; CO.wingDown = false; } saveCO(); return D;
+  fillBoard(); drift(); drift(); if (CO.wing && !solo) { if (CO.wingDown) { CO.wing.p.until = now() + 48; if (CO.wing.p.bar) BARSV.pst[CO.wing.p.seed] = { until: CO.wing.p.until }; } CO.wing = null; CO.wingDown = false; } saveCO(); return D;
 }
 /* ============ RIVAL COMPANIES ON THE BOARD AND IN THE FIELD ============ */
 /* a company that subcontracts to you is the one you bargain with, so each commander is also a negotiating persona (never drawn at random: PERSONA_STD is the ordinary five) */
@@ -5661,7 +5713,9 @@ function rivSettle(c, ok, D, add, base) {
 /* a thread is { name, sub, col, emp, foe, who (whoever is asking), open() (may it start yet?), wait (hours before it first appears), flags [names a chapter may set], ch: [chapters] }.
    a chapter is { title, kind (a TYPES key: what sort of work it is on paper), biome, mood, seed, diff, pay, salv, site, op, tease (the board text), wire (the news line when it is offered),
    sites { lz: [x, z, r], … } (flattened ground, shared by the briefing and the field), face (the site the lance faces on landing), brf [briefing steps], run(ms) (the field script), epi(ok, f) (who says what afterwards), prize(D, add, f) }.
-   STORY has no prototype for the same reason RIV has none: thread keys come out of save files. The thread files further down fill it in */
+   STORY has no prototype for the same reason RIV has none: thread keys come out of save files. The thread files further down fill it in.
+   One thread is marked `first`: the shakedown a new company flies before anybody will hire it. While the board is locked (tutLock) it is the only thread offered; its offer never lapses, a failed attempt is
+   on the board again at once, and it is flown on the company's own account (settle). A chapter marked `solo` is flown alone, whoever has been hired */
 const STORY = Object.create(null), STK = 2.4, STV = { th: Object.create(null), f: Object.create(null) }, STNUM = ['I', 'II', 'III', 'IV', 'V', 'VI'];
 /* where a thread stands: ch the next chapter · st 0 not begun, 1 between chapters, 2 on the board, 3 finished · at the hour it may next be offered · exp when that offer closes · n failed attempts at this chapter */
 const stState = k => STV.th[k] || (STV.th[k] = { ch: 0, st: 0, at: 0, exp: 0, n: 0 });
@@ -5677,14 +5731,20 @@ function storyMake(k) {
 }
 /* keep the board in step with the threads: begin the ones whose time has come, offer whichever chapter is due (never more than three at once), and make sure each offered thread has exactly its own card */
 function storySync() {
-  const n = now(); let on = 0;
-  for (const k in STORY) { const T = stState(k); if (T.st === 0 && STORY[k].open()) { T.st = 1; T.at = n + (STORY[k].wait || 0) * rand(.6, 1.4); } if (T.st === 2) on++; }
-  for (const k in STORY) { const T = stState(k), S = STORY[k]; if (T.st !== 1 || n < T.at || on >= 3) continue; T.st = 2; T.exp = n + rand(60, 96); on++; news(T.n ? `${S.who.name} is asking for ${YARD.name} again: ${S.ch[T.ch].title}.` : S.ch[T.ch].wire); sfx.play('comm'); }
+  const n = now(), L = tutLock(); let on = 0;
+  for (const k in STORY) { const T = stState(k); if (T.st === 0 && L === !!STORY[k].first && STORY[k].open()) { T.st = 1; T.at = n + (STORY[k].wait || 0) * rand(.6, 1.4); } if (T.st === 2) on++; }
+  for (const k in STORY) { const T = stState(k), S = STORY[k]; if (T.st !== 1 || n < T.at || on >= 3 || L !== !!S.first) continue;   /* a locked board is offered the first sortie and nothing else; an open one, everything but */ T.st = 2; T.exp = S.first ? 1e6 : n + rand(60, 96); on++; news(T.n ? `${S.who.name} is asking for ${YARD.name} again: ${S.ch[T.ch].title}.` : S.ch[T.ch].wire); sfx.play('comm'); }
   for (const c of [...CO.board]) if (c.story && (!STORY[c.story] || stState(c.story).st !== 2 || stState(c.story).ch !== c.chap)) dropContract(c);
   for (const k in STORY) if (stState(k).st === 2 && !CO.board.some(c => c.story === k)) { CO.board.push(storyMake(k)); CO.dirty = true; }
 }
 /* an offer nobody took goes away for a while and comes round again */
 function storyLapse(c) { const T = stState(c.story); T.st = 1; T.at = now() + rand(18, 40); dropContract(c); news(`${STORY[c.story].who.name} has stopped waiting on ${YARD.name} — for now.`); }
+/* the first sortie and the lock on the board are one thing. While the board is locked that thread is unfinished; once it is finished — or was never wanted, as in a company founded before there was one,
+   or one that skipped it — the board is open and the thread is closed. Whatever a save says, this makes the two agree */
+function tutStory() {
+  let any = false; for (const k in STORY) if (STORY[k].first) { const T = stState(k); any = true; if (T.st === 3) TUT.lock = false; else if (!TUT.lock) { T.ch = STORY[k].ch.length; T.st = 3; } }
+  if (!any) TUT.lock = false;
+}
 function storySave() { const th = {}; for (const k in STORY) { const T = stState(k); th[k] = { ch: T.ch, st: T.st, at: +T.at.toFixed(2), exp: +T.exp.toFixed(2), n: T.n }; } return { th, f: { ...STV.f }, act: CO.active && CO.active.story ? CO.active.story : null }; }
 /* from a save (or nothing, for a new company): only threads and flags that exist, and only numbers that make sense */
 function storyApply(s) {
@@ -5697,15 +5757,15 @@ function storyApply(s) {
     if (T.ch >= S.ch.length) T.st = 3; else if (T.st === 3) T.st = 1;
     for (const fl of S.flags || []) { const key = k + '.' + fl; if (Object.prototype.hasOwnProperty.call(f, key) && typeof f[key] === 'number' && isFinite(f[key])) STV.f[key] = clamp(f[key] | 0, -9, 9); }
   }
-  storySync(); if (typeof D.act === 'string' && STORY[D.act] && !CO.active) CO.active = CO.board.find(c => c.story === D.act) || null; CO.dirty = true;
+  tutStory(); storySync(); if (typeof D.act === 'string' && STORY[D.act] && !CO.active) CO.active = CO.board.find(c => c.story === D.act) || null; CO.dirty = true;
 }
 /* the books: a chapter won moves the thread on, a chapter lost puts it back in the queue. Either way it will be a while before it is heard from again */
 function storySettle(c, ok, D, add) {
   const k = c.story, S = STORY[k], T = stState(k), H = S.ch[c.chap], last = c.chap === S.ch.length - 1, f = { ...STV.f, ...(ok ? MS.sf : {}) };
   D.story = { k, chap: c.chap, last, f, gifts: [], head: `${S.name} · ${STNUM[c.chap]} · ${H.title.toUpperCase()} — ${ok ? 'COMPLETE' : 'FAILED'}`, news: ok ? (last ? S.fin : `${YARD.name}: ${S.name}, chapter ${STNUM[c.chap]} — done.`) : `${YARD.name} came home from ${c.site} with the job undone. ${S.who.last} has not given up on them.` };
-  if (!ok) { T.n++; T.st = 1; T.at = now() + rand(24, 46); return; }
+  if (!ok) { T.n++; T.st = 1; T.at = S.first ? 0 : now() + rand(24, 46); return; }
   for (const key in MS.sf) if ((S.flags || []).includes(key.slice(k.length + 1))) STV.f[key] = clamp(MS.sf[key] | 0, -9, 9);
-  T.ch++; T.n = 0; T.st = last ? 3 : 1; T.at = now() + rand(24, 44);
+  T.ch++; T.n = 0; T.st = last ? 3 : 1; T.at = now() + rand(24, 44); if (S.first && last) { tutStory(); CO.news = CO.news.filter(n => !n.includes('Nobody is hiring yet')); }
   if (H.prize) H.prize(D, add, f);
 }
 const stGift = (D, key, n = 1) => { invAdd(key, n); D.story.gifts.push(`${n > 1 ? n + ' × ' : ''}${itemInfo(key).name}`); };
@@ -5713,24 +5773,24 @@ const stGift = (D, key, n = 1) => { invAdd(key, n); D.story.gifts.push(`${n > 1 
 function storyDebrief(D, fin) {
   const S = STORY[D.story.k], H = S.ch[D.story.chap], L = (H.epi ? H.epi(D.ok, D.story.f, D) : []).filter(Boolean), crew = { 11: 'xo', 23: 'intel', 37: 'chief', 51: 'p0', 67: 'p1' };
   if (D.story.gifts.length) L.push([CREW.chief, `Delivery for you, boss, off the back of that one: ${D.story.gifts.join(', ')}. In stores now.`]);
-  if (D.ok && D.story.last) L.push([CREW.xo, `That closes the book on ${S.name}. ${S.end || 'It will be talked about.'}`]);
+  if (D.ok && D.story.last) L.push([CREW.xo, S.close || `That closes the book on ${S.name}. ${S.end || 'It will be talked about.'}`]);
   else if (D.ok) L.push([CREW.xo, 'That is not the end of it. When there is more, it will come up on the board.']);
-  else L.push([CREW.xo, 'It will be offered again — these people have nobody else to ask. Take a day, refit, and we go back.']);
-  const step = i => { removeContact(); if (i >= L.length) return fin(); const [ch, text] = L[i], p = crew[ch.seed] ? HQ.P[crew[ch.seed]] : null; if (!p) showContact(ch); dlg(ch, text, [[i === L.length - 1 ? 'Continue' : 'Go on', () => step(i + 1)]], p); };
+  else L.push([CREW.xo, S.again || 'It will be offered again — these people have nobody else to ask. Take a day, refit, and we go back.']);
+  const step = i => { removeContact(); if (i >= L.length) return fin(); const [ch, text] = L[i], p = crew[ch.seed] ? HQ.P[crew[ch.seed]] : null; if (!p && !(CAST[ch.seed] && CAST[ch.seed].bot)) showContact(ch);   /* a machine is a voice: there is nobody to stand on the pad */ dlg(ch, text, [[i === L.length - 1 ? 'Continue' : 'Go on', () => step(i + 1)]], p); };
   step(0);
 }
 const stPips = (c, S) => S.ch.map((h, i) => `<i class="${i < c.chap ? 'd' : i === c.chap ? 'n' : ''}"></i>`).join('');
 function storyCard(c, h) {
   const S = STORY[c.story], B = BIOMES[c.biome];
-  return `<span class="tg">★</span><b>${S.name}</b><em>${fmt(c.pay)}</em><small>${STNUM[c.chap]} OF ${STNUM[S.ch.length - 1]} · ${c.title.toUpperCase()} · <span style="color:${B.css}">${B.name}</span> · <span class="pips">${pipStr(c.diff)}</span></small><u>${c === CO.active ? 'ACCEPTED' : h < 8 ? 'CLOSING' : stState(c.story).n ? 'AGAIN' : 'STORY'}</u>`;
+  return `<span class="tg">★</span><b>${S.name}</b><em>${fmt(c.pay)}</em><small>${S.first ? 'FIRST SORTIE' : `${STNUM[c.chap]} OF ${STNUM[S.ch.length - 1]}`} · ${c.title.toUpperCase()} · <span style="color:${B.css}">${B.name}</span> · <span class="pips">${pipStr(c.diff)}</span></small><u>${c === CO.active ? 'ACCEPTED' : h < 8 ? 'CLOSING' : stState(c.story).n ? 'AGAIN' : S.first ? 'START HERE' : 'STORY'}</u>`;
 }
 function storyDetail(c, el) {
   const S = STORY[c.story], B = BIOMES[c.biome], m = B.wx[c.mood] || B.wx[0], h = Math.max(0, c.exp - now()), act = c === CO.active, T = stState(c.story);
-  el.innerHTML = `<h2 style="color:${S.col}">STORY OPERATION <small>OP. ${c.op}</small></h2><div class="dsc"><div class="sth" style="--sc:${S.col}"><b>${S.name}</b><span>${S.sub}</span><div class="stp">${stPips(c, S)}<em>CHAPTER ${STNUM[c.chap]} OF ${STNUM[S.ch.length - 1]}</em></div></div>
+  el.innerHTML = `<h2 style="color:${S.col}">${S.first ? 'FIRST SORTIE' : 'STORY OPERATION'} <small>OP. ${c.op}</small></h2><div class="dsc"><div class="sth" style="--sc:${S.col}"><b>${S.name}</b><span>${S.sub}</span><div class="stp">${stPips(c, S)}<em>${S.first ? 'BEFORE ANYTHING ELSE' : `CHAPTER ${STNUM[c.chap]} OF ${STNUM[S.ch.length - 1]}`}</em></div></div>
 <h3>${c.title.toUpperCase()}</h3><div class="sub">${c.site.toUpperCase()}</div>
 <div class="kv">ASKED FOR BY <b style="color:${c.contact.col}">${c.contact.name}</b></div><div class="kv">FOR <b style="color:${S.forN ? S.col : FAC[c.emp].col}">${S.forN || FAC[c.emp].name}</b></div><div class="kv">AGAINST <b style="color:${S.vsN ? '#ff7a55' : FAC[c.foe].col}">${S.vsN || FAC[c.foe].name}</b></div><div class="kv">THEATRE <b style="color:${B.css}">${B.name} · ${m[0]}</b></div>
-<div class="kv">OPERATING AREA <b>${(STK).toFixed(1)} KM ACROSS</b></div><div class="kv">THREAT <b class="pips">${pipStr(c.diff)}</b></div>${capKv(c)}<div class="kv">FEE <b>${fmt(c.pay)}</b></div><div class="kv">SALVAGE <b>${c.salv}%</b></div><div class="kv">${act ? 'STATUS' : 'OFFER CLOSES IN'} <b>${act ? 'ACCEPTED' : h.toFixed(0) + ' h'}</b></div>${T.n ? `<div class="kv">ATTEMPTS SO FAR <b style="color:var(--hot)">${T.n}</b></div>` : ''}
-<p>${c.brief}</p><p class="nt">${B.note} A story operation runs long and covers a lot of ground. Commander Varga briefs the lance before launch — what is known, at any rate. Lose it, or let the offer lapse, and it comes round on the board again.</p></div>
+<div class="kv">OPERATING AREA <b>${(STK).toFixed(1)} KM ACROSS</b></div><div class="kv">THREAT <b class="pips">${pipStr(c.diff)}</b></div>${capKv(c)}<div class="kv">FEE <b>${fmt(c.pay)}</b></div><div class="kv">SALVAGE <b>${c.salv}%</b></div><div class="kv">${act ? 'STATUS' : S.first ? 'OFFER' : 'OFFER CLOSES IN'} <b>${act ? 'ACCEPTED' : S.first ? 'STANDS UNTIL FLOWN' : h.toFixed(0) + ' h'}</b></div>${T.n ? `<div class="kv">ATTEMPTS SO FAR <b style="color:var(--hot)">${T.n}</b></div>` : ''}
+<p>${c.brief}</p><p class="nt">${S.note || B.note + ' A story operation runs long and covers a lot of ground. Commander Varga briefs the lance before launch — what is known, at any rate. Lose it, or let the offer lapse, and it comes round on the board again.'}</p></div>
 <div class="dact"><div class="row"><button id="dBrf" class="stb">${act ? 'HEAR THE BRIEFING AGAIN ▶' : 'ACCEPT — REPORT TO THE BRIEFING ROOM ▶'}</button></div>${act ? '<div class="row"><button id="dAcc">STAND DOWN</button><button id="dGo">TO THE MECH BAY ▶</button></div>' : ''}</div>`;
   $('dBrf').onclick = () => { sfx.play('ui'); if (!act) accept(c); CO.dirty = true; toBrief(c); };
   if (act) { $('dGo').onclick = toBay; $('dAcc').onclick = () => { CO.active = null; sfx.play('deny'); CO.dirty = true; }; }
@@ -5741,7 +5801,7 @@ function storyLay(c) {
   const H = STORY[c.story].ch[c.chap], L = H.sites, ks = Object.keys(L), f = L[H.face || ks[1]], lz = L.lz, xz = k => [L[k][0], L[k][1]], o = ks.filter(k => k !== 'lz'), pads = ks.map(k => [L[k][0], L[k][1], L[k][2] || 40]);
   for (const rd of H.roads || []) for (let i = 1; i < rd.length; i++) { const a = L[rd[i - 1]], b = L[rd[i]], n = Math.max(1, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 55)); for (let j = 1; j < n; j++) pads.push([lerp(a[0], b[0], j / n), lerp(a[1], b[1], j / n), 27]); }
   return { a: Math.atan2(lz[0] - f[0], lz[1] - f[1]), lz: xz('lz'), A: xz(o[0]), B: xz(o[1] || o[0]), C: xz(o[2] || o[0]), run: H.run,
-    env: H.home ? { home: true, mood: c.mood } : { pads, mood: c.mood },
+    env: H.home ? { home: true, mood: c.mood, pads: H.lay ? pads.filter(p => Math.hypot(p[0] - lz[0], p[1] - lz[1]) > 90) : null } : { pads, mood: c.mood },   /* a home chapter marked `lay` has its sites levelled and kept clear of rocks, like any other theatre */
     ready: ms => { ms.S = {}; for (const k of ks) { ms.S[k] = gpos(L[k][0], L[k][1]); if (L[k][3]) FD.blips.push([L[k][0], L[k][1], L[k][3]]); } ms.sf = {}; ms.H = H; } };
 }
 
@@ -6495,7 +6555,7 @@ function talkXO() {
   const read = () => { const B = BIOMES[c.biome], risk = c.diff * 24 - st.armor * .06 - st.fire * .13 - (CO.wing ? 18 : 0);
     return `${TYPES[c.type].name} for ${FAC[c.emp].name}, against ${FAC[c.foe].short}. ${B.name.charAt(0) + B.name.slice(1).toLowerCase()} theatre. ${B.note} Their contact, ${c.contact.name}, is ${PERSONA[c.persona].n}. ` + (c.co && RIV[c.co] ? (c.cok === 'sub' ? `The paper belongs to ${RIV[c.co].name}; we would be flying it for them, and it is them we answer to. ` : `${RIV[c.co].name} would deploy beside us. `) : '') + (risk > 38 ? 'In the machine on the turntable I would call that a hard fight. Think about heavier armor, or hire a second pilot.' : risk > 8 ? 'Inside our weight class — if nothing goes sideways. Something usually does.' : 'We outgun this one comfortably.') + (c.twists.includes('renege') && c.seed % 3 ? ` One more thing: ${FAC[c.emp].short} has been slow to pay lately. Talk to their contact before you launch.` : ''); };
   const best = [...EMPS].sort((a, b) => CO.rep[b] - CO.rep[a]);
-  dlg(x, pick(['Commander on deck. What do you need?', 'The board is live. Six offers, and none of them clean.', 'Good timing. Offers move fast out here — and so do the people making them.']), [
+  dlg(x, tutLock() ? pick(['One card on the board, Commander, and it came from our own mech. Fly it and the rest will follow.', 'Nobody hires a company whose only machine is squawking CADET. The shakedown first; then we are in business.']) : pick(['Commander on deck. What do you need?', 'The board is live. Six offers, and none of them clean.', 'Good timing. Offers move fast out here — and so do the people making them.']), [
     ['What is the word in the sector?', () => dlg(x, CO.news.slice(0, 5).join('\n') || 'Quiet. Which worries me.', back)],
     [c ? `Your read on the ${c.site} job` : 'Your read on a contract (select one first)', () => dlg(x, read(), back), !c],
     ['Company status', () => dlg(x, `Funds ${fmt(CO.cb)}. ${CO.done} contracts completed, ${CO.fails} failed. ${FAC[best[0]].short} think best of us (${repWord(CO.rep[best[0]])}); ${FAC[best[4]].short} least (${repWord(CO.rep[best[4]])}). Of the other companies: ${RIVS.map(k => `${RIV[k].name}, ${relWord(CO.riv[k].rel)}`).join('; ')}.${CO.active ? ` We are committed to ${CO.active.site} for ${FAC[CO.active.emp].short}.` : ' Nothing signed yet. Without a contract, a launch is just the proving grounds.'}${CO.wing ? ` ${CO.wing.ch.first} flies with us next drop.` : ''}`, back)],
@@ -6505,7 +6565,7 @@ function talkXO() {
 }
 function talkIntel() {
   const c = CO.sel, s = CREW.intel, cost = c ? Math.round((5000 + c.diff * 2500) * (stFlag('dead.end') ? .5 : 1)) : 0, left = c ? unknown(c) : [], back = [['Something else', talkIntel], ['Thanks, Mira', dlgClose]];
-  dlg(s, pick(['I have six files open and I trust none of them. Which one are we talking about?', 'Everything on that board was written by someone who wants something. Ask.', 'Signals are noisy today. Somebody is moving a lot of metal.']), [
+  dlg(s, tutLock() ? pick(['I have no files open. It is restful, and I do not like it. Clear that transponder and I will have work for you.', 'Every broker in the sector can hear our mech announcing a student driver. I have stopped answering their jokes.']) : pick(['I have six files open and I trust none of them. Which one are we talking about?', 'Everything on that board was written by someone who wants something. Ask.', 'Signals are noisy today. Somebody is moving a lot of metal.']), [
     [c ? (left.length ? `Buy confirmed intel on ${c.site} (${fmt(cost)})` : `Nothing more to learn about ${c.site}`) : 'Buy intel (select a contract first)', () => { if (!spend(cost)) return dlg(s, 'My sources do not work on credit, and neither do I.', back); const k = pick(left); learn(c, k, 'sato'); dlg(s, `Confirmed, and it cost me a favour: ${hintOf(c, k)}`, back); }, !c || !left.length],
     ['Any rumours?', () => { const G = barGossip('intel'); if (G.length && Math.random() < .3) { const [rk, f] = pick(G); rivKnow(rk, f[0]); return dlg(s, `About ${RIV[rk].name}, for what it is worth: ${f[1]} I have put it in their file.`, back); } const L = CO.board.filter(o => !o.rum && o.twists.some(t => !o.intel.some(i => i.k === t))), o = L.length && Math.random() < .7 ? pick(L) : null; if (!o) return dlg(s, pick(['Nothing I would stake a mech on.', 'Only that everyone is hiring and nobody is paying on time.', 'The Red Maw are bolder this season. That is all I have.']), back); o.rum = true; const k = pick(o.twists.filter(t => !o.intel.some(i => i.k === t))); learn(o, k, 'sato'); dlg(s, `About ${o.site}, for free: ${hintOf(o, k)}`, back); }],
     ['How do the factions and the other companies see us?', () => dlg(s, EMPS.map(f => `${FAC[f].short}: ${repWord(CO.rep[f])} (${sdNum(CO.rep[f])})`).join(' · ') + '\n' + RIVS.map(k => `${RIV[k].name}: ${relWord(CO.riv[k].rel)} (${sdNum(CO.riv[k].rel)})`).join(' · ') + '\nGood standing with a faction means better fees and softer negotiators. With a company it decides whether they talk or shoot when we meet them. The STANDING tab on the board has the detail, and the reasons.', back)],
@@ -6672,7 +6732,7 @@ function talkRival(k) {
 /* ---- panels ---- */
 const pipStr = n => '◆'.repeat(n) + '◇'.repeat(5 - n);
 function renderHangarContract() {
-  const c = CO.active; $('ctr').innerHTML = c ? `${c.story ? 'STORY' : 'CONTRACT'} <b>${(c.story ? c.title : TYPES[c.type].name).toUpperCase()} — ${c.site.toUpperCase()}</b><br>${BIOMES[c.biome].name} · ${FAC[c.emp].short} · <span class="pips">${pipStr(c.diff)}</span> · ${fmt(c.pay)}${c.cap ? ` · <span style="color:var(--am)">LIMIT ${c.cap} T</span>` : ''}${wingRec(c) ? ` · <span style="color:var(--${CO.wing ? 'ok' : 'hot'})">${CO.wing ? 'WINGMAN ABOARD' : 'WINGMAN RECOMMENDED'}</span>` : ''}` : 'NO CONTRACT — <b>PROVING GROUNDS</b><br>Visit the command deck to sign one.';
+  const c = CO.active; $('ctr').innerHTML = c ? `${c.story ? 'STORY' : 'CONTRACT'} <b>${(c.story ? c.title : TYPES[c.type].name).toUpperCase()} — ${c.site.toUpperCase()}</b><br>${BIOMES[c.biome].name} · ${c.story && STORY[c.story].forS || FAC[c.emp].short} · <span class="pips">${pipStr(c.diff)}</span> · ${fmt(c.pay)}${c.cap ? ` · <span style="color:var(--am)">LIMIT ${c.cap} T</span>` : ''}${wingRec(c) ? ` · <span style="color:var(--${CO.wing ? 'ok' : 'hot'})">${CO.wing ? 'WINGMAN ABOARD' : 'WINGMAN RECOMMENDED'}</span>` : ''}` : 'NO CONTRACT — <b>PROVING GROUNDS</b><br>Visit the command deck to sign one.';
   deployLabel();
 }
 function renderDetail() {
@@ -6701,6 +6761,7 @@ function renderBoard() {
     if (c.story) { d.style.setProperty('--sc', STORY[c.story].col); d.innerHTML = storyCard(c, h); } else d.innerHTML = `<span class="tg" style="color:${FAC[c.emp].col}">${T.tag}</span><b>${T.name} · ${c.site}</b><em>${fmt(c.pay)}</em><small>${FAC[c.emp].short} ▸ ${FAC[c.foe].short} · <span style="color:${B.css}">${B.name}</span> · <span class="pips">${pipStr(c.diff)}</span>${capTag(c)}</small><u${c.co && RIV[c.co] && c !== CO.active ? ` style="color:${RIV[c.co].col}"` : ''}>${c === CO.active ? 'ACCEPTED' : c.co && RIV[c.co] ? (c.cok === 'sub' ? 'VIA ' : 'WITH ') + RIV[c.co].short : c.upd || (h < 6 ? 'CLOSING' : '')}</u>`;
     d.onclick = () => { sfx.play('ui'); CO.sel = c; CO.dirty = true; }; $('cards').appendChild(d);
   }
+  if (tutLock()) $('cards').insertAdjacentHTML('beforeend', '<div class="tlk"><b>NO OTHER OFFERS</b>The brokers will not write paper for a company whose only machine is announcing a student driver on an open channel. Fly the shakedown, and the board opens.</div>');
   renderDetail(); renderHangarContract();
   const host = $('tags'); host.innerHTML = ''; HQ.tagL = [];
   const mk = (cls, html, col, fn, obj) => { const d = document.createElement('div'); d.className = 'tag ' + cls; d.innerHTML = `<span>${html}</span>`; d.style.color = col; d.onclick = () => { sfx.play('ui'); fn(); }; host.appendChild(d); HQ.tagL.push({ d, obj }); };
@@ -7408,6 +7469,191 @@ async function brfLeave(to) {
   $('brfSkip').onclick = () => { sfx.play('ui'); if (mode === 'brief' && !busy) brfLeave('bay'); }; $('brfBack').onclick = () => { sfx.play('ui'); if (mode === 'brief' && !busy) brfLeave('hq'); };
 }
 
+/* ============ STORY THREAD 0 — SHAKEDOWN: THE MECH CAME WITH A TEACHER, AND NOBODY WILL HIRE THE COMPANY UNTIL SHE HAS PASSED IT ============ */
+/* The first sortie. It is the thread marked `first`, so on a new company's board it is the only card there is (115_first_day.js, storySync), and it is where the controls are taught:
+   walking, steering, the torso and both triggers, heat, the jets, the sprint and, for the last few minutes, an actual fight. It is flown on the home range, alone, on the company's own account.
+   Nothing in it should be able to strand a player: every lesson has a marker and a key prompt (tutKeys, 445_guide.js), a machine with no jets is excused the jump, somebody who has done all this
+   before can go straight to the examination, and the bay crew patch the machine once if the fight goes badly */
+Object.assign(CAST, { 9201: { bot: true }, 9203: { build: 'lean', h: 1.68, habit: 'hips', ...stLook('#b5651d', 2, 'scar') } });
+const SHK_PL = new THREE.PlaneGeometry(1, 1), SHK_TX = [], SHK_PAIL = std({ color: 0xe6cf8a, metalness: .25, roughness: .6 });
+/* what Dutch painted on the targets: three faces (0 cross, 1 a monocle and a moustache, 2 far too pleased with itself) and a bullseye (3) */
+const shkTex = i => SHK_TX[i] || (SHK_TX[i] = labelTex(128, 128, (g, w, h) => {
+  g.clearRect(0, 0, w, h); g.lineWidth = 9; g.lineCap = 'round'; g.lineJoin = 'round';
+  if (i === 3) { for (const [r, c] of [[62, '#e9e2d0'], [48, '#b8301f'], [34, '#e9e2d0'], [20, '#b8301f'], [7, '#16120c']]) { g.fillStyle = c; g.beginPath(); g.arc(64, 64, r, 0, TAU); g.fill(); } return; }
+  g.strokeStyle = g.fillStyle = '#16120c'; for (const x of [40, 88]) { g.beginPath(); g.arc(x, 52, 9, 0, TAU); g.fill(); }
+  g.beginPath();
+  if (i === 0) { g.moveTo(22, 28); g.lineTo(54, 40); g.moveTo(106, 28); g.lineTo(74, 40); g.moveTo(38, 102); g.quadraticCurveTo(64, 80, 90, 102); }
+  else if (i === 1) { g.moveTo(40, 100); g.quadraticCurveTo(64, 112, 88, 100); g.moveTo(30, 82); g.quadraticCurveTo(48, 66, 64, 82); g.quadraticCurveTo(80, 66, 98, 82); g.moveTo(107, 52); g.arc(88, 52, 19, 0, TAU); g.moveTo(104, 66); g.lineTo(112, 104); }
+  else { g.moveTo(28, 80); g.quadraticCurveTo(64, 124, 100, 80); g.lineTo(28, 80); g.moveTo(24, 32); g.lineTo(52, 34); g.moveTo(76, 28); g.lineTo(104, 36); }
+  g.stroke();
+}));
+const shkPlate = (par, tx, w, h, x, y, z, rx = 0) => { const m = new THREE.Mesh(SHK_PL, std({ map: shkTex(tx), transparent: true, roughness: .9, metalness: 0 })); m.scale.set(w, h, 1); m.position.set(x, y, z); m.rotation.x = rx; par.add(m); return m; };
+/* a kill on the range is not a kill: nothing is counted and nothing goes in the salvage */
+const shkFree = e => { e.onDead = () => { if (e.by === 0) { YARD.loot.pop(); P.kills--; } }; return e; };
+/* a target: an oil tank on a post with girders for arms and a bucket for a head. It stands as tall as a light mech, it does nothing whatever, and when it has had enough its head comes off */
+function shkDummy(x, z, yaw, name, face) {
+  const p = gpos(x, z), g = grp(FD.scene, p.x, p.y, p.z, 0, yaw, 0), top = grp(g); FD.misc.push(g);
+  cyl(g, M.girder, .45, .7, 6, 0, 3, 0, 0, 0, 0, 8); box(g, M.hazard, 3.2, .6, 3.2, 0, .3, 0);
+  cyl(top, M.rust, 2.2, 1.9, 4.4, 0, 7.6, 0, 0, 0, 0, 12); box(top, M.girder, 8.2, .6, .7, 0, 9.3, 0); shkPlate(top, 3, 3.1, 3.1, 0, 7.7, 2.22);
+  for (const s of [-1, 1]) { box(top, M.steel, .9, 4.4, .9, s * 4.1, 7.2, 0, 0, 0, s * .1); cyl(top, M.black, .35, .45, 3, s * 4.3, 5.3, 1.2, 1.2, 0, 0, 8); }
+  const hd = grp(top, 0, 11, 0); cyl(hd, SHK_PAIL, 1.5, 1.2, 2.3, 0, 0, 0, 0, 0, 0, 12); cyl(hd, M.girder, 1.75, 1.75, .15, 0, 1.15, 0, 0, 0, 0, 12); shkPlate(hd, face, 2.3, 2.3, 0, -.05, 1.46);
+  const e = shkFree({ kind: 'struct', team: 1, name, obj: g, pos: g.position, cy: 7.8, r: 3.7, hp: 44, max: 44, nw: true, update() { }, col: circ(x, z, 1.2, p.y + 6) });
+  e.crash = () => {
+    FD.scene.attach(hd); g.remove(top); FD.misc.push(hd); const v = V3(rand(-8, 8), rand(18, 26), rand(-8, 8)), sp = V3(rand(-5, 5), rand(-3, 3), rand(-5, 5));
+    stTick(dt => { v.y -= FD.grav * dt; hd.position.addScaledVector(v, dt); hd.rotation.x += sp.x * dt; hd.rotation.y += sp.y * dt; hd.rotation.z += sp.z * dt; const y = heightAt(hd.position.x, hd.position.z) + 1.1; if (hd.position.y > y || v.y > 0) return true; hd.position.y = y; puff(FD.fx, hd.position, 8, 3, .5, .4, 2, 4); sfx.play('step', .8); return false; });
+  };
+  FD.ents.push(e); return e;
+}
+/* a target that moves: a hunter drone with its gun taken out, flying a lazy oval over the butts and paying nobody any attention */
+function shkPigeon(c, i) {
+  const e = shkFree(mkDrone(c.x, c.z, 1)), rot = e.obj.children.filter(o => o.isGroup); e.name = 'TARGET DRONE'; e.hp = e.max = 20; e.pacify = true; e.rad = 34 + i * 17; e.ang = i * 2.1; e.dir = i % 2 ? -1 : 1;
+  e.update = (dt, t) => { for (const r of rot) r.rotation.y += dt * 40; e.ang += e.dir * dt * 12 / e.rad; const x = c.x + Math.sin(e.ang) * e.rad, z = c.z + Math.cos(e.ang) * e.rad * .5; e.pos.set(x, heightAt(x, z) + 14 + i * 4 + Math.sin(t * 1.3 + i * 2) * 2.5, z); e.obj.rotation.set(0, e.ang + e.dir * PI / 2, 0); };
+  return e;
+}
+/* the Table: a block nine metres high and forty across, with a bullseye on the top of it. There is no ramp. That is the lesson.
+   It is as wide as it is because a light mech at a walk covers twenty metres a second, and the first landing ought not to need a second try */
+function shkTable(p, top = 9, hw = 20) {
+  const g = grp(FD.scene, p.x, p.y, p.z), w = hw * 2; FD.misc.push(g);
+  box(g, M.dark, w - 1.4, top - 1, w - 1.4, 0, (top - 1) / 2, 0); box(g, M.steel, w, 1, w, 0, top - .5, 0); box(g, M.hazard, w + .3, .9, w + .3, 0, top - 1.5, 0);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) { cyl(g, M.girder, 1.1, 1.4, top, sx * (hw - .8), top / 2, sz * (hw - .8), 0, 0, 0, 8); noShadow(box(g, M.amber, .7, .7, .7, sx * (hw - .8), top + .4, sz * (hw - .8))); }
+  for (const s of [-1, 1]) for (const k of [-1, 1]) { box(g, M.girder, hw - 2, .5, .5, k * hw * .5, top * .45, s * (hw - .55), 0, 0, k * .5); box(g, M.girder, .5, .5, hw - 2, s * (hw - .55), top * .45, k * hw * .5, k * .5); }
+  shkPlate(g, 3, 24, 24, 0, top + .04, 0, -PI / 2); rect(p.x, p.z, hw, hw, p.y + top); return { g, top: p.y + top, hw };
+}
+/* the firing point: four lamp posts and a painted square */
+function shkPoint(p) {
+  const g = grp(FD.scene, p.x, p.y, p.z); FD.misc.push(g); for (const sx of [-1, 1]) for (const sz of [-1, 1]) { cyl(g, M.girder, .3, .4, 5, sx * 9, 2.5, sz * 9, 0, 0, 0, 8); noShadow(box(g, M.amber, .8, .8, .8, sx * 9, 5.3, sz * 9)); }
+  for (const s of [-1, 1]) { noShadow(box(g, M.hazard, 18, .12, 1, 0, .1, s * 9)); noShadow(box(g, M.hazard, 1, .12, 18, s * 9, .1, 0)); }
+  return g;
+}
+const SHK_GRADE = ['present', 'C', 'B', 'B-plus', 'A', 'A-plus'], shkGrade = (t, a, b) => t < a ? 4 : t < b ? 3 : t < b * 1.6 ? 2 : 1;
+
+STORY.zero = {
+  name: 'SHAKEDOWN', sub: 'The mech came with a teacher. The teacher will not let go', col: '#ff9ad0', emp: 'tyr', foe: 'maw', who: STC.mav, first: true,
+  forN: 'Our own account', forS: 'OWN ACCOUNT', vsN: 'A syllabus', payL: 'Course deposit, refunded — Pallister Academy',
+  open: () => true, wait: 0, flags: ['grade', 'arm'],
+  get fin() { return `${YARD.name} has cleared its transponder and is open for contracts. Brokers who spent a week laughing at the squawk are returning calls.`; },
+  close: 'That is the shakedown flown, Commander, and the last time anybody calls this company a learner. The board is filling as we speak. Pick one.',
+  again: 'She will want us back on the range, Commander, and until that transponder is clear nobody else is calling. It is on the board again now. No charge for the dents.',
+  note: 'Flown alone, on our own range, on our own account: nothing you bend out there goes on a bill, and if it goes wrong the card is back on the board at once. Commander Varga briefs it first. Until it is flown, it is the only offer there is.',
+  ch: [{
+    title: 'First Day', kind: 'recon', biome: 'desert', mood: 0, seed: 41, diff: 1, pay: 30000, salv: 50, site: 'the Yard', op: 'LEARNER', home: true, solo: true, lay: true,
+    tease: 'The company\'s one mech came third-hand from Pallister Academy, a flying school, and it came cheap, because the school could not get the instructor out of it. MAVIS is still in there. She has the transponder announcing a CADET UNDER INSTRUCTION to every broker in the sector, which is why this board is empty, and she will not clear it until somebody passes her course. Six lessons and a final examination, on our own range. Chief Dutch says to just pass it.',
+    wire: 'Every broker in the sector can read a transponder. Ours says CADET UNDER INSTRUCTION. There is one way to change it.',
+    sites: { lz: [0, 22, 0, ''], g1: [4, -128, 30, ''], g2: [-82, -212, 30, ''], g3: [-28, -322, 30, ''], range: [-28, -418, 46, 'FIRING POINT'], butts: [-28, -524, 64, 'THE BUTTS'], table: [-152, -456, 48, 'THE TABLE'], yard: [0, 30, 0, 'THE YARD'] },
+    brf: [
+      { t: 'Sit down, Commander. This will not take long, because it is not a contract. Nobody is paying us and, as far as I know, nobody is shooting. It is our own range, out of our own front door.', show: [['site', 'yard', 'THE YARD', '#ffb21a'], ['card', 'FIRST DAY', ['Not a contract: our own range', 'Flown alone', 'The only card on the board, for a reason']]] },
+      { by: CREW.chief, t: "The reason's in the mech, boss. She's ex-flying-school, and the school left the instructor in. I can't get her out. She's in the transponder, and she is telling every broker in the sector there's a learner in the seat.", shot: 'who' },
+      { by: STC.mav, t: 'Good morning, Cadet! I am MAVIS, your Mechanised Arts Virtual Instruction System. Six lessons, one Final Examination, and a certificate suitable for framing. I have laid out a course!', show: [['route', ['yard', 'g1', 'g2', 'g3', 'range'], '#ff9ad0'], ['site', 'butts', 'THE RANGE', '#ff9ad0'], ['face', STC.mav, ['PALLISTER ACADEMY', 'Instructor program, non-removable', 'Cheerful']]] },
+      { t: 'Walk, steer, shoot, jump. She signs you off, the flag comes off our transponder, and brokers start returning my calls. That is the whole plan. Humour her.', show: [['card', 'THE COURSE', ['1 · Walking', '2 · Steering', '3 · Gunnery', '4 · Moving targets, and heat', '5 · Jump jets', '6 · She will not say']]] },
+      { t: 'When you are ready, take the lift down to the bay and launch. Everything you need to know out there, she will tell you. At length.', show: [['clear'], ['site', 'yard', 'THE YARD', '#ffb21a'], ['route', ['yard', 'g1', 'g2', 'g3', 'range'], '#ff9ad0'], ['site', 'butts', 'THE RANGE', '#ff9ad0']] },
+    ],
+    async run(ms) {
+      const S = ms.S, mav = STC.mav, snips = STC.snips, xo = ms.ops, dutch = CREW.chief, PINK = 0xff9ad0, OK = 0x54ff6a, st = player.stats, apron = gpos(0, 14), gr = {}, T0 = () => MS.t;
+      const gate = k => { const i = +k[1], nx = S[i < 3 ? 'g' + (i + 1) : 'range'], pv = i > 1 ? S['g' + (i - 1)] : P.pos, G = stGate(S[k], stAng(pv, nx), PINK, 34); G.userData.beam.visible = false; return G; };
+      const G = { g1: gate('g1'), g2: gate('g2'), g3: gate('g3') }, lit = k => { G[k].userData.beam.visible = true; }, pass = k => { G[k].userData.lamp.emissive.setHex(OK); G[k].userData.beam.visible = false; sfx.play('ok'); msg('GATE CLEARED', 1.6); };
+      shkPoint(S.range); const TB = shkTable(S.table), onTable = () => Math.abs(P.pos.x - S.table.x) < TB.hw - .6 && Math.abs(P.pos.z - S.table.z) < TB.hw - .6 && P.pos.y > TB.top - .8;
+      const tg = (dx, dz, name, face) => { const x = S.range.x + dx, z = S.range.z + dz; return shkDummy(x, z, stAng({ x, z }, S.range), name, face); };
+      const D = [tg(-78, -64, 'THE LANDLORD', 0), tg(4, -108, 'A TAX INSPECTOR', 1), tg(84, -58, "DUTCH'S BROTHER-IN-LAW", 2)];
+      const done = id => setObj(id, null, 1), mark = (id, text, opt) => setObj(id, text, 0, opt);
+      if (!st.weapons) { await after(1.5); await tell(dutch, "Boss, hold it. She's got no guns on her, and the lady in the dashboard is going to want things shot. Bring her back in and I'll hang some on."); return lose('The KESTREL walked out onto the range with nothing fitted to either arm, and MAVIS will not examine a cadet who cannot shoot. Fit a weapon in the bay and fly it again.'); }
+
+      /* ---- the introduction, and the way round it ---- */
+      await after(1.4); tutKeys([['SPACE', 'Carry on after a message'], ['1 – 2', 'Answer a question']]);
+      say(mav, 'Good morning, Cadet! I am MAVIS: your Mechanised Arts Virtual Instruction System, with the compliments of Pallister Academy. You have completed zero of six lessons. How exciting for you!');
+      say(dutch, "She came with the mech, boss. She's telling the whole sector there's a student driving, and she won't stop till you pass her course. So pass it. I'll owe you one.");
+      const skip = await ask(mav, 'Before we begin, Cadet, I must ask for my records. Have you operated a walking machine before?', ['Never. Start at the beginning.', 'Yes. Take me straight to the examination.'], 30, 0);
+      if (skip === 1) { await tell(mav, 'A returning student! How lovely. Lessons one to five are marked "taken as read". I shall want to see it proved, mind.'); for (const k in G) { G[k].userData.lamp.emissive.setHex(OK); } }
+      else {
+        /* ---- 1: walking ---- */
+        say(mav, 'Lesson one: Forward. Hold W, and walk her through the gate ahead of you. S is for going backwards, which at Pallister we do not do on purpose.');
+        mark('l1', 'LESSON 1 — Walk through the gate'); nav('g', S.g1, 'GATE 1', '#ff9ad0'); lit('g1'); tutKeys([['W', 'Forward'], ['S', 'Reverse']]); const t1 = T0();
+        await until(() => near(S.g1, 17)); pass('g1'); done('l1');
+        /* ---- 2: steering ---- */
+        say(mav, 'Splendid! Lesson two: Steering. A and D turn the legs. The next two gates are not in a straight line, because nothing worth walking to ever is.');
+        let n = 0; mark('l2', () => `LESSON 2 — Steer through the gates · ${n} of 2`); nav('g', S.g2, 'GATE 2', '#ff9ad0'); lit('g2'); tutKeys([['W', 'Forward'], ['A', 'Turn left'], ['D', 'Turn right']]);
+        await until(() => near(S.g2, 17)); pass('g2'); n = 1; MS.dirty = true; nav('g', S.g3, 'GATE 3', '#ff9ad0'); lit('g3'); chatter(mav, pick(['Lovely line! And the other way.', 'Very nearly elegant. One more.', 'Good! Now the other foot, as it were.']));
+        await until(() => near(S.g3, 17)); pass('g3'); n = 2; done('l2'); gr.loco = shkGrade(T0() - t1, 34, 52);
+        /* ---- 3: the torso and the triggers ---- */
+        say(mav, `Locomotion: ${SHK_GRADE[gr.loco]}. Lesson three is Gunnery! Your legs go where the keys send them. Your torso goes where the MOUSE looks. Walk onto the firing point, between the lamps, and stop.`);
+        mark('l3', 'LESSON 3 — Stand on the firing point'); nav('g', S.range, 'FIRING POINT', '#ff9ad0'); tutKeys([['W', 'Forward'], ['S', 'Slow down / reverse'], ['MOUSE', 'Look about']]);
+        await until(() => near(S.range, 11)); unnav('g');
+        say(dutch, "Knocked you up some targets out of scrap, boss. Named 'em after people this company owes money. Enjoy yourself.");
+        say(mav, 'Three targets, and I have spread them out so that you must twist to find them. The LEFT mouse button fires your left arm: the laser. The RIGHT button fires the right: the rotary cannon. The ring in the middle of your view is where they will land. Begin!');
+        D.forEach((e, i) => nav('d' + i, e, 'TARGET', '#ff5a3a')); mark('l3', () => `LESSON 3 — Destroy the targets · ${3 - alive(D)} of 3`); tutKeys([['MOUSE', 'Twist the torso and aim'], ['LEFT BUTTON', 'Left arm'], ['RIGHT BUTTON', 'Right arm']]); const t3 = T0(); let dn = 0;
+        while (alive(D)) { await until(() => 3 - alive(D) > dn); dn = 3 - alive(D); D.forEach((e, i) => { if (e.dead) unnav('d' + i); }); MS.dirty = true; if (dn === 1) chatter(dutch, pick(["That's the landlord told.", 'Ha! Do the one with the monocle.', "He had that coming. They all did."])); }
+        done('l3'); gr.gun = shkGrade(T0() - t3, 16, 30);
+        /* ---- 4: things that move, and heat ---- */
+        await tell(mav, `Gunnery: ${SHK_GRADE[gr.gun]}. Now look down at your feet, Cadet. Your legs and your torso no longer agree about which way is forward. X turns the legs to face the way you are looking. Remember it when you feel muddled.`);
+        const B = [0, 1, 2].map(i => shkPigeon(S.butts, i)); look(B[0], 'TARGET DRONES');
+        say(mav, 'Lesson four: targets that move. I am releasing three target drones. They are unarmed, and have been told to be sporting. Do mind the HEAT gauge: every shot warms the reactor, and at one hundred percent she shuts herself down to sulk. V vents coolant if you overdo it.'); B.forEach((e, i) => nav('b' + i, e, 'DRONE', '#ff5a3a')); mark('l4', () => `LESSON 4 — Shoot down the target drones · ${3 - alive(B)} of 3`); tutKeys([['LEFT BUTTON', 'Laser · hits at once'], ['RIGHT BUTTON', 'Cannon · lead the target'], ['X', 'Legs to face front'], ['V', 'Vent coolant']]); const t4 = T0(); let bn = 0;
+        while (alive(B)) { await until(() => 3 - alive(B) > bn); bn = 3 - alive(B); B.forEach((e, i) => { if (e.dead) unnav('b' + i); }); MS.dirty = true; if (bn === 2) chatter(mav, 'One left! It has become nervous.'); }
+        done('l4'); gr.move = shkGrade(T0() - t4, 18, 36);
+        /* ---- 5: the jets ---- */
+        if (st.jets) {
+          say(mav, `Moving targets: ${SHK_GRADE[gr.move]}. Lesson five: Jump jets! Walk to the Table. Hold SPACE and you rise; let go and you do not. The JETS gauge is your fuel, and it fills again on the ground. Land on top, please. Cadets who land beside the Table are marked "present".`);
+          mark('l5', 'LESSON 5 — Land on top of the Table'); nav('g', V3(S.table.x, TB.top, S.table.z), 'THE TABLE', '#ff9ad0'); tutKeys([['SPACE', 'Jump jets — hold to climb'], ['W', 'Forward, in the air too']]); const t5 = T0(); let on = 0;
+          (async () => { await until(() => near(S.table, 52) || onTable()); if (!onTable()) chatter(mav, 'Walk up close, hold SPACE until you are above the edge, and W will carry you over it. Then let go of both.'); })();
+          (async () => { const t = T0() + 34; await until(() => T0() > t || on >= .5); if (on < .5) chatter(mav, 'A hint, Cadet: if the JETS gauge is empty, let go of SPACE and stand still for a moment. It will not fill while you are holding the key. Then one long burn, from close in.'); })();
+          stTick(dt => { on = onTable() && !P.air ? on + dt : 0; return on < .5 && !ms.over; }); await until(() => on >= .5); unnav('g'); done('l5'); gr.jump = shkGrade(T0() - t5, 22, 40); stShow(V3(S.table.x, TB.top, S.table.z), 4, 34);
+          await tell(mav, `A gold star! Jump jets: ${SHK_GRADE[gr.jump]}. They are also how one leaves a place in a hurry, which Pallister does not teach but does acknowledge.`);
+        } else await tell(mav, `Moving targets: ${SHK_GRADE[gr.move]}. Lesson five is Jump Jets, and I see that yours have been taken off. I shall write "excused". Do fit some one day, Cadet: they are the only part of this machine that is any fun.`);
+      }
+      for (const e of D) if (!e.dead) e.team = 2;
+      if (MS.obj.length) { MS.obj.length = 0; setObj('ls', st.jets ? 'LESSONS 1 TO 5 — Passed' : 'LESSONS 1 TO 4 — Passed · 5 excused', 1); }   /* one line for the lot: the list is about to be needed for something else */
+
+      /* ---- 6: the examination nobody was told about ---- */
+      tutKeys(null);
+      await tell(mav, 'Which brings us to the Final Examination! Regulations ask for live opposition, so I placed an advertisement. "WANTED: opponents for a novice pilot. One small machine, no escort, valuable hangar." I have had ever so many replies!');
+      const R = [], tail = { name: 'TAILOR', legs: 'rap', torso: 'pod', head: 'can', armL: 'sw1', armR: 'las', back: 'snk', sinks: 2, paint: FAC.maw.paint }; let SN = null, crates = 0;
+      const ship = dropship(-34, -6, () => {
+        SN = mkMech(-34, -6, tail, 1, { ai: 'guard', skill: .55, hpK: 1.5, yaw: 0 }); SN.name = "SNIPS' TAILOR"; SN.vk = .82; fieldWho(snips, SN); R.push(SN);
+        for (const [x, z] of [[-62, 34], [28, -30]]) R.push(mkTank(x, z, 1, { v: 'dingo' })); for (const [x, z] of [[-20, 30], [40, 10]]) { const d = mkDrone(x, z, 1); d.name = 'REAVER DRONE'; R.push(d); }
+      }, PI / 2, 1);
+      say(xo, 'Commander, this is Varga. A Red Maw dropship has just come in over the east fence, and it is putting down on our apron. I take it that this is the machine\'s doing.');
+      await until(() => SN); look(SN, 'RED MAW — ON THE APRON'); nav('y', apron, 'THE YARD', '#ff5a3a');
+      say(snips, "Afternoon! Snips Halvard, Red Maw Salvage and Clearance. Lovely advert. No, don't get up, we'll see ourselves round. Lads! Fuel first, then anything with wheels on.");
+      say(dutch, "They are UNBOLTING my FUEL TANKS. Boss! Hold SHIFT and RUN!");
+      say(mav, 'Lesson six: Sprinting, followed by Everything Else. Hold SHIFT with W and she runs. Running heats the reactor, so do let go before she boils. Off you go! I am timing you.');
+      mark('l6', 'FINAL EXAMINATION — Get back to the yard'); tutKeys([['SHIFT + W', 'Sprint — it builds heat'], ['M', 'Map']]); const t6 = T0();
+      stTick(dt => { if (ms.over || !alive(R)) return false; if (SN && !SN.dead && !SN.ej && stDist(SN.pos, apron) < 130 && (crates += dt / 60) > 6) crates = 6; return true; });   /* a crate a minute: somebody quick loses nothing */
+      await until(() => near(apron, 215) || R.some(e => !e.dead && stDist(e.pos, P.pos) < 150)); gr.run = shkGrade(T0() - t6, 17, 26); for (const e of R) e.alert = true; stMend(1, 'TRAINING SAFETIES OFF — ARMOUR AT FULL');
+      say(snips, "Hang about. Is that the student? Lads, it's the STUDENT. Somebody take a picture. Then take its legs.");
+      say(mav, `Sprinting: ${SHK_GRADE[gr.run]}. Now, Cadet: a machine is made of parts, and so is an argument. That one has a SAW on its left arm. Aim at the arm and it will come off, saw and all. The line under your reticle tells you which part you are looking at.`);
+      done('l6'); unnav('y'); mark('ex', () => `FINAL EXAMINATION — Run the Reavers off the yard · ${alive(R)} left`); mark('arm', "EXTRA CREDIT — Shoot off Snips' saw arm", true); nav('s', SN, 'SNIPS', '#ff5a3a');
+      tutKeys([['LEFT / RIGHT BUTTON', 'Fire'], ['S', 'Back away from the saw'], ['R', 'Repair kit'], ['V', 'Vent coolant']]);
+      let armOff = false, patched = false, kitTold = false, last = alive(R);
+      SN.onKill = () => { unnav('s'); if (!ms.over) say(snips, armOff ? "Right. RIGHT. Tactical withdrawal, lads! And you can KEEP the arm, I never liked it!" : "I'm out! I'm OUT! Who gives a student live ammunition? Lads, we're leaving!"); };
+      stTick(() => {
+        if (ms.over || !alive(R)) return false;
+        if (!armOff && SN.zones.armL && SN.zones.armL.hp <= 0) { armOff = true; done('arm'); stSet('arm', 1); bonus('Extra credit: one saw arm, detached', 4000); if (!SN.dead) chatter(snips, pick(["My ARM! Have you any idea what those cost? ...Well. I suppose you do now.", "That was my good arm! That was my ONLY good arm!"])); }
+        if (!kitTold && P.armor < P.max * .6 && CO.kit > 0) { kitTold = true; chatter(dutch, "You're taking hits, boss. R is your repair kit: one press, a chunk of armour back. That's what it's for."); }
+        if (!patched && P.armor < P.max * .3 && !P.dead) { patched = true; stMend(.5, 'BAY CREW — ARMOUR PATCHED'); chatter(dutch, "Got a crew out on the apron with plate and a welder. That's the one patch I can do, boss. Back off from that saw!"); }
+        if (alive(R) < last) { last = alive(R); MS.dirty = true; if (last === 2 && !SN.dead) chatter(snips, pick(['Mind the PAINT!', "Oi! We'd only just nicked that one!", 'This is NOT what the advert said!'])); }
+        return true;
+      });
+      await until(() => !alive(R)); done('ex'); if (!armOff) setObj('arm', null, 3); unnav('s'); tutKeys(null);
+      const left = clamp(P.armor / P.max, 0, 1); gr.exam = left > .65 ? 4 : left > .35 ? 3 : 2; const lost = Math.floor(crates), all = Object.values(gr), avg = all.reduce((a, b) => a + b, 0) / all.length + (armOff ? .6 : 0), word = avg >= 4.2 ? 'with Distinction' : avg >= 3.3 ? 'with Merit' : avg >= 2.4 ? '' : 'for Attendance';
+      stSet('grade', clamp(Math.round(avg), 1, 5)); if (!lost) bonus('Nothing stolen from the yard', 5000); else note(`Red Maw got ${lost} crate${lost > 1 ? 's' : ''} of stores onto their dropship before they were seen off.`);
+      await after(1.6); stShow(apron, 6, 70);
+      say(mav, `Examination complete! Opposition: dispersed. Hangar: retained. Cadet: alive, which is weighted heavily. It is my great pleasure to award you the Pallister Certificate of Basic Competence${word ? ', ' + word : ''}.`);
+      say(mav, 'I am now obliged to take the student flag off your transponder. ...There. You are squawking as a licensed commercial operator. Do drive carefully. I shall be here if you need me. I shall be here regardless.');
+      say(xo, `Confirmed. We are showing as ${YARD.name} on every board in the sector, and I have two brokers holding already. Bring her in to the apron, Commander. We have a company to run.`);
+      note(`MAVIS's report card — ${[['Locomotion', gr.loco], ['Gunnery', gr.gun], ['Moving targets', gr.move], ['Jump jets', gr.jump], ['Sprinting', gr.run], ['Final examination', gr.exam]].filter(r => r[1]).map(([l, v]) => `${l}: ${SHK_GRADE[v]}`).join(' · ')}${armOff ? ' · Extra credit: one arm' : ''}.`);
+      if (armOff) YARD.loot.push({ kind: 'gift', key: 'arm.sw1' });
+      mark('home', 'Walk her back onto the apron'); nav('y', apron, 'THE APRON', '#8dff6a');
+      await until(() => near(apron, 34)); done('home');
+      win(`MAVIS has signed the certificate, the Red Maw have left without the fuel, and for the first time the transponder says ${YARD.name}. The board is open.`);
+    },
+    epi: (ok, f) => ok ? [
+      [CREW.chief, f['zero.arm'] ? "He said keep the arm, boss, so I've kept it: one ripsaw, slightly shot. It's in the salvage with the rest. And nice flying. I'd have paid to watch that." : "Not a scratch on my fuel tanks that wasn't there this morning. Nice flying, boss. I'd have paid to watch that."],
+      [STC.mav, f['zero.grade'] >= 4 ? 'Commander! I have filed your certificate with the Academy. You are our highest-scoring graduate this year. You are also our only graduate this year. Congratulations twice!' : 'Commander! I have filed your certificate with the Academy. There is a refresher course whenever you should want one. I do so hope you will want one.'],
+    ] : [
+      [CREW.chief, "She's dented, not dead, boss, and so are you. I'll have her straight by the time you've had a coffee. No bill: it's our own range."],
+      [STC.mav, 'Not to worry, Cadet! At Pallister we say that failure is simply a lesson with the answers missing. I have kept your place.'],
+    ],
+    prize(D, add) { stGift(D, 'gear.sink', 1); CO.kit = Math.max(CO.kit, 1); },
+  }],
+};
 /* ============ STORY THREAD 1 — MARIGOLD: A MINING TOWN ON TRACKS, THE COMPANY THAT HOLDS ITS DEBT, AND AN ELEVEN-YEAR-OLD ON THE RADIO ============ */
 Object.assign(CAST, { 9101: { build: 'heavy', h: 1.6, habit: 'hips', ...stLook('#b8b8b8', 3, 'headset') }, 9103: { build: 'slim', h: 1.34, habit: 'stand', ...stLook('#1b1b1b', 3, 'headset', '#c68642') }, 9107: { build: 'lean', h: 1.86, habit: 'back', ...stLook('#3b2416', 0, 'glasses') } });
 STORY.mar = {
@@ -8724,7 +8970,7 @@ function gfxApply() {
 }
 /* swap the whole company for another: a fresh start (null) or an imported save */
 function gameApply(s) {
-  if (dlgCur) dlgClose(); yardApply(s); ledgerApply(s); pilotsApply(s); boardApply(s); storyApply(s); barApply(s);
+  if (dlgCur) dlgClose(); tutEnd(); yardApply(s); tutApply(s); ledgerApply(s); pilotsApply(s); boardApply(s); storyApply(s); barApply(s);
   player.cfg = YARD.bays[YARD.act]; applyPaint(player.mats, player.cfg.paint); player.build(); mechName = bayTitle(); HG.armT = 0; HG.syncBerths(); if (HQ.setMini) HQ.setMini();
   brandSync(); saveCO(); setStatus(bayParts(player.cfg) ? 'STAND READY — ' + mechName : 'STAND EMPTY'); if (mode === 'hangar') { refreshUI(); renderHangarContract(); } else if (mode === 'hq') renderDetail();
 }
@@ -8782,7 +9028,9 @@ ${SCORES.map(([bk, n, d], i) => `<div class="trk${CFG.track === i + 1 ? ' on' : 
 <div class="sh">IN THE FIELD</div>${K([['W / S', 'Throttle forward / reverse'], ['A / D', 'Turn the legs'], ['MOUSE', 'Twist the torso and aim'], ['LEFT / RIGHT BUTTON', 'Fire left / right arm'], ['F', 'Fire the back unit'], ['SPACE', 'Jump jets'], ['SHIFT', 'Sprint — it builds heat'], ['X', 'Centre legs under the torso'], ['C', 'Cockpit / chase camera'], ['M', 'Tactical map — pauses the sortie'], ['R', 'Field repair kit'], ['V', 'Coolant flush'], ['1 – 3', 'Answer the comms'], ['SPACE / ENTER', 'Carry on after a message'], ['H', 'Withdraw to base'], ['ESC', 'Pause']])}
 <div class="sh">COMMS IN THE FIELD</div><div class="sg"><label>HOLD THE SORTIE FOR COMMS</label><span class="seg" id="sHold">${[[2, 'EVERY MESSAGE'], [1, 'QUESTIONS ONLY'], [0, 'NEVER']].map(([v, l]) => `<button data-v="${v}" class="${CFG.hold === v ? 'on' : ''}">${l}</button>`).join('')}</span><em></em></div>
 <p class="snt">${['The fight carries on while people talk, and a question you do not answer in time answers itself.', 'Chatter plays over the fight. When somebody needs a decision, everything stops until you have made it.', 'Whenever anybody comes on the radio, everything stops until you have read it. Nothing moves and no clock runs while you choose a reply.'][CFG.hold]}</p>
-<div class="sh">BAY AND COMMAND DECK</div>${K([['DRAG', 'Orbit the camera'], ['WHEEL', 'Zoom'], ['RIGHT-DRAG', 'Raise / lower the view'], ['1 – 6', 'Pick a reply in conversation'], ['ESC', 'Close a window']])}`;
+<div class="sh">BAY AND COMMAND DECK</div>${K([['DRAG', 'Orbit the camera'], ['WHEEL', 'Zoom'], ['RIGHT-DRAG', 'Raise / lower the view'], ['1 – 6', 'Pick a reply in conversation'], ['ESC', 'Close a window']])}
+<div class="sh">GUIDANCE</div><div class="sg">${tog('sTut', 'THE CREW SHOW YOU ROUND EACH ROOM', TUT.hints)}</div><div class="gm"><button id="sTutAgain" ${fld ? 'disabled' : ''}><b>SHOW ME ROUND AGAIN</b><small>Every room's tour, the next time you walk into it</small></button></div>`;
+    $('sTut').onclick = () => { TUT.hints = !TUT.hints; if (!TUT.hints) tutEnd(); saveCO(); sfx.play('ui'); settingsDraw(); }; $('sTutAgain').onclick = () => { tutAgain(); sfx.play('ok'); settingsDraw(); };
     bindR('sSens', v => { CFG.sens = v / 100; }, sx); bindT('sInv', 'invY'); $('sHold').querySelectorAll('button').forEach(b => b.onclick = () => { CFG.hold = +b.dataset.v; cfgSave(); sfx.play('ui'); settingsDraw(); });
   } else if (tab === 'display') {
     B.innerHTML = `<div class="sh">RENDERING</div><div class="sg">${rng('sScale', 'RENDER SCALE', CFG.scale * 100, 50, 150, 10, pc)}${tog('sBloom', 'BLOOM AND GLOW', CFG.bloom)}${tog('sShadow', 'DYNAMIC SHADOWS', CFG.shadow)}</div>
@@ -8812,7 +9060,7 @@ ${fld ? '<p class="snt">Importing and starting over are locked while a sortie is
   }
 }
 {
-  $('setClose').onclick = () => { sfx.play('ok'); if (SET.found) { SET.found = false; YARD.founded = true; YARD.name = cleanName($('coName') && $('coName').value, 'IRONWORKS'); brandSync(); CO.news = CO.news.filter(n => !n.includes('is open for contracts')); news(`${YARD.name} mercenary company is open for contracts.`); saveCO(); setStatus('STAND READY — ' + mechName); } settingsClose(); };
+  $('setClose').onclick = () => { sfx.play('ok'); if (SET.found) { SET.found = false; YARD.founded = true; YARD.name = cleanName($('coName') && $('coName').value, 'IRONWORKS'); brandSync(); CO.news = CO.news.filter(n => !n.includes('is open for contracts') && !n.includes('Nobody is hiring yet')); news(tutLock() ? TUT_WIRE() : TUT_OPEN()); saveCO(); setStatus('STAND READY — ' + mechName); } settingsClose(); };
   $('setUI').addEventListener('pointerdown', e => { if (e.target === $('setUI')) settingsClose(); });
   $('saveFile').onchange = e => { const f = e.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { const why = saveImport(String(rd.result)); SET.bad = !!why; SET.msg = why || `Loaded ${YARD.name} — day ${CO.day}, ${fmt(CO.cb)}.`; sfx.play(why ? 'deny' : 'ok'); settingsDraw(); }; rd.readAsText(f); };
   addEventListener('keydown', e => { if (e.code !== 'Escape' || !uiModal()) return; if (ST.open && ST.mode !== 'salv') storesClose(); else if (SET.open) settingsClose(); });
@@ -8995,6 +9243,120 @@ const STATS = [['TONNAGE', s => s.tons, 110, v => v.toFixed(0) + ' t'], ['ARMOR'
   addEventListener('resize', resize); resize(); refreshUI(); gfxApply(); brandSync(); if (BOOT && BOOT.v !== 2) saveCO(); if (!YARD.founded) foundOpen();
 }
 
+/* ============ THE GUIDE: THE CREW SHOW A NEW COMMANDER ROUND EACH ROOM THE FIRST TIME THEY WALK INTO IT, AND POINT AT THE NEXT THING TO PRESS ============ */
+/* A tour is a few steps said by one of the crew: { t: the line (or a function giving it), at: a selector to ring (or a function giving the element), when: () => the step applies,
+   done: () => the player has done what it asks, so the tour moves on by itself, act: () => something to set up as the step begins, pos: 'lft' or 'low' to stand the panel at the left or the bottom of the page }. A tour never takes the controls away: the page works as usual
+   underneath it, the ring lets clicks through, and walking out of the room ends it. Each is given once (TUT.seen) and only while TUT.hints is on; `modal` marks one that is about an overlay.
+   Besides the tours there is the chip, which names the next thing to do until the first sortie has been flown, and the key prompts the shakedown puts on the HUD (tutKeys).
+   State is in TUT (115_first_day.js) and is saved with the company */
+const TG = { k: null, i: 0, T: null, st: null, tk: 0, w: 0, arm: 0, pul: null, chip: '', keys: null };
+const tutFirst = () => CO.board.find(c => c.story && STORY[c.story].first) || null;
+const TOURS = {
+  bay: { by: () => CREW.chief, room: () => mode === 'hangar' && !CO.active, steps: [
+    { t: () => `Morning, boss. Dutch: I run your bay. That is all of ${YARD.name} on the stand there. One KESTREL, third-hand, paid for. Give me a minute and I'll show you round.` },
+    { t: "This side is how she's built. Six places to bolt something on: legs, torso, cockpit, two arms and a back unit. Click one and I'll show you what we have in stores that fits it.", at: '#panelL' },
+    { t: "This side is what the build adds up to: weight, armour, speed, and how much heat her guns make against how much she can shed. If I don't like something, it turns up here in amber or red.", at: '#panelR' },
+    { t: 'Drag to walk round her, wheel to get closer. STORES is everything we own that is not bolted on, and the market. There is nothing to change today: we own one of everything.', at: '#btnStores' },
+    { t: "What we don't have is work. That's upstairs. Go up to the COMMAND DECK and see the XO.", at: '#btnHQ', done: () => mode === 'hq' },
+  ] },
+  launch: { by: () => CREW.chief, room: () => mode === 'hangar' && !!CO.active, steps: [
+    { t: "There's the job on the slate, boss: where it is, who it's for and how bad they say it is.", at: '#ctr' },
+    { t: "Anything I don't like about her for this job shows up here. Amber I'll argue about. Red, the door stays shut.", at: '#warns', when: () => !!$('warns').children.length },
+    { t: "She's fuelled and she's armed. Press LAUNCH and I'll roll her out.", at: '#btnDeploy', done: () => mode === 'field' || busy },
+  ] },
+  deck: { by: () => CREW.xo, room: () => mode === 'hq' && tutLock(), steps: [
+    { t: 'Commander on deck. Varga: I run your operations. Everything this company is offered comes through this room, and so does everything it is paid.' },
+    { t: 'The contract board. On an ordinary day there are six offers here, and none of them clean. Today there is one, and it came out of our own mech.', at: '#board', act: () => { const c = tutFirst(); if (c && !CO.sel) { CO.sel = c; CO.dirty = true; } } },
+    { t: 'Select a card and the terms come up on this side: who is asking, who it is against, what it pays and how dangerous it is. Ordinary offers can be argued with. This one cannot.', at: '#detail', act: () => { const c = tutFirst(); if (c) { CO.sel = c; CO.dirty = true; } } },
+    { t: 'Along the bottom, your people. Me for the board, Mira Sato for intelligence, Dutch, the pilots, the market, and the lifts down to the bay and the bar. Click any of us and we will talk.', at: '#hqBar' },
+    { t: 'When you are ready: ACCEPT. I brief an operation like this one in person, next door, and then you take the lift to the bay and launch.', at: () => $('dBrf') || $('detail'), done: () => mode === 'brief' },
+  ] },
+  field: { by: () => CREW.chief, room: () => mode === 'field' && MS.on && !MS.over && !locked && !P.dead && !$('pause').classList.contains('hid') && $('mapUI').classList.contains('hid'), steps: [
+    { t: "Last thing from me, boss. ENGAGE gives you the controls: it takes the mouse, and the mouse aims her. ESC hands it back and stops the clock, so nothing out there can hurry you.", at: '#btnResume', pos: 'lft', done: () => locked },
+  ] },
+  salv: { by: () => CREW.chief, modal: true, room: () => !$('stores').classList.contains('hid') && ST.mode === 'salv', steps: [
+    { t: "Salvage, boss. What you shot is lying out there, and the contract gives us a share of it. Click what you want brought home, up to the limit, then confirm. Whatever we leave, the client keeps.", at: '#stGrid', pos: 'low' },
+  ] },
+  home: { by: () => CREW.xo, room: () => mode === 'hq' && !tutLock() && CO.board.some(c => !c.story), steps: [
+    { t: 'There. A full board. Offers come and go by the hour. The tag is the kind of work, the pips are how dangerous the client admits it is, and the figure is where the haggling starts.', at: '#board' },
+    { t: 'Select one and read it before you sign. OPEN CHANNEL talks to the client: push for more money and they may pay it, or they may walk away. ACCEPT puts it on the slate in the bay.', at: '#detail', act: () => { if (!CO.sel) { CO.sel = CO.board.find(c => !c.story) || null; CO.dirty = true; } } },
+    { t: 'Mira Sato sells certainty. Ask her about a contract before you take it. What the client left out of the brief is usually the part that kills you.', at: '#bIntel' },
+    { t: 'STANDING is who thinks well of us and who does not: the five powers that pay, and the three other companies working this sector. They remember.', at: '#hqTabs' },
+    { t: 'And when you want a wingman, a rumour or a drink, the bar is downstairs. That is the tour, Commander. Pick a contract.', at: '#btnToBar' },
+  ] },
+  bar: { by: () => BARC.keep, room: () => mode === 'bar' && !BAR.relax && !BAR.game, steps: [
+    { t: "New face. Sit anywhere that isn't taken. I'm Brandt. Everybody calls me Mother and I've stopped arguing." },
+    { t: "People in here talk. Click one and buy them a round, and you'll hear what is coming onto your board before it gets there. It's bar talk: sometimes it's even true.", at: '#barRoom' },
+    { t: 'Pilots between jobs drink here too. Hire one and they fly on your wing for the next drop, for a fee or a share. The good ones cost.', at: '#barHire' },
+    { t: "There's a drinking contest and an arm-wrestling table, if you fancy your liver or your elbow against the regulars. Or take a seat and do nothing at all. The lift is that way when you've had enough.", at: '#barBar' },
+  ] },
+  stores: { by: () => CREW.chief, modal: true, room: () => !$('stores').classList.contains('hid') && ST.mode !== 'salv', steps: [
+    { t: 'Stores, boss. The tabs along the top are what we own, and the market: what is for sale today, and what they will give us for ours. It changes every day.', at: '#stTabs' },
+    { t: 'Click a part to read its card. Anything you buy goes on the shelf; to bolt it to her, close this and click the slot it belongs in.', at: '#stGrid', pos: 'low' },
+  ] },
+};
+const tutStepOk = s => !s.when || s.when();
+function tutStart(k) {
+  const T = TOURS[k]; TG.k = k; TG.T = T; TG.arm = 0; $('tut').classList.remove('hid'); const ch = T.by(); drawFace($('tutFace'), ch); $('tutWho').textContent = ch.name; $('tutWho').style.color = ch.col || '';
+  $('tutOff').classList.toggle('hid', !(k === 'bay' && tutLock())); $('tutOff').textContent = 'I HAVE DONE THIS BEFORE'; tutStep(0);
+}
+function tutStep(i) {
+  const T = TG.T; while (i < T.steps.length && !tutStepOk(T.steps[i])) i++; if (i >= T.steps.length) return tutEnd();
+  const s = TG.st = T.steps[i], n = T.steps.filter(tutStepOk), text = typeof s.t === 'function' ? s.t() : s.t; TG.i = i; if (s.act) s.act();
+  $('tutText').textContent = text; $('tutN').textContent = n.length > 1 ? `${n.indexOf(s) + 1} / ${n.length}` : ''; $('tutNext').textContent = s.done ? 'GOT IT' : i === T.steps.length - 1 ? 'DONE' : 'NEXT ▶'; $('tutSkip').classList.toggle('hid', n.length < 2 || n.indexOf(s) === n.length - 1);
+  if (i) $('tutOff').classList.add('hid'); if (!dlgCur) vox.say(T.by(), text, mode === 'field' ? 'radio' : undefined); tutRing(); sfx.play('ui');
+}
+/* a tour that ends, however it ends, has been given */
+function tutEnd() {
+  if (TG.k) { TUT.seen[TG.k] = 1; saveCO(); } TG.k = TG.T = TG.st = null; TG.w = 0; $('tut').classList.add('hid'); $('tutRing').classList.add('hid');
+}
+function tutRing() {
+  const s = TG.st, R = $('tutRing'), at = s && s.at, el = !at ? null : typeof at === 'function' ? at() : document.querySelector(at), b = el && el.getBoundingClientRect(), on = b && b.width > 2 && b.height > 2 && !$('tut').classList.contains('hid');
+  /* keep the panel off whatever it is pointing at: it sits at the top of the page unless the ringed thing is there (or the step says otherwise), and then it goes to the bottom */
+  $('tut').classList.toggle('lft', !!s && s.pos === 'lft'); $('tut').classList.toggle('low', !!s && (s.pos === 'low' || (!s.pos && !!on && b.top < 190 && b.left < innerWidth / 2 + 250 && b.right > innerWidth / 2 - 250)));
+  if (!on) return R.classList.add('hid');
+  R.classList.remove('hid'); R.style.left = b.left - 6 + 'px'; R.style.top = b.top - 6 + 'px'; R.style.width = b.width + 12 + 'px'; R.style.height = b.height + 12 + 'px';
+}
+/* what to do next, for somebody who has not yet flown the first sortie: a line of text and the thing to press */
+function tutHint() {
+  if (!tutLock() || !TUT.hints || TG.k || busy || uiModal() || (dlgCur && mode !== 'brief')) return null; const a = CO.active, c = tutFirst();
+  if (mode === 'hangar') return a ? ['NEXT · LAUNCH when she is ready', '#btnDeploy'] : ['NEXT · The contracts are upstairs, on the COMMAND DECK', '#btnHQ'];
+  if (mode === 'hq') return a ? ['NEXT · Take the lift down to the MECH BAY and launch', $('dGo') ? '#dGo' : '#btnToBay'] : !c ? null : CO.sel === c && $('dBrf') ? ['NEXT · ACCEPT it: Commander Varga will brief you', '#dBrf'] : ['NEXT · Select the ★ SHAKEDOWN card on the board', '.card.stc'];
+  if (mode === 'brief') return dlgCur ? ['CONTINUE (or SPACE) through the briefing', null] : ['NEXT · Take the lift to the MECH BAY', '#brfSkip'];
+  if (mode === 'bar') return ['NEXT · The contract board is upstairs, on the COMMAND DECK', '#bbHQ'];
+  return null;
+}
+function tutChip() {
+  const h = tutHint(), C = $('tutChip'), el = h && h[1] ? document.querySelector(h[1]) : null;
+  if (TG.pul && TG.pul !== el) TG.pul.classList.remove('tutP'); if (el) el.classList.add('tutP'); TG.pul = el;
+  C.classList.toggle('hid', !h); C.classList.toggle('side', mode === 'brief'); if (h && TG.chip !== h[0]) C.textContent = TG.chip = h[0]; if (!h) TG.chip = '';   /* in the briefing room the middle of the page is the wall map */
+}
+/* the keys for whatever is being taught just now, across the bottom of the HUD: [[key, what it does], ...], or nothing to take them away */
+function tutKeys(L) { TG.keys = L && L.length ? L : null; $('tutKeys').innerHTML = TG.keys ? TG.keys.map(([k, d]) => `<div><b>${k}</b><span>${d}</span></div>`).join('') : ''; POST.kick(); }
+function tutTick(dt) {
+  $('tutKeys').classList.toggle('hid', !(TG.keys && mode === 'field' && MS.on && !MS.over && !P.dead)); if (TG.keys && (mode !== 'field' || !MS.on)) TG.keys = null;
+  if ((TG.tk -= dt) > 0) return; const el = .1 - TG.tk; TG.tk = .1;
+  if (TG.k) {
+    const T = TG.T; if (!TUT.hints || !T.room()) { tutEnd(); return tutChip(); }
+    const hide = !!dlgCur || (busy && !TG.st.done) || (uiModal() && !T.modal); $('tut').classList.toggle('hid', hide);
+    if (!hide && TG.st.done && TG.st.done()) tutStep(TG.i + 1); else tutRing();
+  } else if (TUT.hints && (!busy || mode === 'field') && !dlgCur) {   /* `busy` is the bay's, and stays set from the launch until the machine is home again */
+    let k = null; for (const q of TUT_KEYS) { const T = TOURS[q]; if (T && !TUT.seen[q] && T.room() && (T.modal || !uiModal())) { k = q; break; } }
+    if (!k) TG.w = 0; else if ((TG.w += el) > .7) tutStart(k);   /* a moment for the room to arrive before anybody starts talking */
+  }
+  tutChip();
+}
+/* "I have done this before": the board opens, the shakedown is closed unflown and nobody shows anybody round. It takes two presses */
+function tutSkip() {
+  TUT.lock = false; TUT.hints = false; tutEnd(); tutStory(); for (const c of CO.board.filter(c => c.story && STORY[c.story].first)) { if (CO.active === c) CO.active = null; if (CO.sel === c) CO.sel = null; CO.board.splice(CO.board.indexOf(c), 1); }
+  CO.news = CO.news.filter(n => !n.includes('Nobody is hiring yet')); fillBoard(); news(TUT_OPEN()); CO.dirty = true; saveCO(); refreshUI(); sfx.play('ok'); setStatus('TUTORIAL SKIPPED — THE CONTRACT BOARD IS OPEN');
+}
+/* the tours again, from the settings: every room, the next time it is walked into */
+function tutAgain() { tutEnd(); TUT.seen = {}; TUT.hints = true; TG.w = 0; saveCO(); }
+$('tutNext').onclick = () => { if (TG.k) tutStep(TG.i + 1); };
+$('tutSkip').onclick = () => { sfx.play('ui'); tutEnd(); };
+$('tutOff').onclick = () => { if (TG.arm) return tutSkip(); TG.arm = 1; sfx.play('deny'); $('tutOff').textContent = 'SURE? NO FIRST SORTIE, NO TOURS — PRESS AGAIN'; };
+addEventListener('resize', () => { if (TG.k) tutRing(); });
 /* ============ MAIN LOOP ============ */
 let last = performance.now();
 function frame(now) {
@@ -9010,7 +9372,7 @@ function frame(now) {
       POST.scene = HQ.scene; POST.camera = HQ.camera; POST.strength = .55;
     } else { POST.scene = HG.scene; POST.camera = HG.camera; POST.strength = .5; }
   }
-  POST.frame(dt, mode === 'field' && !locked && !P.dead && !MS.over && !CUT.live && !tweens.length);
+  tutTick(dt); POST.frame(dt, mode === 'field' && !locked && !P.dead && !MS.over && !CUT.live && !tweens.length);
 }
 sfx.init();   /* everything it needs exists by now */
 requestAnimationFrame(frame);

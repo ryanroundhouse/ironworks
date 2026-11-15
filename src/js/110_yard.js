@@ -168,7 +168,7 @@ function saveBlob() {
     ledger: { cb: Math.round(CO.cb), day: CO.day, hour: +CO.hour.toFixed(2), rep: { ...CO.rep }, done: CO.done, fails: CO.fails, seed: CO.seed, ...rivSave() },
     inventory: { ...YARD.inv }, bays: YARD.bays.map(b => ({ ...b })), activeBay: YARD.act, market: { rot: YARD.shop.rot, stock: YARD.shop.stock.map(e => ({ ...e })) },
     board: CO.board.filter(c => !c.story).map(c => ({ ...c })), active: CO.active && !CO.active.story ? CO.active.id : null, news: CO.news.slice(0, 9),
-    pilots: PILOTS.map(p => ({ fee: p.fee, until: p.until, hag: !!p.hag })), wing: CO.wing ? { i: PILOTS.indexOf(CO.wing.p), share: CO.wing.share, s: CO.wing.p.seed || 0, paid: CO.wing.paid || 0 } : null, bar: barSave(), story: storySave(),
+    pilots: PILOTS.map(p => ({ fee: p.fee, until: p.until, hag: !!p.hag })), wing: CO.wing ? { i: PILOTS.indexOf(CO.wing.p), share: CO.wing.share, s: CO.wing.p.seed || 0, paid: CO.wing.paid || 0 } : null, bar: barSave(), story: storySave(), tut: tutSave(),
   };
 }
 /* returns a reason string if the document is not one of ours */
@@ -187,7 +187,7 @@ function boardApply(s) {
   if (s && Array.isArray(s.board)) for (const c of s.board) if (ok(c)) { c.twists = (c.twists || []).filter(t => TWISTS[t]); rivClean(c); c.intel = Array.isArray(c.intel) ? c.intel : []; c.diff = clamp(c.diff | 0, 1, 5); c.cap = [45, 65, 85].includes(c.cap) ? c.cap : 0; CO.board.push(c); cid = Math.max(cid, c.id | 0); }
   if (s && Array.isArray(s.news)) CO.news = s.news.filter(n => typeof n === 'string').slice(0, 9);
   if (s && s.active != null) CO.active = CO.board.find(c => c.id === s.active) || null;
-  if (!CO.board.length) { fillBoard(); news(`${YARD.name} mercenary company is open for contracts.`); } else fillBoard();
+  if (!CO.board.length) { fillBoard(); news(tutLock() ? TUT_WIRE() : `${YARD.name} mercenary company is open for contracts.`); } else fillBoard();
   if (YARD.shop.rot < 0) shopRoll(true); CO.dirty = true;
 }
 function pilotsApply(s) {

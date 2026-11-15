@@ -240,7 +240,7 @@ function clearEnv() {
 }
 function buildEnv(key, seed, o = {}) {
   clearEnv(); const B = BIOMES[key], R = mulberry(seed * 7919 + 13);
-  Object.assign(EV, { key, B, seed, home: !!o.home, ox: o.home ? 0 : R() * 900, oz: o.home ? 0 : R() * 900, pads: o.home ? HOME_PADS : (o.pads || []), wl: B.wl ?? null, cr: [] });
+  Object.assign(EV, { key, B, seed, home: !!o.home, ox: o.home ? 0 : R() * 900, oz: o.home ? 0 : R() * 900, pads: o.home ? (o.pads ? HOME_PADS.concat(o.pads) : HOME_PADS) : (o.pads || []), wl: B.wl ?? null, cr: [] });
   if (B.init) B.init(R);
   EV.padH = EV.pads.map(p => o.home && !p[0] ? 0 : Math.max(genRaw(p[0], p[1]), (EV.wl ?? -99) + 2.5));
   const g = FD.ter.geometry, pa = g.attributes.position, ca = g.attributes.color, c = new THREE.Color(), p = B.pal;

@@ -332,3 +332,26 @@ body.cut #comm.hold{top:auto;bottom:3vh;transform:translate(-50%,0)}
 /* the browser is holding the sound back until the player does something */
 #sndHint{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:58;font:700 11px/1 Menlo,Consolas,monospace;letter-spacing:.16em;color:#ffb21a;background:rgba(7,9,11,.84);border:1px solid rgba(255,178,26,.5);padding:8px 13px;opacity:0;transition:opacity .4s;pointer-events:none;white-space:nowrap}
 #sndHint.on{opacity:1}
+/* the guide: a tour panel, the ring round whatever it is talking about, the next-step chip, and the key prompts on the HUD */
+#tut{left:50%;top:52px;transform:translateX(-50%);width:540px;max-width:calc(100vw - 40px);display:grid;grid-template-columns:72px 1fr;gap:12px;z-index:47;background:rgba(7,9,11,.96);border-color:var(--cy);box-shadow:0 10px 34px rgba(0,0,0,.6)}
+#tut.low{top:auto;bottom:70px}
+#tut.lft{left:18px;top:50%;bottom:auto;transform:translateY(-50%);width:400px}
+#tut canvas{width:72px;height:72px}
+#tutWho{font-weight:400;letter-spacing:.14em;font-size:11px}
+#tutText{margin:5px 0 9px;line-height:1.55;color:#e4ddcc;font-size:12px}
+#tutRow{display:flex;gap:6px;align-items:center;justify-content:flex-end}
+#tutN{margin-right:auto;color:#7d776a;font-size:10px;letter-spacing:.14em}
+#tutRow button{padding:6px 10px;font-size:10px}
+#tutNext{background:var(--cy);color:#06121a;border-color:var(--cy)}#tutNext:hover{background:#fff;color:#06121a}
+#tutSkip,#tutOff{color:#8b8474;border-color:rgba(255,255,255,.14);background:none}
+#tutRing{position:fixed;z-index:46;pointer-events:none;border:2px solid var(--cy);box-shadow:0 0 0 9999px rgba(3,5,7,.4),0 0 18px rgba(95,216,255,.7);animation:tutR 1.3s ease-in-out infinite}
+@keyframes tutR{50%{border-color:#fff;box-shadow:0 0 0 9999px rgba(3,5,7,.4),0 0 30px rgba(95,216,255,1)}}
+#tutChip{position:fixed;left:50%;top:52px;transform:translateX(-50%);z-index:44;padding:8px 14px;border:1px solid var(--cy);background:rgba(7,9,11,.9);color:var(--cy);font-size:11px;letter-spacing:.14em;white-space:nowrap;pointer-events:none}
+#tutChip.side{left:18px;top:96px;transform:none}
+.tutP{animation:tutP 1.1s ease-in-out infinite;border-color:var(--cy)!important}
+@keyframes tutP{50%{box-shadow:0 0 0 3px rgba(95,216,255,.55),0 0 22px rgba(95,216,255,.8)}}
+#tutKeys{position:fixed;left:50%;bottom:176px;transform:translateX(-50%);display:flex;gap:8px;white-space:nowrap;pointer-events:none}
+#tutKeys div{display:flex;align-items:center;gap:7px;padding:5px 9px;background:rgba(7,9,11,.78);border:1px solid var(--ln);font-size:10px;letter-spacing:.1em;color:#d8d1c0}
+#tutKeys b{font-weight:700;color:#06121a;background:var(--cy);padding:3px 7px;letter-spacing:.06em}
+.tlk{border:1px dashed var(--ln);padding:8px 9px;margin-top:8px;color:#8b8474;font-size:10px;line-height:1.5}
+.tlk b{display:block;color:var(--am);font-weight:400;letter-spacing:.18em;margin-bottom:4px}

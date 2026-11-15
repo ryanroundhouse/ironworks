@@ -67,7 +67,11 @@ Object.assign(VOX_CAST, {
   brick: { f0: 111, tr: .9, rate: 5, range: 7.5, brass: .6, rough: .36, crisp: .95, tilt: 2500, lilt: 1.3, dip: .3, ph: ['bbggddwwhm.', 'aaooAU', '.....mk'], emo: ['ha', 'oh', 'grunt', 'ha'], emoP: .3 },                             /* Sgt. "Brick" Adeyemi: big, loud, and delighted to be here */
   deacon: { f0: 127, tr: .95, rate: 4.4, range: 2.3, brass: .2, breath: .66, rough: .5, crisp: 1.1, stac: .3, tilt: 3000, lilt: .4, ph: ['ssSShhkkxt.', 'iiIIeE', '....Skx'], emo: ['hm', 'tsk'], emoP: .08 },                          /* the Deacon: says his prayers through his teeth */
 });
-Object.assign(VOX_WHO, { 9101: 'ma', 9103: 'pip', 9107: 'hale', 9121: 'und', 9123: 'dex', 9141: 'lan', 9143: 'abb', 9145: 'cas', 9161: 'liz', 9163: 'bar', 9181: 'krait', 9183: 'brick', 9185: 'deacon' });
+Object.assign(VOX_CAST, {
+  mav: { f0: 262, tr: 1.2, rate: 5.1, range: 11, brass: .1, vib: .03, crisp: 1.3, stac: .1, tilt: 3700, lilt: 1.9, dip: .4, ph: ['mmllnnwwdbp.', 'aaeeiioy', '.....nl'], emo: ['oh', 'ah', 'ha'], emoP: .3 },            /* MAVIS: an elocution mistress on a loop, delighted with everybody */
+  snips: { f0: 143, tr: .97, rate: 5.9, range: 7, brass: .34, nas: .5, rough: .42, crisp: 1.15, stac: .3, tilt: 3000, lilt: 1.2, dip: .3, ph: ['ssSSkkttccnh.', 'iiIIeeay', '....Skn'], emo: ['ha', 'tsk', 'eh', 'ha'], emoP: .3 },   /* "Snips" Halvard: a market trader with a cutting torch */
+});
+Object.assign(VOX_WHO, { 9201: 'mav', 9203: 'snips', 9101: 'ma', 9103: 'pip', 9107: 'hale', 9121: 'und', 9123: 'dex', 9141: 'lan', 9143: 'abb', 9145: 'cas', 9161: 'liz', 9163: 'bar', 9181: 'krait', 9183: 'brick', 9185: 'deacon' });
 /* everyone else is cut from one of eight cloths (four low, four high), then nudged so that no two are quite alike */
 const VOX_KIND = [
   { f0: 104, tr: .9, rate: 4.6, range: 4, brass: .5, rough: .3, tilt: 2400 }, { f0: 122, tr: .95, rate: 5.2, range: 5, brass: .3, tilt: 2800 }, { f0: 142, tr: .99, rate: 5.6, range: 6.5, brass: .2, nas: .35, tilt: 3200 }, { f0: 96, tr: .87, rate: 4.1, range: 3, brass: .6, rough: .5, tilt: 2100 },
