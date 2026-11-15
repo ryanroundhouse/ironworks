@@ -23,12 +23,12 @@ a CDN, so view it through a local web server with an internet connection.
 While `.scratch/` exists, `index.html` is generated rather than hand-edited:
 
 - `.scratch/base.html` is a snapshot of the page from before the current round of work.
-- `.scratch/v10/build.py` applies asserted string patches to the base and inserts the part file
-  beside it: `r1_race.js` (`stRace` and `RACE_K`: the Iron Derby's pack, which holds round the
-  player until the last gate). The patches seat each Derby car in the pack and add the calls from
-  the pit wall (`dbCall`), the gaps on the board (`dbBy`) and the time a detour costs (`dbBank`).
-  - `python3 .scratch/v10/build.py` writes `index.html` (release).
-  - `python3 .scratch/v10/build.py --debug` writes `.scratch/debug.html` with the test hooks from
+- `.scratch/v11/build.py` applies asserted string patches to the base. This round has no part
+  file: it makes a sprint cost heat (`SPRINT_K`, `sprintFor`), says so in the bay and the
+  controls, and has the Derby's pit wall tell the player to reach the last gate cold. A new
+  top-level name in a patch is checked with `fresh(name)` first.
+  - `python3 .scratch/v11/build.py` writes `index.html` (release).
+  - `python3 .scratch/v11/build.py --debug` writes `.scratch/debug.html` with the test hooks from
     `harness.js` (`__ev`, `__errs`, `__ff`, `__cam`, `__see`, `__strip`, `__poses`, `__mus`,
     `__render`, `__wav`, `__mk`, `__sim`, `__vox`, `__story`, `__smk`, `__sites`, `__fcam`,
     `__fsee`).
@@ -36,8 +36,12 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   - The build refuses a part file whose top-level name is already taken in the base.
   - Do not put a `//` comment in the middle of a long one-line statement in a part file: it
     swallows the rest of the line without a syntax error. Use `/* */`, or a line of its own.
-- Earlier rounds (`.scratch/v9/` and before) are history; their output is already in the base.
-  Each folder keeps the base it patched (`v9/base_v9.html`) next to its part files. `p1_post.js`
+- Earlier rounds (`.scratch/v10/` and before) are history; their output is already in the base.
+  Each folder keeps the base it patched (`v10/base_v10.html`) next to its part files.
+  `r1_race.js` (`stRace` and `RACE_K`: the Iron Derby's pack, which holds round the player until
+  the last gate) is in `.scratch/v10/`, whose build also seated each Derby car in the pack and
+  added the calls from the pit wall (`dbCall`), the gaps on the board (`dbBy`) and the time a
+  detour costs (`dbBank`). `p1_post.js`
   (the post chain `POST`: the scene target, the bloom, the pass that writes the canvas, and the
   hold that leaves a paused sortie's picture standing) is in `.scratch/v9/`; the other part
   files named further down are in `.scratch/v8/`: `a1_wake.js` (the sound notice), `v2_cast.js`
@@ -128,17 +132,26 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
     chapter and a lapsed offer coming round again, the three-card limit.
   The autopilot kills fast and (without `drive`) teleports, so it proves a chapter can be
   finished and says nothing about how hard it is.
-- The Derby races, in `.scratch/v10/`: `race.sh '{ ch, sprint, log }'` flies a chapter through
+- The Derby races, in `.scratch/v11/`: `race.sh '{ ch, sprint, log }'` flies a chapter through
   the real controls (W, A, D and SHIFT held in `keys`, so the machine's own speed, turning and
   heat count) and prints the place every `log` seconds, each car's gap in metres and the speed it
-  is taking, and how much of the race the pack stayed within 70 m. `sprint` is `heat` (off at 80
-  heat, back on at 50), `never`, `last` (only on the run to the flag) or `notlast`; `cfg` puts a
-  `PRESETS` machine in the bay, `fight` gives the pilot that many dps on one hostile in front of
-  it, `go: ['liz']` sends it to a nav marker and clears it, `tweak` runs JS on the race `R` as it
-  starts, and `picks`, `mortal`, `secs` and `said` work as in `run.sh`. `ffrace.sh` is the same in
-  Firefox, and `see.sh '{ ..., until, keep: true }' out.png` stops at a moment with the throttle
+  is taking, the place and heat at every gate, and how much of the race the pack stayed within
+  70 m. `sprint` is `heat` (off at 80 heat, back on at 50), `never`, `always`, `last` (only on
+  the run to the flag), `notlast` or `smart` (under 45 heat, and all of the run to the flag);
+  `cap` lets go of SHIFT above that heat whatever the mode (and takes it again 15 under it), and
+  `preheat` sets the heat the pilot comes to the last gate with. `cfg` puts a `PRESETS` machine
+  in the bay (slow ones need `secs: 1000`), `fight` gives the pilot that many dps on one hostile
+  in front of it and `fh` charges that share of the machine's full-fire heat while it shoots,
+  `go: ['liz']` sends it to a nav marker and clears it, `tweak` runs JS on the race `R` as it
+  starts, and `picks`, `mortal`, `secs` and `said` work as in `run.sh`. `sweep.sh ch '<extra>'`
+  flies one chapter six ways and prints a line for each; `t_cool.js` lists the cooling, speed and
+  sprint from cold of the bay and every preset, and each course's final straight. `ffrace.sh` is
+  the same in Firefox (`ff_race.js` is `t_derby.js` between two lines: rebuild it when that
+  changes), and `see.sh '{ ..., until, keep: true }' out.png` stops at a moment with the throttle
   still down and takes a picture from the cockpit. A race should be won by sprinting from the
-  last gate to the flag, and lost (or placed) by walking it.
+  last gate to the flag, and lost (or placed) by walking it or by holding SHIFT the whole way.
+  In the final a shutdown on the run to the flag loses to MAGPIE; a sprint let off under the
+  shutdown line still wins from about 75 heat.
 - `__ff(seconds)` fast-forwards bay tweens, so crane and lift sequences (`fitPart`, `switchBay`)
   can be awaited in a loop instead of in real time. It steps whichever room is showing, the bar
   included, and `__cam` places the camera there too.
@@ -301,11 +314,22 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   place, between `lo` and `hi` (`far` out of sight, `rush` in the last `late` seconds), so it can
   neither be dropped nor get away. When the player clears the last gate (`R.home()`) every car
   drops to `f`, its honest share of the player's walking speed, and the run to the flag goes to a
-  player who sprints it. `flat` takes a car out of the pack; `R.pace` under .5 is a caution flag
+  player who sprints it with the heat to do it. `flat` takes a car out of the pack; `R.pace` under .5 is a caution flag
   that shuts the gates for everybody; a car turned hostile (`dbHot`) fires `gun` (.3) as often as
   it would standing still. `R.gap(car)` and `R.secs(car)` say where a car is against the player,
   and `dbBank(R)` lets the cars in front keep what they gained while the player was off the
   course. `e.vk` on any `mkMech` scales its speed and turning without quickening its stride.
+- A sprint costs heat (`SPRINT_K`, beside `SINK_COOL`). It adds `heat` a second, and while it
+  lasts the sinks shed only `shed` of their usual rate, so it cannot be held: from cold it runs
+  about twenty seconds to the ordinary shutdown at 100, a little longer with a lot of cooling.
+  `sprintFor(stats, k)` gives that time (the bay shows it as SPRINT FROM COLD). Past `HEAT_WARN`
+  (80) the HUD says HEAT CRITICAL, whatever is making the heat: once a climb, again only after it
+  has fallen under 55, never while venting (`t_warn.js` checks that, in either browser).
+  Anything tuned on how far the player can run has to
+  allow for it. The Derby's final straights are as long as a sprint from cold or longer, so the
+  pit wall tells the player to reach the last gate cold, and at the gate `dbCall` swaps Rook's
+  "flat out" for "let off when she warns you" when the machine cannot sprint the whole straight
+  from the heat it has.
 - The briefing room is `BRF` with camera rig `brfCam`, built like the bar; `toBrief(c)` enters
   it from the deck, `brfStep(i)` plays one step, `brfLeave('bay' | 'hq')` leaves. A chapter's
   `brf` is a list of steps `{ t, by, show, shot }`: `by` speaks (the XO if absent; the crew

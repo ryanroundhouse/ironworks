@@ -365,7 +365,7 @@ body.cut #comm.hold{top:auto;bottom:3vh;transform:translate(-50%,0)}
  <div id="ret"><i></i><i></i><i></i><i></i><b></b></div>
  <div id="twist"><b id="hdg">000</b><i id="twI"></i></div>
  <div id="obj" class="pn"><div id="objW">HOSTILES <b id="hCnt">0</b>KILLS <b id="kCnt">0</b>WAVE <b id="wCnt">1</b></div><div id="objM" class="hid"><h2><span id="msTitle">CONTRACT</span><small id="msClock"></small></h2><div id="objList"></div></div></div>
- <div id="help" class="pn"><b>W/S</b> throttle · <b>A/D</b> turn legs<br><b>MOUSE</b> torso twist / aim<br><b>LMB</b> left arm · <b>RMB</b> right arm<br><b>F</b> back unit · <b>SPACE</b> jump jets<br><b>SHIFT</b> sprint · <b>C</b> camera · <b>X</b> center legs<br><b>R</b> repair kit · <b>V</b> coolant flush<br><b>M</b> tactical map · <b>1-3</b> answer comms<br><b>SPACE</b> carry on after a message<br><b>H</b> withdraw to base · <b>ESC</b> pause</div>
+ <div id="help" class="pn"><b>W/S</b> throttle · <b>A/D</b> turn legs<br><b>MOUSE</b> torso twist / aim<br><b>LMB</b> left arm · <b>RMB</b> right arm<br><b>F</b> back unit · <b>SPACE</b> jump jets<br><b>SHIFT</b> sprint, which builds heat<br><b>C</b> camera · <b>X</b> center legs<br><b>R</b> repair kit · <b>V</b> coolant flush<br><b>M</b> tactical map · <b>1-3</b> answer comms<br><b>SPACE</b> carry on after a message<br><b>H</b> withdraw to base · <b>ESC</b> pause</div>
  <canvas id="radar" width="190" height="190"></canvas>
  <div id="gauges" class="pn">
   <div class="st" id="gArm"><span>ARMOR</span><i><b></b></i><em></em></div>
@@ -1987,6 +1987,11 @@ const PRESETS = [
 /* ============ COMPANY YARD: ITEM CATALOG, STORES, THREE MECH BAYS, MARKET, SALVAGE, SAVE FILES ============ */
 /* every component is a counted item. A mech bay holds a build made from those items; a slot is null until something is fitted. */
 const SINK_COOL = 1.2, HOT_SECS = 6, SHOP_HOURS = 30, SELL_K = .5;
+/* a sprint runs the reactor past its rating. It makes `heat` a second of its own, and the sinks, busy with the reactor, shed only `shed` of what they would at a walk: from cold that is
+   about twenty seconds for most machines and half as long again for one with a great deal of cooling, which gets back from it sooner as well */
+const SPRINT_K = { heat: 6, shed: .15 };
+const sprintFor = (st, k = 1) => 100 / Math.max(.5, SPRINT_K.heat - SPRINT_K.shed * st.cool * k);   /* seconds of sprint from cold to shutdown, with no weapons fired */
+const HEAT_WARN = 80;   /* past this the pilot is told to ease off, whatever is making the heat: once a climb, and again only after it has fallen 25 under */
 { const n = { pod: 3, bas: 3, sti: 4, brd: 4, jug: 5 }; for (const k in PARTS.torso) PARTS.torso[k].sinks = n[k] ?? 3; }
 const GEAR = {
   sink: { name: 'HEAT SINK', desc: 'Torso mount · cooling +' + SINK_COOL, tons: 1, price: 6000, kind: 'MOUNT' },
@@ -3226,7 +3231,7 @@ function updateField(dt, t) {
   const thr = ctl ? (K.KeyW ? 1 : 0) - (K.KeyS ? .6 : 0) : 0, sprint = thr > 0 && (K.ShiftLeft || K.ShiftRight);
   const dyaw = trn * st.turn * dt * (P.air ? .4 : 1); P.yaw += dyaw; P.twist -= dyaw; P.twist = st.twist < 3 ? clamp(P.twist, -st.twist, st.twist) : angDiff(0, P.twist);
   const wade = !P.air && EV.B.liq === 'water' && P.pos.y < EV.wl - 2.5, top = st.speed * RUN * (P.carry ? .88 : 1) * (wade ? .7 : 1);
-  P.v = damp(P.v, thr * top * (sprint ? 1.45 : 1), P.air ? .25 : 1.7, dt); if (sprint) P.heat += 4.5 * dt;
+  P.v = damp(P.v, thr * top * (sprint ? 1.45 : 1), P.air ? .25 : 1.7, dt); if (sprint) P.heat += SPRINT_K.heat * dt;
   const step = P.v * dt, nx = P.pos.x + Math.sin(P.yaw) * step, nz = P.pos.z + Math.cos(P.yaw) * step;
   if (!P.air && heightAt(nx, nz) - heightAt(P.pos.x, P.pos.z) > Math.abs(step) * 1.2 + .02) P.v *= .6; else { P.pos.x = nx; P.pos.z = nz; }
   collide(P.pos, player.radius * .65);
@@ -3238,9 +3243,10 @@ function updateField(dt, t) {
   if (P.air) { P.vy -= FD.grav * dt; P.pos.y += P.vy * dt; if (P.pos.y <= ground) { const imp = -P.vy; P.pos.y = ground; P.air = false; P.vy = 0; if (imp > 5) { sfx.play('step', 1.6); P.shake += imp * .05; puff(FD.fx, P.pos, 16, 4, .55, .4, 2, 7); } } }
   else P.pos.y = damp(P.pos.y, ground, 14, dt);
   /* heat + shutdown */
-  P.heat = Math.max(0, P.heat - st.cool * FD.coolK * (P.coolK || 1) * dt * (P.shut > 0 ? 2 : 1));
+  P.heat = Math.max(0, P.heat - st.cool * FD.coolK * (P.coolK || 1) * dt * (P.shut > 0 ? 2 : sprint ? SPRINT_K.shed : 1));
   if (P.buzz && !P.dead) { P.twist += (Math.sin(t * .83) + Math.sin(t * 1.37 + 1)) * .055 * P.buzz * dt; P.pitch = clamp(P.pitch + Math.sin(t * 1.1 + 2) * .04 * P.buzz * dt, -.38, .5); }
   if (EV.wl != null && !P.air && !P.dead && P.pos.y < EV.wl - .6) { if (EV.B.liq === 'lava') { P.heat += 26 * dt; P.armor -= 5 * dt; if (Math.random() < .3) { _v.copy(P.pos); _v.y = EV.wl; sparks(FD.fx, _v, 2, 5, 5, 1.6, .3); } if (P.armor <= 0) playerLost(); } else P.heat = Math.max(0, P.heat - 9 * dt); }
+  if (P.heat > HEAT_WARN && P.heat < 100 && !P.hw && P.shut <= 0 && !P.dead) { P.hw = true; msg('HEAT CRITICAL — EASE OFF', 2.5); sfx.play('deny'); } if (P.heat < HEAT_WARN - 25) P.hw = false;
   if (P.heat >= 100 && P.shut <= 0 && !P.dead) { P.shut = 3.5; msg('REACTOR SHUTDOWN — VENTING HEAT', 3.4); sfx.play('deny'); sfx.play('steam'); }
   if (P.shut > 0) { P.shut -= dt; if (Math.random() < .5) { _v.copy(P.pos); _v.y += player.chestY; puff(FD.fx, _v, 1, 2.5, .85, .3, 4, 2); } }
   /* drive the mech */
@@ -6868,7 +6874,8 @@ const dbBoard = (R, laps) => (MS.v.R = R, setObj)('r', () => R.fin ? `Finished �
 /* the race, called from the pit wall: that nobody can be dropped, the last lap, the front of the grid going for the line, and the gate where they have nothing left. A line may be a function, or missing */
 const dbCall = (R, who, L) => { const go = () => !R.fin && !MS.over, line = i => { const t = typeof L[i] === 'function' ? L[i]() : L[i]; if (t && go()) chatter(who, t); }; (async () => {
   await until(() => !go() || R.me >= 2); line(0); await until(() => !go() || R.me >= R.total - R.N); line(1); await until(() => !go() || R.late() > .3); line(2);
-  await until(() => !go() || R.home()); if (go()) { for (let i = commQ.length - 1; i >= 0; i--) if (commQ[i].chat) commQ.splice(i, 1); msg('LAST GATE — SPRINT FOR THE FLAG', 3.5); sfx.play('alarm'); line(3); }   /* nothing that was waiting to be said is worth being late with this */
+  await until(() => !go() || R.home()); if (go()) { for (let i = commQ.length - 1; i >= 0; i--) if (commQ[i].chat) commQ.splice(i, 1); msg('LAST GATE — SPRINT FOR THE FLAG', 3.5); sfx.play('alarm'); const st = player.stats;
+    if (sprintFor(st, FD.coolK * (P.coolK || 1)) * (100 - P.heat) / 100 < R.left(P.pos, R.me) / (st.speed * RUN * 1.45)) chatter(who, "LAST GATE! She won't sprint all of that without shutting down, boss. Go, and let off when she warns you, or you'll be standing still when they come by!"); else line(3); }   /* nothing that was waiting to be said is worth being late with this */
 })(); };
 const dbBet = (stake, mult, won, what) => { if (!stake) return; if (won) stPay(`Calloway pays out: ${what}`, stake * mult); else stPay(`Calloway keeps your stake: ${what}`, -stake); };
 /* a racer stops racing and starts shooting */
@@ -6888,7 +6895,7 @@ STORY.derby = {
     brf: [
       { t: 'I want it noted that this is not a contract. It is a motor race. Rook has asked for the floor, and I have decided I would rather know what she is up to than not.', show: [['site', 'lz', 'PADDOCK', '#8dff6a'], ['card', 'THE JOB', ['Enter the Iron Derby qualifier', 'Finish in the top three', 'Try to bring the machine back']]] },
       { by: PILOTS[0].ch, t: "Boss. The Iron Derby. Six gates, two laps, flat out. You go through every gate in order or it doesn't count. That's the whole rulebook, and half of it's optional.", show: [['route', ['g0', 'g1', 'g2', 'g3', 'g4', 'g5', 'g0'], '#ffb21a'], ['site', 'g0', 'START / FINISH', '#ffb21a'], ['site', 'g1', 'GATE 2', '#ffb21a'], ['site', 'g2', 'GATE 3', '#ffb21a'], ['site', 'g3', 'GATE 4', '#ffb21a'], ['site', 'g4', 'GATE 5', '#ffb21a'], ['site', 'g5', 'GATE 6', '#ffb21a']], shot: 'who' },
-      { by: PILOTS[0].ch, t: "Five other cars, and you won't lose one of them. A Derby grid runs past the red line to stay in the pack, whatever you bring. It lets go at the last gate: nobody has anything left for the run to the flag, so that's where you take it. The one to watch is Tin Lizzie. Thirty years on the grid. She'll talk the whole way round.", show: [['face', STC.liz, ['"Tin Lizzie" Brandt, car 7', 'Thirty seasons. Never won it', 'Will tell you why, at length']], ['card', 'THE GRID', ['Six cars. Top three qualify', 'Nobody gets away before the last gate', 'It is won on the run to the flag']]] },
+      { by: PILOTS[0].ch, t: "Five other cars, and you won't lose one of them. A Derby grid runs past the red line to stay in the pack, whatever you bring. It lets go at the last gate: nobody has anything left for the run to the flag, so that's where you take it. Get there with your heat down. That straight's a long one, and a sprint eats your sinks. The one to watch is Tin Lizzie. Thirty years on the grid. She'll talk the whole way round.", show: [['face', STC.liz, ['"Tin Lizzie" Brandt, car 7', 'Thirty seasons. Never won it', 'Will tell you why, at length']], ['card', 'THE GRID', ['Six cars. Top three qualify', 'Nobody gets away before the last gate', 'Reach it cold. Sprint for the flag']]] },
       { by: BARC.broker, t: 'Ezra Calloway. I keep the book, and the purse. It rides in that wagon on the infield, where everybody can see it and nobody can reach it. I shall be on the tannoy. Do ask me about odds.', show: [['site', 'pot', 'THE PURSE', '#c9a0ff'], ['face', BARC.broker, ['Ezra Calloway, bookmaker', 'Holds the purse and the odds', 'Has never lost money on a Derby']]], shot: 'who' },
       { t: 'What I cannot tell you is why one of my pilots is barred from that grid, because she will not tell me. The reigning champion is a Baron Drescher. He does not race qualifiers. He sends people.', show: [['face', STC.bar, ['Baron Viktor Drescher', 'Champion, nine years running', 'Does not attend qualifiers in person']], ['unk', 'g3', 'WHAT IS ROOK NOT SAYING?']] },
       { by: PILOTS[0].ch, t: "I'll be in your ear the whole way. I know every stone of that course. Just get me on to the big grid, boss. I'll tell you the rest when you have.", shot: 'who' },
@@ -6903,7 +6910,7 @@ STORY.derby = {
       say(book, b === 2 ? 'A soldier and a puritan. The book is desolate. Racers — to the grid!' : 'Taken, and written down. Racers — to the grid!'); dbBoard(R, 2);
       chatter(liz, "New blood! Tin Lizzie, car seven. First rule of the Derby: I talk, you listen. Second rule: don't follow me into gate three, I take it sideways.");
       await stGridUp(R, 5); chatter(rook, "Clean start. Gate two's a long drag — get your head down and don't look at Lizzie, she does it to put you off.");
-      dbCall(R, rook, ["That's a Derby grid, boss. Every one of them is over the red line to stay in the pack, and you will not shake them. Don't try. Just be there at the last gate.", "Last lap! The front of the grid goes early, it always does. Let them. Nobody holds that pace past the last gate.",
+      dbCall(R, rook, ["That's a Derby grid, boss. Every one of them is over the red line to stay in the pack, and you will not shake them. Don't try, and don't cook yourself trying. Just be there at the last gate with your heat down.", "Last lap! The front of the grid goes early, it always does. Let them, and keep your heat down. Nobody holds that pace past the last gate.",
         "There they go! That's everything they have, and it's gone by the gate. Stay on them!", "LAST GATE! They're cooked, boss. Flat out, straight at the flag, GO!"]);
       /* gate five has been seen to */
       (async () => {
@@ -6969,7 +6976,7 @@ STORY.derby = {
       await after(5); const b = await ask(book, 'Calloway! The Crucible book is open. I can offer the Commander five to two on the win, or evens that both of the Baron\'s seconds fail to finish. One does like to offer a sporting market.', ['¢20,000 on myself to win. Five to two.', '¢15,000 that neither second finishes. Evens.', 'I do not gamble.'], 20, 2);
       look(guns[0], 'TRACK GUNS'); await tell(book, 'And now the lottery! The track guns tonight will follow car number... one moment... oh. Oh dear. It appears to be yours, Commander. What are the odds? I ask rhetorically. I know the odds. I was paid to.'); dbBoard(R, 2);
       await stGridUp(R, 5); chatter(liz, "Stay on my hip through two, love. After that it's every hull for herself.");
-      dbCall(R, rook, [null, "Last lap, and they're all still on you. That's the Derby. Keep something back for the flag.", "The front's going for the line early. Let them burn it.", "LAST GATE! There's nothing left in any of them. Flat out, boss, straight at it!"]);
+      dbCall(R, rook, [null, "Last lap, and they're all still on you. That's the Derby. Keep your heat down for the flag.", "The front's going for the line early. Let them burn it.", "LAST GATE! There's nothing left in any of them. Flat out, boss, straight at it!"]);
       await until(() => R.me >= 2 || R.fin); msg('GATE TWO — WEAPONS FREE', 3); sfx.play('alarm'); dbHot(sab); dbHot(bru);
       look(sab.e, "THE BARON'S SECONDS"); await tell(rook, "Weapons free — and Sable and Brute have both gone hot. They're not racing you, boss, they're hunting you. You're allowed to hunt back. I'd start with Sable.");
       chatter(liz, "Oh good. It's THAT sort of Crucible."); setObj('s', () => `The Baron's seconds — ${alive([sab.e, bru.e])} still running`, 0, true);
@@ -7029,7 +7036,7 @@ STORY.derby = {
       await after(5); look(B.e, 'MAGPIE'); await tell(bar, "Miss Albrecht's mercenary. I trust she has told you whose machine this is. I keep her in the long gallery, between a Vermeer and a stuffed bear. She is the only one of the three I take out.");
       chatter(rook, "Don't. Don't answer him. Just drive."); const b = await ask(book, 'Calloway. The book on the final stands at seven to two against the Commander, which I may say is the shortest price anybody has had against the Baron in nine years. A last flutter?', ['¢30,000 on myself. Seven to two.', 'I do not gamble.'], 20, 1); dbBoard(R, 2);
       if (L) chatter(liz, "Harvester leg and all, love. Sable's mine. I owe that family a wheel."); await stGridUp(R, pole ? 0 : 6); chatter(rook, pole ? "Front row, alongside him. Get to gate one first and make him look at your back for once." : "You're at the back. Good. Nobody mines the back. Pick them off one gate at a time.");
-      dbCall(R, rook, ["He has the legs of you, boss. I made sure of that when I built her. Doesn't matter. Stay in his mirrors.", "Last lap. Whatever he does, be on him at the last gate. She was never built to hold that pace past it.",
+      dbCall(R, rook, ["He has the legs of you, boss. I made sure of that when I built her. Doesn't matter. Stay in his mirrors.", "Last lap. Whatever he does, be on him at the last gate, and cold. She was never built to hold that pace past it.",
         () => ms.v.stall ? "He's coming back at you, and that's everything she has. Hold him off to the gate!" : "He's gone for the line! That's MAGPIE flat out, and I know to the second how long she'll take it.",
         () => ms.v.stall ? "LAST GATE! He's got nothing left to come by with. Straight at the flag, boss, don't look back!" : "LAST GATE! She's cooked. Straight at the flag, everything you have, NOW!"]);
       /* gate two: his second earns her money */
@@ -7565,7 +7572,7 @@ ${SCORES.map(([bk, n, d], i) => `<div class="trk${CFG.track === i + 1 ? ' on' : 
   } else if (tab === 'controls') {
     const sx = v => (v / 100).toFixed(2) + '×', K = (L) => `<div class="keys">${L.map(([k, d]) => `<div><b>${k}</b><span>${d}</span></div>`).join('')}</div>`;
     B.innerHTML = `<div class="sh">MOUSE</div><div class="sg">${rng('sSens', 'AIM SENSITIVITY', CFG.sens * 100, 30, 250, 5, sx)}${tog('sInv', 'INVERT VERTICAL AIM', CFG.invY)}</div>
-<div class="sh">IN THE FIELD</div>${K([['W / S', 'Throttle forward / reverse'], ['A / D', 'Turn the legs'], ['MOUSE', 'Twist the torso and aim'], ['LEFT / RIGHT BUTTON', 'Fire left / right arm'], ['F', 'Fire the back unit'], ['SPACE', 'Jump jets'], ['SHIFT', 'Sprint'], ['X', 'Centre legs under the torso'], ['C', 'Cockpit / chase camera'], ['M', 'Tactical map — pauses the sortie'], ['R', 'Field repair kit'], ['V', 'Coolant flush'], ['1 – 3', 'Answer the comms'], ['SPACE / ENTER', 'Carry on after a message'], ['H', 'Withdraw to base'], ['ESC', 'Pause']])}
+<div class="sh">IN THE FIELD</div>${K([['W / S', 'Throttle forward / reverse'], ['A / D', 'Turn the legs'], ['MOUSE', 'Twist the torso and aim'], ['LEFT / RIGHT BUTTON', 'Fire left / right arm'], ['F', 'Fire the back unit'], ['SPACE', 'Jump jets'], ['SHIFT', 'Sprint — it builds heat'], ['X', 'Centre legs under the torso'], ['C', 'Cockpit / chase camera'], ['M', 'Tactical map — pauses the sortie'], ['R', 'Field repair kit'], ['V', 'Coolant flush'], ['1 – 3', 'Answer the comms'], ['SPACE / ENTER', 'Carry on after a message'], ['H', 'Withdraw to base'], ['ESC', 'Pause']])}
 <div class="sh">COMMS IN THE FIELD</div><div class="sg"><label>HOLD THE SORTIE FOR COMMS</label><span class="seg" id="sHold">${[[2, 'EVERY MESSAGE'], [1, 'QUESTIONS ONLY'], [0, 'NEVER']].map(([v, l]) => `<button data-v="${v}" class="${CFG.hold === v ? 'on' : ''}">${l}</button>`).join('')}</span><em></em></div>
 <p class="snt">${['The fight carries on while people talk, and a question you do not answer in time answers itself.', 'Chatter plays over the fight. When somebody needs a decision, everything stops until you have made it.', 'Whenever anybody comes on the radio, everything stops until you have read it. Nothing moves and no clock runs while you choose a reply.'][CFG.hold]}</p>
 <div class="sh">BAY AND COMMAND DECK</div>${K([['DRAG', 'Orbit the camera'], ['WHEEL', 'Zoom'], ['RIGHT-DRAG', 'Raise / lower the view'], ['1 – 6', 'Pick a reply in conversation'], ['ESC', 'Close a window']])}`;
@@ -7746,7 +7753,7 @@ const STATS = [['TONNAGE', s => s.tons, 110, v => v.toFixed(0) + ' t'], ['ARMOR'
     $('ovw').textContent = !rd.ok ? 'NOT READY' : st.over ? 'OVERWEIGHT' : 'WITHIN LIMITS'; $('ovw').style.color = !rd.ok || st.over ? '#ff5a1f' : '';
     const wn = k => { const w = cfg[k] && (k === 'back' ? PARTS.back[cfg.back] : PARTS.arm[cfg[k]].weapon); return w ? w.name : '<s>EMPTY</s>'; }, hot = st.heat > st.cool;
     $('loadout').innerHTML = `<div>L-ARM <b>${wn('armL')}</b></div><div>R-ARM <b>${wn('armR')}</b></div><div>BACK <b>${wn('back')}</b></div><div>TORSO TWIST <b>${!cfg.legs ? '—' : st.twist > 3 ? '360°' : '±' + Math.round(st.twist * 180 / PI) + '°'}</b></div>`
-      + `<div>HEAT · FIRING / SHED <b style="color:${rd.secs < HOT_SECS ? '#ff5a1f' : ''}">${st.heat.toFixed(1)} / ${st.cool.toFixed(1)} per s</b></div><div>SUSTAINED FIRE <b style="color:${rd.secs < HOT_SECS ? '#ff5a1f' : ''}">${!st.weapons ? '—' : hot ? rd.secs.toFixed(1) + ' s to shutdown' : 'INDEFINITE'}</b></div>`;
+      + `<div>HEAT · FIRING / SHED <b style="color:${rd.secs < HOT_SECS ? '#ff5a1f' : ''}">${st.heat.toFixed(1)} / ${st.cool.toFixed(1)} per s</b></div><div>SUSTAINED FIRE <b style="color:${rd.secs < HOT_SECS ? '#ff5a1f' : ''}">${!st.weapons ? '—' : hot ? rd.secs.toFixed(1) + ' s to shutdown' : 'INDEFINITE'}</b></div><div>SPRINT FROM COLD <b>${!cfg.legs || !cfg.torso ? '—' : sprintFor(st).toFixed(0) + ' s to shutdown'}</b></div>`;
     $('warns').innerHTML = rd.block.map(s => `<div class="b">${iconSvg('warn', 13, '#ff5a1f')}${s}</div>`).join('') + rd.warn.map(s => `<div class="w">${iconSvg('warn', 13, '#ffb21a')}${s}</div>`).join('') + (rd.ok && !rd.warn.length ? '<div class="g">ALL SYSTEMS FITTED — CLEARED TO LAUNCH</div>' : '');
     document.querySelectorAll('#panelL button,#btnTest,#btnDeploy,#btnHQ,#btnStores').forEach(b => { if (b.id !== 'sinkDn' && b.id !== 'sinkUp') b.disabled = busy; });
     $('btnTest').disabled = busy || !rd.ok; deployLabel(rd);
