@@ -202,13 +202,18 @@ function renderHangarContract() {
 function renderDetail() {
   if (HQV.tab === 'stand') return renderStandDetail();
   const c = CO.sel, el = $('detail'); if (!c) { el.innerHTML = '<h2>CONTRACT DETAIL <small>NONE SELECTED</small></h2><p>Select an offer on the board, or a marker on the map table.</p>'; return; }
-  if (c.story) return storyDetail(c, el);
+  const dsc0 = el.querySelector('.dsc'), dscTop = dsc0 && HQV.dc === c ? dsc0.scrollTop : 0; HQV.dc = c;
+  if (c.story) storyDetail(c, el); else contractDetail(c, el);
+  /* the text scrolls in .dsc and the buttons stay under it: keep its place through the redraws */
+  el.scrollTop = 0; const dsc1 = el.querySelector('.dsc'); if (dsc1) dsc1.scrollTop = dscTop;
+}
+function contractDetail(c, el) {
   const T = TYPES[c.type], B = BIOMES[c.biome], m = B.wx[c.mood] || B.wx[0], h = Math.max(0, c.exp - now()), act = c === CO.active;
-  el.innerHTML = `<h2>CONTRACT DETAIL <small>OP. ${c.op}</small></h2><h3>${T.name.toUpperCase()} — ${c.site.toUpperCase()}</h3><div class="sub">${T.desc}</div>
+  el.innerHTML = `<h2>CONTRACT DETAIL <small>OP. ${c.op}</small></h2><div class="dsc"><h3>${T.name.toUpperCase()} — ${c.site.toUpperCase()}</h3><div class="sub">${T.desc}</div>
 <div class="kv">CLIENT <b style="color:${FAC[c.emp].col}">${FAC[c.emp].name}</b></div>${c.co && RIV[c.co] ? `<div class="kv">${c.cok === 'sub' ? 'PRIME CONTRACTOR' : 'FLYING WITH'} <b style="color:${RIV[c.co].col}">${RIV[c.co].name}${c.share ? ` · ${Math.round(c.share * 100)}% SHARE` : ''}</b></div>` : ''}<div class="kv">OPPOSITION <b style="color:${FAC[c.foe].col}">${FAC[c.foe].name}</b></div><div class="kv">THEATRE <b style="color:${B.css}">${B.name} · ${m[0]}</b></div>
 <div class="kv">THREAT <b class="pips">${pipStr(c.diff)}</b></div>${capKv(c)}<div class="kv">FEE <b>${fmt(c.pay)}</b></div><div class="kv">SALVAGE <b>${c.salv}%</b></div><div class="kv">SUPPORT <b>${c.support ? 'REPAIR DROP' : 'NONE'}</b></div><div class="kv">${act ? 'STATUS' : 'OFFER CLOSES IN'} <b>${act ? 'ACCEPTED' : h.toFixed(0) + ' h'}</b></div>
-<p>${c.brief}</p><p class="nt">${B.note}</p>${c.intel.map(i => `<div class="intel${i.src === 'contact' || i.src === 'bar' ? ' q' : ''}">${i.src === 'contact' ? 'CLIENT CLAIMS' : i.src === 'bar' ? 'BAR TALK' : i.src === 'terms' ? 'TERMS' : 'CONFIRMED'} — ${i.s}</div>`).join('')}
-<div class="row"><button id="dNeg">OPEN CHANNEL — ${dealer(c).name.toUpperCase()}</button></div><div class="row"><button id="dAcc">${act ? 'ABANDON CONTRACT' : 'ACCEPT AS OFFERED'}</button><button id="dGo">TO THE MECH BAY ▶</button></div>`;
+<p>${c.brief}</p><p class="nt">${B.note}</p>${c.intel.map(i => `<div class="intel${i.src === 'contact' || i.src === 'bar' ? ' q' : ''}">${i.src === 'contact' ? 'CLIENT CLAIMS' : i.src === 'bar' ? 'BAR TALK' : i.src === 'terms' ? 'TERMS' : 'CONFIRMED'} — ${i.s}</div>`).join('')}</div>
+<div class="dact"><div class="row"><button id="dNeg">OPEN CHANNEL — ${dealer(c).name.toUpperCase()}</button></div><div class="row"><button id="dAcc">${act ? 'ABANDON CONTRACT' : 'ACCEPT AS OFFERED'}</button><button id="dGo">TO THE MECH BAY ▶</button></div></div>`;
   $('dNeg').onclick = () => { sfx.play('ui'); talkContact(c); }; $('dGo').onclick = toBay;
   $('dAcc').onclick = () => { if (act) { CO.active = null; quitCost(c); news(`${YARD.name} walked away from the ${FAC[c.emp].short} job at ${c.site}.`); sfx.play('deny'); } else accept(c); CO.dirty = true; };
 }

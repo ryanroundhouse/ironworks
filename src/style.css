@@ -126,6 +126,9 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .card em{font-style:normal;color:var(--am);text-align:right}
 .card u{text-decoration:none;color:var(--hot);font-size:8px;letter-spacing:.12em;text-align:right;white-space:nowrap}
 #detail{right:18px;top:112px;width:340px;max-height:calc(100vh - 190px);overflow:auto}
+#detail:has(>.dact){display:flex;flex-direction:column;overflow:hidden}
+#detail>.dsc{flex:1 1 auto;min-height:0;overflow:auto;margin-right:-8px;padding-right:8px}
+#detail>.dact{flex:none;margin-top:8px;border-top:1px solid var(--ln);padding-top:2px}
 #detail h3{font-size:14px;letter-spacing:.12em;color:#fff;font-weight:400}
 #detail .sub{color:var(--cy);font-size:10px;letter-spacing:.12em;margin:2px 0 8px}
 #detail p{color:#c9c2b2;line-height:1.5;margin:7px 0}

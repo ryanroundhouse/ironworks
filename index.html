@@ -133,6 +133,9 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .card em{font-style:normal;color:var(--am);text-align:right}
 .card u{text-decoration:none;color:var(--hot);font-size:8px;letter-spacing:.12em;text-align:right;white-space:nowrap}
 #detail{right:18px;top:112px;width:340px;max-height:calc(100vh - 190px);overflow:auto}
+#detail:has(>.dact){display:flex;flex-direction:column;overflow:hidden}
+#detail>.dsc{flex:1 1 auto;min-height:0;overflow:auto;margin-right:-8px;padding-right:8px}
+#detail>.dact{flex:none;margin-top:8px;border-top:1px solid var(--ln);padding-top:2px}
 #detail h3{font-size:14px;letter-spacing:.12em;color:#fff;font-weight:400}
 #detail .sub{color:var(--cy);font-size:10px;letter-spacing:.12em;margin:2px 0 8px}
 #detail p{color:#c9c2b2;line-height:1.5;margin:7px 0}
@@ -5723,12 +5726,12 @@ function storyCard(c, h) {
 }
 function storyDetail(c, el) {
   const S = STORY[c.story], B = BIOMES[c.biome], m = B.wx[c.mood] || B.wx[0], h = Math.max(0, c.exp - now()), act = c === CO.active, T = stState(c.story);
-  el.innerHTML = `<h2 style="color:${S.col}">STORY OPERATION <small>OP. ${c.op}</small></h2><div class="sth" style="--sc:${S.col}"><b>${S.name}</b><span>${S.sub}</span><div class="stp">${stPips(c, S)}<em>CHAPTER ${STNUM[c.chap]} OF ${STNUM[S.ch.length - 1]}</em></div></div>
+  el.innerHTML = `<h2 style="color:${S.col}">STORY OPERATION <small>OP. ${c.op}</small></h2><div class="dsc"><div class="sth" style="--sc:${S.col}"><b>${S.name}</b><span>${S.sub}</span><div class="stp">${stPips(c, S)}<em>CHAPTER ${STNUM[c.chap]} OF ${STNUM[S.ch.length - 1]}</em></div></div>
 <h3>${c.title.toUpperCase()}</h3><div class="sub">${c.site.toUpperCase()}</div>
 <div class="kv">ASKED FOR BY <b style="color:${c.contact.col}">${c.contact.name}</b></div><div class="kv">FOR <b style="color:${S.forN ? S.col : FAC[c.emp].col}">${S.forN || FAC[c.emp].name}</b></div><div class="kv">AGAINST <b style="color:${S.vsN ? '#ff7a55' : FAC[c.foe].col}">${S.vsN || FAC[c.foe].name}</b></div><div class="kv">THEATRE <b style="color:${B.css}">${B.name} · ${m[0]}</b></div>
 <div class="kv">OPERATING AREA <b>${(STK).toFixed(1)} KM ACROSS</b></div><div class="kv">THREAT <b class="pips">${pipStr(c.diff)}</b></div>${capKv(c)}<div class="kv">FEE <b>${fmt(c.pay)}</b></div><div class="kv">SALVAGE <b>${c.salv}%</b></div><div class="kv">${act ? 'STATUS' : 'OFFER CLOSES IN'} <b>${act ? 'ACCEPTED' : h.toFixed(0) + ' h'}</b></div>${T.n ? `<div class="kv">ATTEMPTS SO FAR <b style="color:var(--hot)">${T.n}</b></div>` : ''}
-<p>${c.brief}</p><p class="nt">${B.note} A story operation runs long and covers a lot of ground. Commander Varga briefs the lance before launch — what is known, at any rate. Lose it, or let the offer lapse, and it comes round on the board again.</p>
-<div class="row"><button id="dBrf" class="stb">${act ? 'HEAR THE BRIEFING AGAIN ▶' : 'ACCEPT — REPORT TO THE BRIEFING ROOM ▶'}</button></div>${act ? '<div class="row"><button id="dAcc">STAND DOWN</button><button id="dGo">TO THE MECH BAY ▶</button></div>' : ''}`;
+<p>${c.brief}</p><p class="nt">${B.note} A story operation runs long and covers a lot of ground. Commander Varga briefs the lance before launch — what is known, at any rate. Lose it, or let the offer lapse, and it comes round on the board again.</p></div>
+<div class="dact"><div class="row"><button id="dBrf" class="stb">${act ? 'HEAR THE BRIEFING AGAIN ▶' : 'ACCEPT — REPORT TO THE BRIEFING ROOM ▶'}</button></div>${act ? '<div class="row"><button id="dAcc">STAND DOWN</button><button id="dGo">TO THE MECH BAY ▶</button></div>' : ''}</div>`;
   $('dBrf').onclick = () => { sfx.play('ui'); if (!act) accept(c); CO.dirty = true; toBrief(c); };
   if (act) { $('dGo').onclick = toBay; $('dAcc').onclick = () => { CO.active = null; sfx.play('deny'); CO.dirty = true; }; }
 }
@@ -6675,13 +6678,18 @@ function renderHangarContract() {
 function renderDetail() {
   if (HQV.tab === 'stand') return renderStandDetail();
   const c = CO.sel, el = $('detail'); if (!c) { el.innerHTML = '<h2>CONTRACT DETAIL <small>NONE SELECTED</small></h2><p>Select an offer on the board, or a marker on the map table.</p>'; return; }
-  if (c.story) return storyDetail(c, el);
+  const dsc0 = el.querySelector('.dsc'), dscTop = dsc0 && HQV.dc === c ? dsc0.scrollTop : 0; HQV.dc = c;
+  if (c.story) storyDetail(c, el); else contractDetail(c, el);
+  /* the text scrolls in .dsc and the buttons stay under it: keep its place through the redraws */
+  el.scrollTop = 0; const dsc1 = el.querySelector('.dsc'); if (dsc1) dsc1.scrollTop = dscTop;
+}
+function contractDetail(c, el) {
   const T = TYPES[c.type], B = BIOMES[c.biome], m = B.wx[c.mood] || B.wx[0], h = Math.max(0, c.exp - now()), act = c === CO.active;
-  el.innerHTML = `<h2>CONTRACT DETAIL <small>OP. ${c.op}</small></h2><h3>${T.name.toUpperCase()} — ${c.site.toUpperCase()}</h3><div class="sub">${T.desc}</div>
+  el.innerHTML = `<h2>CONTRACT DETAIL <small>OP. ${c.op}</small></h2><div class="dsc"><h3>${T.name.toUpperCase()} — ${c.site.toUpperCase()}</h3><div class="sub">${T.desc}</div>
 <div class="kv">CLIENT <b style="color:${FAC[c.emp].col}">${FAC[c.emp].name}</b></div>${c.co && RIV[c.co] ? `<div class="kv">${c.cok === 'sub' ? 'PRIME CONTRACTOR' : 'FLYING WITH'} <b style="color:${RIV[c.co].col}">${RIV[c.co].name}${c.share ? ` · ${Math.round(c.share * 100)}% SHARE` : ''}</b></div>` : ''}<div class="kv">OPPOSITION <b style="color:${FAC[c.foe].col}">${FAC[c.foe].name}</b></div><div class="kv">THEATRE <b style="color:${B.css}">${B.name} · ${m[0]}</b></div>
 <div class="kv">THREAT <b class="pips">${pipStr(c.diff)}</b></div>${capKv(c)}<div class="kv">FEE <b>${fmt(c.pay)}</b></div><div class="kv">SALVAGE <b>${c.salv}%</b></div><div class="kv">SUPPORT <b>${c.support ? 'REPAIR DROP' : 'NONE'}</b></div><div class="kv">${act ? 'STATUS' : 'OFFER CLOSES IN'} <b>${act ? 'ACCEPTED' : h.toFixed(0) + ' h'}</b></div>
-<p>${c.brief}</p><p class="nt">${B.note}</p>${c.intel.map(i => `<div class="intel${i.src === 'contact' || i.src === 'bar' ? ' q' : ''}">${i.src === 'contact' ? 'CLIENT CLAIMS' : i.src === 'bar' ? 'BAR TALK' : i.src === 'terms' ? 'TERMS' : 'CONFIRMED'} — ${i.s}</div>`).join('')}
-<div class="row"><button id="dNeg">OPEN CHANNEL — ${dealer(c).name.toUpperCase()}</button></div><div class="row"><button id="dAcc">${act ? 'ABANDON CONTRACT' : 'ACCEPT AS OFFERED'}</button><button id="dGo">TO THE MECH BAY ▶</button></div>`;
+<p>${c.brief}</p><p class="nt">${B.note}</p>${c.intel.map(i => `<div class="intel${i.src === 'contact' || i.src === 'bar' ? ' q' : ''}">${i.src === 'contact' ? 'CLIENT CLAIMS' : i.src === 'bar' ? 'BAR TALK' : i.src === 'terms' ? 'TERMS' : 'CONFIRMED'} — ${i.s}</div>`).join('')}</div>
+<div class="dact"><div class="row"><button id="dNeg">OPEN CHANNEL — ${dealer(c).name.toUpperCase()}</button></div><div class="row"><button id="dAcc">${act ? 'ABANDON CONTRACT' : 'ACCEPT AS OFFERED'}</button><button id="dGo">TO THE MECH BAY ▶</button></div></div>`;
   $('dNeg').onclick = () => { sfx.play('ui'); talkContact(c); }; $('dGo').onclick = toBay;
   $('dAcc').onclick = () => { if (act) { CO.active = null; quitCost(c); news(`${YARD.name} walked away from the ${FAC[c.emp].short} job at ${c.site}.`); sfx.play('deny'); } else accept(c); CO.dirty = true; };
 }

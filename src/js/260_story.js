@@ -67,12 +67,12 @@ function storyCard(c, h) {
 }
 function storyDetail(c, el) {
   const S = STORY[c.story], B = BIOMES[c.biome], m = B.wx[c.mood] || B.wx[0], h = Math.max(0, c.exp - now()), act = c === CO.active, T = stState(c.story);
-  el.innerHTML = `<h2 style="color:${S.col}">STORY OPERATION <small>OP. ${c.op}</small></h2><div class="sth" style="--sc:${S.col}"><b>${S.name}</b><span>${S.sub}</span><div class="stp">${stPips(c, S)}<em>CHAPTER ${STNUM[c.chap]} OF ${STNUM[S.ch.length - 1]}</em></div></div>
+  el.innerHTML = `<h2 style="color:${S.col}">STORY OPERATION <small>OP. ${c.op}</small></h2><div class="dsc"><div class="sth" style="--sc:${S.col}"><b>${S.name}</b><span>${S.sub}</span><div class="stp">${stPips(c, S)}<em>CHAPTER ${STNUM[c.chap]} OF ${STNUM[S.ch.length - 1]}</em></div></div>
 <h3>${c.title.toUpperCase()}</h3><div class="sub">${c.site.toUpperCase()}</div>
 <div class="kv">ASKED FOR BY <b style="color:${c.contact.col}">${c.contact.name}</b></div><div class="kv">FOR <b style="color:${S.forN ? S.col : FAC[c.emp].col}">${S.forN || FAC[c.emp].name}</b></div><div class="kv">AGAINST <b style="color:${S.vsN ? '#ff7a55' : FAC[c.foe].col}">${S.vsN || FAC[c.foe].name}</b></div><div class="kv">THEATRE <b style="color:${B.css}">${B.name} · ${m[0]}</b></div>
 <div class="kv">OPERATING AREA <b>${(STK).toFixed(1)} KM ACROSS</b></div><div class="kv">THREAT <b class="pips">${pipStr(c.diff)}</b></div>${capKv(c)}<div class="kv">FEE <b>${fmt(c.pay)}</b></div><div class="kv">SALVAGE <b>${c.salv}%</b></div><div class="kv">${act ? 'STATUS' : 'OFFER CLOSES IN'} <b>${act ? 'ACCEPTED' : h.toFixed(0) + ' h'}</b></div>${T.n ? `<div class="kv">ATTEMPTS SO FAR <b style="color:var(--hot)">${T.n}</b></div>` : ''}
-<p>${c.brief}</p><p class="nt">${B.note} A story operation runs long and covers a lot of ground. Commander Varga briefs the lance before launch — what is known, at any rate. Lose it, or let the offer lapse, and it comes round on the board again.</p>
-<div class="row"><button id="dBrf" class="stb">${act ? 'HEAR THE BRIEFING AGAIN ▶' : 'ACCEPT — REPORT TO THE BRIEFING ROOM ▶'}</button></div>${act ? '<div class="row"><button id="dAcc">STAND DOWN</button><button id="dGo">TO THE MECH BAY ▶</button></div>' : ''}`;
+<p>${c.brief}</p><p class="nt">${B.note} A story operation runs long and covers a lot of ground. Commander Varga briefs the lance before launch — what is known, at any rate. Lose it, or let the offer lapse, and it comes round on the board again.</p></div>
+<div class="dact"><div class="row"><button id="dBrf" class="stb">${act ? 'HEAR THE BRIEFING AGAIN ▶' : 'ACCEPT — REPORT TO THE BRIEFING ROOM ▶'}</button></div>${act ? '<div class="row"><button id="dAcc">STAND DOWN</button><button id="dGo">TO THE MECH BAY ▶</button></div>' : ''}</div>`;
   $('dBrf').onclick = () => { sfx.play('ui'); if (!act) accept(c); CO.dirty = true; toBrief(c); };
   if (act) { $('dGo').onclick = toBay; $('dAcc').onclick = () => { CO.active = null; sfx.play('deny'); CO.dirty = true; }; }
 }
