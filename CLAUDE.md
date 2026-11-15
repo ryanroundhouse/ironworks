@@ -2,7 +2,9 @@
 
 A single-file three.js game: mech hangar with three build bays and a parts inventory, command deck
 with contracts and a rotating market, a bar (rumours, pilots for hire, two contests), field
-missions with salvage, three rival mech companies that compete with you, hire you and fly
+missions with salvage (eighteen catalogue mechs, fifty-three weapons in families, fifteen kinds of
+vehicle, a centipede, factories and two capital ships, all of which can be shot apart a
+component at a time), three rival mech companies that compete with you, hire you and fly
 beside you, and five story threads: connected chapters that come up on the board one at a time,
 are briefed in a briefing room and are flown on a theatre 2.4 times the usual size. Everybody who
 speaks does so aloud, in a made-up language.
@@ -23,21 +25,32 @@ a CDN, so view it through a local web server with an internet connection.
 While `.scratch/` exists, `index.html` is generated rather than hand-edited:
 
 - `.scratch/base.html` is a snapshot of the page from before the current round of work.
-- `.scratch/v11/build.py` applies asserted string patches to the base. This round has no part
-  file: it makes a sprint cost heat (`SPRINT_K`, `sprintFor`), says so in the bay and the
-  controls, and has the Derby's pit wall tell the player to reach the last gate cold. A new
-  top-level name in a patch is checked with `fresh(name)` first.
-  - `python3 .scratch/v11/build.py` writes `index.html` (release).
-  - `python3 .scratch/v11/build.py --debug` writes `.scratch/debug.html` with the test hooks from
+- `.scratch/v12/build.py` applies asserted string patches to the base and places four part
+  files. A part file is cut into sections by lines reading `//@@ NAME`, and each section goes
+  in at its own anchor (`sec('file.js:NAME')`); the build fails if a section is never placed.
+  - `w1_parts.js`: four chassis, five hulls, four cockpits, five back units, forty-four arm
+    weapons from one table (`ARM_FAM`), twelve more `PRESETS`, their prices and their icons.
+  - `c1_combat.js`: the weapons engine (`emitShot`, `fire`, `fireFrom`, `updateShots`) and
+    component damage (`mechZones`, `zoneBreak`, `damage`, `entTick`).
+  - `u1_units.js`: every vehicle (`AIR`, `TANKS`, `TUR`), `mkCentipede`, `mkFactory`,
+    `mkCapital`, and who turns up where (`UNIT_POOL`, `foeCfg`, `spawn`).
+  - `m4_ops.js`: the `assault` and `intercept` contracts, the `air`, `worm` and `works`
+    twists, and the rules a contract sets for the machine that flies it (`capFor`, `wingRec`).
+  - `python3 .scratch/v12/build.py` writes `index.html` (release).
+  - `python3 .scratch/v12/build.py --debug` writes `.scratch/debug.html` with the test hooks from
     `harness.js` (`__ev`, `__errs`, `__ff`, `__cam`, `__see`, `__strip`, `__poses`, `__mus`,
     `__render`, `__wav`, `__mk`, `__sim`, `__vox`, `__story`, `__smk`, `__sites`, `__fcam`,
-    `__fsee`).
+    `__fsee`, `__sheet`, `__mechs`, `__parts`, `__aim`, `__arena`, `__dummy`).
   - Follow every build with `node --check .scratch/check.mjs`.
-  - The build refuses a part file whose top-level name is already taken in the base.
+  - The build refuses a section whose top-level name is already taken in the page. To replace
+    existing functions, `cut()` the old text to a placeholder first and put the section there.
+    A new top-level name in a patch is checked with `fresh(name)` first.
   - Do not put a `//` comment in the middle of a long one-line statement in a part file: it
     swallows the rest of the line without a syntax error. Use `/* */`, or a line of its own.
-- Earlier rounds (`.scratch/v10/` and before) are history; their output is already in the base.
-  Each folder keeps the base it patched (`v10/base_v10.html`) next to its part files.
+    The build refuses the ones it can see.
+- Earlier rounds (`.scratch/v11/` and before) are history; their output is already in the base.
+  Each folder keeps the base it patched (`v11/base_v11.html`) next to its part files. The
+  `v11` build has no part file: it made a sprint cost heat (`SPRINT_K`, `sprintFor`).
   `r1_race.js` (`stRace` and `RACE_K`: the Iron Derby's pack, which holds round the player until
   the last gate) is in `.scratch/v10/`, whose build also seated each Derby car in the pack and
   added the calls from the pit wall (`dbCall`), the gaps on the board (`dbBy`) and the time a
@@ -152,6 +165,39 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   last gate to the flag, and lost (or placed) by walking it or by holding SHIFT the whole way.
   In the final a shutdown on the run to the flag loses to MAGPIE; a sprint let off under the
   shutdown line still wins from about 75 heat.
+- Machines, weapons and the fight, in `.scratch/v12/`. `ev.sh file.js ['prelude']` runs an async
+  function body inside the module (through `__ev`), so module names need no wrapping;
+  `ffev.sh` is the same in Firefox. Start each from a freshly loaded page.
+  - `__arena(cfg)` is a bare proving ground with the player in a given build, `__dummy(d, cfg,
+    o)` a pacified machine d metres ahead (`{ name: undefined }` makes it an ordinary pilot,
+    who can eject), and `__aim(e, zone)` puts the reticle on a target or one of its parts:
+    call it every step, because the chase camera sits off one shoulder and a level reticle
+    passes over whatever is in front.
+  - `t_weps.js` fires every weapon at a dummy and sets what it dealt against its card
+    (`window.__only`, `__zone`, `__secs`). `t_zones.js` walks component damage on both sides:
+    arms off (the pilot ejects), legs off, a named pilot, the player's own losses, the HUD,
+    the repair kit. `t_wear.js` stands the player in a fight and reports when each part went
+    against how much hull had gone by then: the back unit, the first to go, should usually
+    outlast half the hull, and the legs all of it.
+  - `t_units.js` builds every vehicle, lets each shoot at the player and kills it
+    (`window.__sheetN = 1 | 2` draws the contact sheets instead). `t_ally.js` puts the ones
+    with area weapons on our side and checks they do not hurt us.
+  - `t_ops.js` flies the new contracts with a crude autopilot (`window.__ops = [[type, plot,
+    o, picks, dps, secs]]`); `t_ship.js` is a capital ship against a pilot who stands by the
+    depot and shoots one thing (`'hull' | 'eng' | 'gun'`) at a given rate; `t_flee.js` lets a
+    beaten ship go and watches her leave. A ship should last about a minute and a half at 45
+    dps, and the depot about three and a half minutes if she is left alone.
+  - `t_board.js` deals sixty boards and counts limits, types and twists, then asks the bay
+    about each limit; `t_launch.js` presses the real launch button against a limit and a job
+    rated for two; `t_salv.js` goes through both salvage confirmations with real buttons;
+    `t_misc.js` covers the proving ground's waves, the save round trip for a limit, and the
+    stores with every part in them. `t_pic.js` (`window.__pic`) sets up a moment to look at.
+  - `__sheet(items, angle, cols, pitch)`, `__mechs(cfgs)` and `__parts(cat)` tile anything
+    into one screenshot. Look at every new model before calling it done.
+- The story autopilot's `follow: 'nav'` stands 46 m beside the newest marker. That is the
+  wrong place when the newest marker is the destination and the thing to guard is elsewhere
+  (follow the escort itself: `follow: "FD.ents.find(e => /MARIGOLD/.test(e.name))"`), and too
+  far to board the dropship (add `off: 12`).
 - `__ff(seconds)` fast-forwards bay tweens, so crane and lift sequences (`fitPart`, `switchBay`)
   can be awaited in a loop instead of in real time. It steps whichever room is showing, the bar
   included, and `__cam` places the camera there too.
@@ -372,6 +418,56 @@ While `.scratch/` exists, `index.html` is generated rather than hand-edited:
   which resumes it, and `#sndHint` (`sndWait`) says so on screen until the context is running.
   Nothing may assume the context does not exist yet, and nothing should wait for a gesture
   before building audio.
+- Weapons are descriptors on a part: `{ type, name, dmg, cd, heat, speed | range }` plus what
+  the type needs (`salvo`, `spread`, `blast`, `turn`, `life`, `loft`, `reach`, `burn`,
+  `stun`, `chain`, `arc`, `sweep`, `grind`, `big`, `small`, `snd`). The types are `laser`,
+  `rail`, `beam` (hitscan), `bullet`, `flak`, `plasma`, `bolt`, `ion`, `missile` (homing
+  unless `turn: 0`, lofted with `loft`), `lob` (a shell under gravity), `flame` (a cone that
+  sets fire), `arc` (lightning that chains) and `melee`. `emitShot` sends one round from one
+  muzzle whoever fired it; `fire` is a mech's slot, `fireFrom` anything else's. An arm weapon
+  comes from a row of `ARM_FAM` (`[id, mark, family, name, desc, tons, armor, value, rarity,
+  weapon, build]`): the same gun in two or three marks shares a builder. `wepReach(w)` is how
+  far it is worth firing, and a machine's AI closes to `e.rng` (`mechRng`), so a brawler
+  walks in and a missile boat stands off.
+- `PRESETS[0..5]` keep their places (deck pilots name them by index); the twelve after them
+  are sorted into `PRESET_CLS` by weight class, which is where `foeCfg` draws opposition from.
+- Component damage. `mechZones(mech)` gives every fitted part a sphere (`mech.zg`), and
+  `zonesFor(mech, hull, k)` its armour as a share of the hull (`ZONE_K`: share, how much of a
+  hit passes on to the hull). `damage(e, dmg, at, owner, zone)` takes the zone that
+  `rayHit`, `zoneAt` or `zoneRay` found. It applies to hostile mechs (`e.zones`, unless
+  `e.nz`, which the Derby cars carry) and to the player (`P.zones`, `P.lost`). `zoneBreak` is
+  what losing a part does: an arm or back weapon stops firing, legs gone is `e.legless`
+  (a third of the player's speed, no sprint), a cockpit costs aim or radar range, a back unit
+  its jets, shield, ECM or cooling. An ordinary pilot with no weapons left ejects (`e.ej`)
+  and the kill is credited; one with a name (`e.named`) fights on. The R kit brings the
+  player's wrecked parts back at half (`zoneMend`), and `settle()` charges 15% of each.
+- Every unit's turn in the frame goes through `entTick` (burning, shields, stuns, ejections)
+  before its own `update`. A target is one sphere, or a list in `e.hs` (`[x, y, z, r]` in its
+  own frame, turned by `e.yaw`): use `entRay`, `entIn` and `entGap` rather than `e.r`.
+- Vehicles keep their makers and take a variant: `mkDrone(x, z, team, v)` (`AIR`: `hunter`,
+  `scr`, `shr`, `vul`, `hrp`), `mkTank(x, z, team, { v })` (`TANKS`: `striker`, `dingo`,
+  `mam`, `hail`, `fur`, `pike`; `tankBrain` drives them all), `mkTurret(x, z, team, v)`
+  (`TUR`: `sentry`, `hydra`, `prism`, `bas`). With none given each builds what it always did.
+  `spawn(spec, ...)` picks variants from `UNIT_POOL` by tier (`unitTier`), or takes `spec.v`.
+  In a story chapter only a spec marked `mix` (which `force()` sets) is varied: a number a
+  chapter asks for outright stays the hunter, striker or sentry it was written round.
+- `mkCentipede` is a head and a body of separate entities following its trail (kill the head
+  and the rest goes); `mkFactory` a `STRUCT.fab` that builds through `spawn` while it stands
+  (`pacify` stops the line); `mkCapital(v, ...)` a `kind: 'ship'` hull from `CAPS` (`lev`,
+  `hive`) whose turrets and engines are entities of their own in `e.subs`. `o.focus` is what
+  a ship came for, `e.flee` sends her off the map. An entity with `nw` leaves no wreck:
+  `killEnt` calls its `crash(owner)` instead, and any entity's `onDead()` first. (`e.gone` is
+  taken: it is the flag for a unit walking off the map.) `shell(x, z, dmg, r, delay, own)`
+  knows whose it is, so anything with an area weapon must pass its team.
+- A contract may carry `cap` (45, 65 or 85 t; 0 for none: `capFor`). `capTier(c)` scales
+  `force()` and `foeCfg` to it, `mechReady(cfg, biome, contract)` refuses a machine over it,
+  and `boardApply` checks it against those three numbers (a table lookup let `'constructor'`
+  through). `wingRec(c)` is the wingman recommendation, worked out from the difficulty and
+  type each time rather than stored: it is a warning in `mechReady`, so launching alone
+  takes the second press. Neither applies to a company's joint contract or to the Derby.
+- Salvage is not given up by accident: the chief asks again in `debrief`, and the picker's
+  LEAVE IT ALL arms on the first press (`ST.sure`). A script hands the player an item by
+  pushing `{ kind: 'gift', key }` onto `YARD.loot`.
 - Never keep a `getChannelData()` view of a buffer that gets played. Firefox detaches the view
   once the buffer is playing, reads from it then give `undefined`, and a sample built from that is
   all NaN. One NaN note silences every score until reload (the music shares one compressor).
