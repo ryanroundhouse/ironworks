@@ -59,7 +59,7 @@ const STATS = [['TONNAGE', s => s.tons, 110, v => v.toFixed(0) + ' t'], ['ARMOR'
     if (e.code.startsWith('Digit')) commKey(+e.code[5] - 1);
     if (e.code === 'KeyR' && locked && CO.kit > 0 && !P.dead && (P.armor < P.max * .98 || Object.keys(P.lost).length)) { CO.kit--; P.armor = Math.min(P.max, P.armor + P.max * .4); const n = zoneMend(); msg(`REPAIR KIT USED${n ? ` — ${n} COMPONENT${n > 1 ? 'S' : ''} BACK ON LINE` : ''} — ${CO.kit} LEFT`, 2.5); sfx.play('ok'); }
     if (e.code === 'KeyV' && locked && !P.dead && invN('gear.cool') > 0 && P.heat > 20) { invAdd('gear.cool', -1); P.heat = Math.max(0, P.heat - 60); msg(`COOLANT FLUSH — ${invN('gear.cool')} LEFT`, 2.5); sfx.play('steam'); }
-    if (e.code === 'KeyC') P.cam = 1 - P.cam; if (e.code === 'KeyX') P.center = true; if (e.code === 'KeyH') toHangar(); if (e.code === 'Escape' && soft) { soft = false; setLock(false); }
+    if (e.code === 'KeyC') P.cam = 1 - P.cam; if (e.code === 'KeyX') P.center = true; if (e.code === 'KeyH') withdrawKey(); if (e.code === 'Escape' && soft) { soft = false; setLock(false); }
   });
   addEventListener('keyup', e => keys[e.code] = false); addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
   const resize = () => { const w = innerWidth, h = innerHeight; renderer.setSize(w, h); POST.size(w, h); for (const c of [HG.camera, FD.camera, HQ.camera, BAR.camera, BRF.camera]) { c.aspect = w / h; c.updateProjectionMatrix(); } const u = renderer.domElement.height * .95; for (const f of [HG.fx, FD.fx]) f.spark.mat.uniforms.uS.value = f.smoke.mat.uniforms.uS.value = u; FD.fx.wx.mat.uniforms.uS.value = u; };

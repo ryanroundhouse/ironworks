@@ -65,7 +65,8 @@ playable page. Never hand-edit it.
   It also makes `music.KIT` reachable. A debug page skips the first day altogether (an open
   board, no tours, through a new game and an imported save as well), because every driver below
   expects that; load `debug.html?tut` to get what a new player gets. It never plays the opening
-  unasked either (`INTROV.off`): `debug.html?intro` does. Its two anchors are asserted; if one moves, fix `build.py`.
+  unasked either (`INTROV.off`): `debug.html?intro` does. Nor does it ask before being unloaded mid-sortie
+  (`SGUARD.ask`), so the drivers can navigate away: `debug.html?guard` does. Its two anchors are asserted; if one moves, fix `build.py`.
 - Every build writes `.scratch/check.mjs` (the module script alone). Follow every build with
   `node --check .scratch/check.mjs`: in a module a second top-level declaration of a name is a
   syntax error, so this is what catches collisions between files. Check a new top-level name
@@ -388,6 +389,11 @@ playable page. Never hand-edit it.
   which is what the contact sheets use. The canvas has no depth buffer and no antialiasing of
   its own (the scene target has both), so `renderer.render()` straight to the canvas comes out
   wrong. `gfxApply()` and the resize handler keep `POST.bloom` and `POST.size()` in step.
+- A sortie is not in the save: a page left mid-contract comes back in the bay. So from launch until `toHangar` has
+  settled the books, `sortieGuard` (`src/js/275_sortie_guard.js`) keeps the page from being left by accident: a
+  history entry of its own catches Back and pauses the sortie, the mouse's side buttons are swallowed, and an
+  unload asks first. The proving ground is not guarded. Add nothing that keeps the page out of the browser's
+  back/forward cache (an `unload` listener, `Cache-Control: no-store`): the browser's back/forward cache is what brings a sortie back if one is left anyway.
 - A sortie on hold keeps the picture it has. `still` is true in the field while the pointer is
   free (SORTIE READY, the pause sheet, the map), nobody is dead, the contract is not over, the
   comm camera is not live and no tween is running: `updateField` does not run then, so nothing

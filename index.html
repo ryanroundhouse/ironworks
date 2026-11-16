@@ -413,7 +413,7 @@ body.intro>*:not(#gl):not(#intro):not(#boot){opacity:0!important;pointer-events:
  <div id="ret"><i></i><i></i><i></i><i></i><b></b></div>
  <div id="twist"><b id="hdg">000</b><i id="twI"></i></div>
  <div id="obj" class="pn"><div id="objW">HOSTILES <b id="hCnt">0</b>KILLS <b id="kCnt">0</b>WAVE <b id="wCnt">1</b></div><div id="objM" class="hid"><h2><span id="msTitle">CONTRACT</span><small id="msClock"></small></h2><div id="objList"></div></div></div>
- <div id="help" class="pn"><b>W/S</b> throttle · <b>A/D</b> turn legs<br><b>MOUSE</b> torso twist / aim<br><b>LMB</b> left arm · <b>RMB</b> right arm<br><b>F</b> back unit · <b>SPACE</b> jump jets<br><b>SHIFT</b> sprint, which builds heat<br><b>C</b> camera · <b>X</b> center legs<br><b>R</b> repair kit · <b>V</b> coolant flush<br>Aim at an arm or the legs to shoot them off<br><b>M</b> tactical map · <b>1-3</b> answer comms<br><b>SPACE</b> carry on after a message<br><b>H</b> withdraw to base · <b>ESC</b> pause</div>
+ <div id="help" class="pn"><b>W/S</b> throttle · <b>A/D</b> turn legs<br><b>MOUSE</b> torso twist / aim<br><b>LMB</b> left arm · <b>RMB</b> right arm<br><b>F</b> back unit · <b>SPACE</b> jump jets<br><b>SHIFT</b> sprint, which builds heat<br><b>C</b> camera · <b>X</b> center legs<br><b>R</b> repair kit · <b>V</b> coolant flush<br>Aim at an arm or the legs to shoot them off<br><b>M</b> tactical map · <b>1-3</b> answer comms<br><b>SPACE</b> carry on after a message<br><b>H H</b> withdraw to base · <b>ESC</b> pause</div>
  <canvas id="radar" width="190" height="190"></canvas>
  <div id="gauges" class="pn">
   <div class="st" id="gArm"><span>ARMOR</span><i><b></b></i><em></em></div>
@@ -5902,7 +5902,7 @@ function startField() {
   mode = 'field'; HG.alarmOn = false; HG.walk = 0; FD.scene.add(player.root); player.root.rotation.set(0, PI, 0); player.gait.amt = 0;
   Object.assign(P, { yaw: PI, v: 0, vy: 0, twist: 0, pitch: 0, heat: 0, armor: player.stats.armor * 1.5, max: player.stats.armor * 1.5, fuel: 1, shut: 0, air: false, shake: 0, kills: 0, wave: 0, dead: false, waveT: 1, center: false, camInit: false, cam: 0, leaving: false });
   P.cd = { armL: 0, armR: 0, back: 0 }; P.md = [false, false, false]; const c = CO.active; fieldScale(c && c.story ? STK : 1); clearField(); YARD.loot = []; P.carry = false; MS.on = MS.over = false; MS.navs.length = 0;
-  if (c) beginMission(c); else { if (!EV.home) buildEnv('desert', 41, { home: true }); P.pos.set(0, 0, 22); P.yaw = PI; }
+  if (c) { beginMission(c); sortieGuard(true); } else { if (!EV.home) buildEnv('desert', 41, { home: true }); P.pos.set(0, 0, 22); P.yaw = PI; }
   player.root.rotation.set(0, P.yaw, 0); player.run = RUN; player.gait.sk = 1.15; FD.camera.position.copy(P.pos); music.track(scoreFor(EV.key)); MAPV.wp = null; scoreH = scoreT = 0;
   $('objW').classList.toggle('hid', !!c); $('objM').classList.toggle('hid', !c); $('btnHangar').textContent = c ? 'WITHDRAW — ABANDON CONTRACT' : 'RETURN TO HANGAR'; $('navs').innerHTML = ''; $('tgt').classList.add('hid');
   $('pauseTxt').innerHTML = c ? `<b style="color:#fff">OP. ${c.op} — ${BIOMES[c.biome].name} · ${EV.mood[0]}</b><br>${c.brief}` : 'Proving grounds: free skirmish against endless waves.<br>Mouse aims the torso; the legs steer separately.'; $('pauseTxt').innerHTML += barSortie(!!c);
@@ -5915,7 +5915,7 @@ function startField() {
 async function toHangar() {
   if (mode !== 'field' || P.leaving) return; P.leaving = true; mapClose(false); if (document.pointerLockElement) document.exitPointerLock(); locked = false; $('pause').classList.add('hid');
   if (MS.on && !MS.over) { MS.abort = true; endMission(false, 'You withdrew from the contract area.'); }
-  await tween(.7, fade); const D = MS.on ? settle() : null; MS.on = false; commReset(); clearField(); mode = 'hangar'; player.run = 1; player.gait.sk = 1; soft = false;
+  await tween(.7, fade); const D = MS.on ? settle() : null; MS.on = false; sortieGuard(false); commReset(); clearField(); mode = 'hangar'; player.run = 1; player.gait.sk = 1; soft = false;
   HG.turn.add(player.root); HG.turn.rotation.y = 0; player.root.position.set(0, MECH_Y, 0); player.root.rotation.set(0, 0, 0); player.twist = player.pitch = 0; player.gait.amt = player.gait.turn = 0; player.setJets(false); if (Object.keys(P.lost || {}).length) { P.lost = {}; player.build(); }   /* the bay puts back whatever was shot off */
   player.gait.sag = 0; if (player.slot.head) player.slot.head.visible = true; player.onStep = null;
   setDoor(0); HG.lift.position.y = .1; orb.cine = false; orb.idle = 0; setGang(1); busy = false;
@@ -5942,6 +5942,32 @@ async function deploy() {
   await wait(3.2); await tween(1.5, fade); startField(); await tween(1.2, k => fade(1 - k));
 }
 
+/* ============ SORTIE GUARD ============ */
+/* A contract being flown exists only in this page: the save keeps the company, not the sortie, so a page that is left mid-sortie comes back in the bay. From launch until the debrief has settled
+   the books the page therefore will not be left by accident. Back (a mouse's side button, a trackpad swipe, Alt+Left) lands on a history entry of the sortie's own and pauses the fight instead;
+   the side buttons are swallowed outright where the browser allows it; and anything else that would unload the page (reload, closing the tab, a typed address) asks first.
+   The proving ground has nothing to lose and is not guarded. SGUARD.ask false leaves out the question on unload (the debug build does, so the test drivers can navigate). */
+const SGUARD = { on: false, ask: true, wT: 0 };
+/* H withdraws. With a contract still running that abandons it, so the first press only asks and a second within four seconds goes; once the contract is over, or in the proving ground, one press goes */
+function withdrawKey() {
+  if (mode !== 'field' || P.leaving) return;
+  if (!MS.on || MS.over || SGUARD.wT > T) { SGUARD.wT = 0; return toHangar(); }
+  SGUARD.wT = T + 4; sfx.play('deny'); msg('ABANDON THE CONTRACT? PRESS H AGAIN TO WITHDRAW', 4); POST.kick();
+}
+function sortieGuard(on) {
+  if (on === SGUARD.on) return; SGUARD.on = on;
+  try {
+    if (on) { if (!(history.state && history.state.sortie)) history.pushState({ sortie: 1 }, ''); }
+    else if (history.state && history.state.sortie) history.back();   /* the page's own entry again; the popstate that follows finds the guard off */
+  } catch (e) { }
+}
+addEventListener('popstate', () => {
+  if (!SGUARD.on) return;
+  try { history.pushState({ sortie: 1 }, ''); } catch (e) { }
+  if (mode === 'field' && !P.leaving) { if (locked && fieldUnlock) fieldUnlock(); msg('BACK IS OFF DURING A SORTIE — WITHDRAW FROM HERE IF YOU MEANT IT', 5); POST.kick(); }
+});
+for (const k of ['mousedown', 'mouseup', 'auxclick']) addEventListener(k, e => { if (SGUARD.on && (e.button === 3 || e.button === 4)) e.preventDefault(); }, true);
+addEventListener('beforeunload', e => { if (SGUARD.on && SGUARD.ask) { e.preventDefault(); e.returnValue = ''; } });
 /* ============ PEOPLE: SCULPTING KIT (superellipse lofts merged into vertex-coloured body segments) ============ */
 const _n3 = new THREE.Matrix3(), _c3 = new THREE.Color(), _c4 = new THREE.Color(), _v3 = V3(), _v4 = V3(), _q3 = new THREE.Quaternion(), _q4 = new THREE.Quaternion();
 const TRS = (x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, sx = 1, sy = sx, sz = sx) => new THREE.Matrix4().compose(V3(x, y, z), new THREE.Quaternion().setFromEuler(_e3.set(rx, ry, rz)), V3(sx, sy, sz));
@@ -9114,7 +9140,7 @@ ${SCORES.map(([bk, n, d], i) => `<div class="trk${CFG.track === i + 1 ? ' on' : 
   } else if (tab === 'controls') {
     const sx = v => (v / 100).toFixed(2) + '×', K = (L) => `<div class="keys">${L.map(([k, d]) => `<div><b>${k}</b><span>${d}</span></div>`).join('')}</div>`;
     B.innerHTML = `<div class="sh">MOUSE</div><div class="sg">${rng('sSens', 'AIM SENSITIVITY', CFG.sens * 100, 30, 250, 5, sx)}${tog('sInv', 'INVERT VERTICAL AIM', CFG.invY)}</div>
-<div class="sh">IN THE FIELD</div>${K([['W / S', 'Throttle forward / reverse'], ['A / D', 'Turn the legs'], ['MOUSE', 'Twist the torso and aim'], ['LEFT / RIGHT BUTTON', 'Fire left / right arm'], ['F', 'Fire the back unit'], ['SPACE', 'Jump jets'], ['SHIFT', 'Sprint — it builds heat'], ['X', 'Centre legs under the torso'], ['C', 'Cockpit / chase camera'], ['M', 'Tactical map — pauses the sortie'], ['R', 'Field repair kit'], ['V', 'Coolant flush'], ['1 – 3', 'Answer the comms'], ['SPACE / ENTER', 'Carry on after a message'], ['H', 'Withdraw to base'], ['ESC', 'Pause']])}
+<div class="sh">IN THE FIELD</div>${K([['W / S', 'Throttle forward / reverse'], ['A / D', 'Turn the legs'], ['MOUSE', 'Twist the torso and aim'], ['LEFT / RIGHT BUTTON', 'Fire left / right arm'], ['F', 'Fire the back unit'], ['SPACE', 'Jump jets'], ['SHIFT', 'Sprint — it builds heat'], ['X', 'Centre legs under the torso'], ['C', 'Cockpit / chase camera'], ['M', 'Tactical map — pauses the sortie'], ['R', 'Field repair kit'], ['V', 'Coolant flush'], ['1 – 3', 'Answer the comms'], ['SPACE / ENTER', 'Carry on after a message'], ['H', 'Withdraw to base — twice to abandon a contract'], ['ESC', 'Pause']])}
 <div class="sh">COMMS IN THE FIELD</div><div class="sg"><label>HOLD THE SORTIE FOR COMMS</label><span class="seg" id="sHold">${[[2, 'EVERY MESSAGE'], [1, 'QUESTIONS ONLY'], [0, 'NEVER']].map(([v, l]) => `<button data-v="${v}" class="${CFG.hold === v ? 'on' : ''}">${l}</button>`).join('')}</span><em></em></div>
 <p class="snt">${['The fight carries on while people talk, and a question you do not answer in time answers itself.', 'Chatter plays over the fight. When somebody needs a decision, everything stops until you have made it.', 'Whenever anybody comes on the radio, everything stops until you have read it. Nothing moves and no clock runs while you choose a reply.'][CFG.hold]}</p>
 <div class="sh">BAY AND COMMAND DECK</div>${K([['DRAG', 'Orbit the camera'], ['WHEEL', 'Zoom'], ['RIGHT-DRAG', 'Raise / lower the view'], ['1 – 6', 'Pick a reply in conversation'], ['ESC', 'Close a window']])}
@@ -9327,7 +9353,7 @@ const STATS = [['TONNAGE', s => s.tons, 110, v => v.toFixed(0) + ' t'], ['ARMOR'
     if (e.code.startsWith('Digit')) commKey(+e.code[5] - 1);
     if (e.code === 'KeyR' && locked && CO.kit > 0 && !P.dead && (P.armor < P.max * .98 || Object.keys(P.lost).length)) { CO.kit--; P.armor = Math.min(P.max, P.armor + P.max * .4); const n = zoneMend(); msg(`REPAIR KIT USED${n ? ` — ${n} COMPONENT${n > 1 ? 'S' : ''} BACK ON LINE` : ''} — ${CO.kit} LEFT`, 2.5); sfx.play('ok'); }
     if (e.code === 'KeyV' && locked && !P.dead && invN('gear.cool') > 0 && P.heat > 20) { invAdd('gear.cool', -1); P.heat = Math.max(0, P.heat - 60); msg(`COOLANT FLUSH — ${invN('gear.cool')} LEFT`, 2.5); sfx.play('steam'); }
-    if (e.code === 'KeyC') P.cam = 1 - P.cam; if (e.code === 'KeyX') P.center = true; if (e.code === 'KeyH') toHangar(); if (e.code === 'Escape' && soft) { soft = false; setLock(false); }
+    if (e.code === 'KeyC') P.cam = 1 - P.cam; if (e.code === 'KeyX') P.center = true; if (e.code === 'KeyH') withdrawKey(); if (e.code === 'Escape' && soft) { soft = false; setLock(false); }
   });
   addEventListener('keyup', e => keys[e.code] = false); addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
   const resize = () => { const w = innerWidth, h = innerHeight; renderer.setSize(w, h); POST.size(w, h); for (const c of [HG.camera, FD.camera, HQ.camera, BAR.camera, BRF.camera]) { c.aspect = w / h; c.updateProjectionMatrix(); } const u = renderer.domElement.height * .95; for (const f of [HG.fx, FD.fx]) f.spark.mat.uniforms.uS.value = f.smoke.mat.uniforms.uS.value = u; FD.fx.wx.mat.uniforms.uS.value = u; };

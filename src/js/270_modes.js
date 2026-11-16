@@ -4,7 +4,7 @@ function startField() {
   mode = 'field'; HG.alarmOn = false; HG.walk = 0; FD.scene.add(player.root); player.root.rotation.set(0, PI, 0); player.gait.amt = 0;
   Object.assign(P, { yaw: PI, v: 0, vy: 0, twist: 0, pitch: 0, heat: 0, armor: player.stats.armor * 1.5, max: player.stats.armor * 1.5, fuel: 1, shut: 0, air: false, shake: 0, kills: 0, wave: 0, dead: false, waveT: 1, center: false, camInit: false, cam: 0, leaving: false });
   P.cd = { armL: 0, armR: 0, back: 0 }; P.md = [false, false, false]; const c = CO.active; fieldScale(c && c.story ? STK : 1); clearField(); YARD.loot = []; P.carry = false; MS.on = MS.over = false; MS.navs.length = 0;
-  if (c) beginMission(c); else { if (!EV.home) buildEnv('desert', 41, { home: true }); P.pos.set(0, 0, 22); P.yaw = PI; }
+  if (c) { beginMission(c); sortieGuard(true); } else { if (!EV.home) buildEnv('desert', 41, { home: true }); P.pos.set(0, 0, 22); P.yaw = PI; }
   player.root.rotation.set(0, P.yaw, 0); player.run = RUN; player.gait.sk = 1.15; FD.camera.position.copy(P.pos); music.track(scoreFor(EV.key)); MAPV.wp = null; scoreH = scoreT = 0;
   $('objW').classList.toggle('hid', !!c); $('objM').classList.toggle('hid', !c); $('btnHangar').textContent = c ? 'WITHDRAW — ABANDON CONTRACT' : 'RETURN TO HANGAR'; $('navs').innerHTML = ''; $('tgt').classList.add('hid');
   $('pauseTxt').innerHTML = c ? `<b style="color:#fff">OP. ${c.op} — ${BIOMES[c.biome].name} · ${EV.mood[0]}</b><br>${c.brief}` : 'Proving grounds: free skirmish against endless waves.<br>Mouse aims the torso; the legs steer separately.'; $('pauseTxt').innerHTML += barSortie(!!c);
@@ -17,7 +17,7 @@ function startField() {
 async function toHangar() {
   if (mode !== 'field' || P.leaving) return; P.leaving = true; mapClose(false); if (document.pointerLockElement) document.exitPointerLock(); locked = false; $('pause').classList.add('hid');
   if (MS.on && !MS.over) { MS.abort = true; endMission(false, 'You withdrew from the contract area.'); }
-  await tween(.7, fade); const D = MS.on ? settle() : null; MS.on = false; commReset(); clearField(); mode = 'hangar'; player.run = 1; player.gait.sk = 1; soft = false;
+  await tween(.7, fade); const D = MS.on ? settle() : null; MS.on = false; sortieGuard(false); commReset(); clearField(); mode = 'hangar'; player.run = 1; player.gait.sk = 1; soft = false;
   HG.turn.add(player.root); HG.turn.rotation.y = 0; player.root.position.set(0, MECH_Y, 0); player.root.rotation.set(0, 0, 0); player.twist = player.pitch = 0; player.gait.amt = player.gait.turn = 0; player.setJets(false); if (Object.keys(P.lost || {}).length) { P.lost = {}; player.build(); }   /* the bay puts back whatever was shot off */
   player.gait.sag = 0; if (player.slot.head) player.slot.head.visible = true; player.onStep = null;
   setDoor(0); HG.lift.position.y = .1; orb.cine = false; orb.idle = 0; setGang(1); busy = false;

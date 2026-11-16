@@ -122,6 +122,8 @@ if (!/[?&]tut\b/.test(location.search)) {
 /* the opening. A debug page never plays it unasked (the drivers expect the bay), unless the address ends in ?intro. __intro(t) builds it and holds it at t seconds, silent, for a screenshot;
    __intro('play') runs it from the top with its sound, __intro('end') stops it, __intro() says where it stands */
 if (!/[?&]intro\b/.test(location.search)) INTROV.off = true;
+/* the sortie guard. A debug page does not ask before it is unloaded mid-sortie (the drivers navigate away from sorties all the time), unless the address ends in ?guard */
+if (!/[?&]guard\b/.test(location.search)) SGUARD.ask = false;
 window.__intro = t => {
   if (t === 'end') introEnd(); else if (t === 'play') { introEnd(); introOpen(); }
   else if (t !== undefined) { introEnd(); introOpen(); Object.assign(INTROV, { st: 2, hold: true, warm: 5, a0: -1 }); $('intro').classList.add('run'); for (let x = 0; x < t; x += 1 / 30) introStep(x, 1 / 30); introStep(t, 0); $('inBlk').style.opacity = INTROV.blk; }
